@@ -200,6 +200,14 @@ public class MyClass {
 }
 ```
 
+## Overload
+Overloading allows different methods to have the same name, 
+but different signatures where the signature can differ by the 
+number of input parameters or type of input parameters or both. 
+
+We don’t have to create and remember different names for functions doing the same thing.
+
+
 ## Abstraction
 Hiding the internal implementation of the feature and only 
 showing the functionality to the users. i.e. what it works (showing), 
