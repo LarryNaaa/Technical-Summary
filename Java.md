@@ -77,6 +77,30 @@ A non-access modifier used for nested class(cannot be used for top level class),
 >
 > > if there are multiple static code blocks, they will be executed in sequence 
 
+#### What is the difference between static nested class and inner class?
+there are two kinds of class in Java, 
+one is called **top level class** and other is called **nested class**. 
+
+As name suggested top level class is a class which is declared in 
+.java file and not enclosed under any other class. 
+
+On other hand nested class is declared inside another class. 
+The class which enclosed nested class is known as Outer class.
+
+In Java programming language you can not make a top level class static. 
+We can only make nested class either static or non static. 
+If you make a nested class non static then it also referred as Inner class.
+
+1. Nested static class doesn't need reference of Outer class 
+but non static nested class or Inner class requires Outer class 
+reference. We can not create instance of Inner class 
+without creating instance of Outer class. But we can create instance of
+static nested class directly.
+   
+2. Static nested class cannot access non static members. 
+While Inner class can access both static and 
+non static member of Outer class.
+
 ### final
 A non-access modifier used for classes, attributes and methods, which makes them non-changeable (impossible to inherit or override)
 	
