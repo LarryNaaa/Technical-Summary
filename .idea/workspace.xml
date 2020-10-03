@@ -48,7 +48,7 @@
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="settings.editor.selected.configurable" value="MavenSettings" />
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.Palindrome">
     <configuration name="Outer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="Outer" />
       <module name="Technical summary" />
@@ -56,8 +56,16 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Palindrome" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Palindrome" />
+      <module name="Technical summary" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Palindrome" />
         <item itemvalue="Application.Outer" />
       </list>
     </recent_temporary>
@@ -72,7 +80,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1601498968529</updated>
-      <workItem from="1601498969788" duration="5851000" />
+      <workItem from="1601498969788" duration="9263000" />
     </task>
     <servers />
   </component>
@@ -80,21 +88,21 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
-    <state width="1038" height="582" key="GridCell.Tab.0.bottom" timestamp="1601499037254">
+    <state width="1038" height="582" key="GridCell.Tab.0.bottom" timestamp="1601676987992">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
-    <state width="1038" height="582" key="GridCell.Tab.0.bottom/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601499037254" />
-    <state width="1038" height="582" key="GridCell.Tab.0.center" timestamp="1601499037252">
+    <state width="1038" height="582" key="GridCell.Tab.0.bottom/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601676987992" />
+    <state width="1038" height="582" key="GridCell.Tab.0.center" timestamp="1601676987990">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
-    <state width="1038" height="582" key="GridCell.Tab.0.center/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601499037252" />
-    <state width="1038" height="582" key="GridCell.Tab.0.left" timestamp="1601499037251">
+    <state width="1038" height="582" key="GridCell.Tab.0.center/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601676987990" />
+    <state width="1038" height="582" key="GridCell.Tab.0.left" timestamp="1601676987989">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
-    <state width="1038" height="582" key="GridCell.Tab.0.left/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601499037251" />
-    <state width="1038" height="582" key="GridCell.Tab.0.right" timestamp="1601499037253">
+    <state width="1038" height="582" key="GridCell.Tab.0.left/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601676987989" />
+    <state width="1038" height="582" key="GridCell.Tab.0.right" timestamp="1601676987991">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
-    <state width="1038" height="582" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601499037253" />
+    <state width="1038" height="582" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601676987991" />
   </component>
 </project>

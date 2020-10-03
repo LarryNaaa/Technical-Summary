@@ -200,6 +200,40 @@ public class MyClass {
 }
 ```
 
+## Encapsulation
+> The meaning of Encapsulation, is to make sure that "sensitive" data is hidden from users. To achieve this, you must:
+>
+> > declare class variables/attributes as private
+>
+> > provide public get and set methods to access and update the value of a private variable
+
+### Get and Set
+You learned from the previous chapter that private variables can only be accessed within the same class (an outside class has no access to it). However, it is possible to access them if we provide public get and set methods.
+
+The get method returns the variable value, and the set method sets the value.
+
+Syntax for both is that they start with either get or set, followed by the name of the variable, with the first letter in upper case:
+```java
+public class Person {
+  private String name; // private = restricted access
+
+  // Getter
+  public String getName() {
+    return name;
+  }
+
+  // Setter
+  public void setName(String newName) {
+    this.name = newName;
+  }
+}
+```
+### Why Encapsulation?
+1. Better control of class attributes and methods
+2. Class attributes can be made read-only (if you only use the get method), or write-only (if you only use the set method)
+3. Flexible: the programmer can change one part of the code without affecting other parts
+4. Increased security of data
+
 ## Inheritance
 It is the mechanism in java by which one class is allow to inherit the features(fields and methods) of another class.
 
@@ -429,4 +463,34 @@ When a method in a subclass has the same name, same parameters or signature, and
 
 7. Overriding and constructor : We can not override constructor as parent and child class can never have constructor with same name(Constructor name must always be same as Class name).
 
+## Singleton Class
+The Singleton's purpose is to control object creation, limiting the number of objects to only one. Since there is only one Singleton instance, any instance fields of a Singleton will occur only once per class, just like static fields. Singletons often control access to resources, such as database connections or sockets.
+
+```java
+public class ClassicSingleton {
+
+   private static ClassicSingleton instance = null;
+   private ClassicSingleton() {
+      // Exists only to defeat instantiation.
+   }
+
+   public static ClassicSingleton getInstance() {
+      if(instance == null) {
+         instance = new ClassicSingleton();
+      }
+      return instance;
+   }
+}
+```
+
+## Packages
+In order to organize classes better, Java provides a package mechanism to distinguish the namespace of class names.
+
+1. group related classes in one package, easy to find and use
+
+2. avoid name conflicts, we need to add package name to distinguish classes
+which have same name, because we cannot have same classes name in one package,
+but we can have same classes name in different packages.
+
+3. it limits the access rights, the class with the package access rights can access the classes in a package
 
