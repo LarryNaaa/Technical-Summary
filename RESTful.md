@@ -73,7 +73,7 @@ Please note that POST is neither safe nor idempotent, and invoking two identical
 
 > Summary: 
 >
-> > POST requests can be used to create/update a resources
+> > POST requests can be used to create/update resources
 >
 > > POST requests are not safe methods
 >
@@ -88,19 +88,21 @@ Please note that POST is neither safe nor idempotent, and invoking two identical
 > > POST requests requests have no restrictions on data length
 
 ##### What is the different between GET and POST?
-1. GET is idempotent, but POST is not
+1. GET is used to retrieve resources; POST is used to create or update resources
 
-2. GET can be bookmarked and remained in the history, but POST cannot
+2. GET is idempotent, but POST is not
 
-3. GET is harmless when using back button/reload, but POST will re-submit data
+3. GET can be bookmarked and remained in the history, but POST cannot
 
-4. GET has restrictions on data length, because GET adds data to URL, and the length of URL is limited; POST has no restrictions
+4. GET is harmless when using back button/reload, but POST will re-submit data
 
-5. GET has restrictions on data type, only ASCII characters allowed; POST has no restrictions 
+5. GET has restrictions on data length, because GET adds data to URL, and the length of URL is limited; POST has no restrictions
 
-6. GET is less secure compared to POST because data sent is part of the URL
+6. GET has restrictions on data type, only ASCII characters allowed; POST has no restrictions 
 
-7. GET is faster than POST when accessing resources, 
+7. GET is less secure compared to POST because data sent is part of the URL
+
+8. GET is faster than POST when accessing resources, 
 because GET can be cached and POST need to send request head first, then 
 receive 100 Continue response, and send request body. 
 
@@ -109,7 +111,19 @@ Use PUT APIs primarily to update existing resource (if the resource does not exi
 
 If the request passes through a cache and the Request-URI identifies one or more currently cached entities, those entries SHOULD be treated as stale. Responses to this method are not cacheable.
 
+> Summary: 
+>
+> > PUT requests can be used to create/update resources
+>
+> > PUT requests are not idempotent
+>
+> > PUT can be cached
 
+##### What is the different between POST and PUT?
+1. PUT is idempotent; POST is not. For example: when we create a blog by sending multiple POST requests, 
+we will create multiple blog; but if we send PUT multiple requests, we will only create one blog.
+
+2. PUT can be cached, but POST cannot
 
 
 
