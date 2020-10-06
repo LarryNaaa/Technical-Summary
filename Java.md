@@ -494,3 +494,9 @@ but we can have same classes name in different packages.
 
 3. it limits the access rights, the class with the package access rights can access the classes in a package
 
+## Do Java call functions pass arguments by value or by reference?
+Pass by value: A copy of the actual parameter is passed to the function when the function is called, so that if the parameter is modified in the function, the actual parameter will not be affected.
+
+Pass by reference: The address of the actual parameter is passed directly to the function when the function is called, so that if the parameter is modified in the function, the actual parameter will be affected.
+
+in Java we call functions pass parameters by value!

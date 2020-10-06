@@ -18,6 +18,7 @@ public class Outer {
         public void display(){
             System.out.println(" Message from non static nested or Inner class : " + message);
         }
+
     }
 
 

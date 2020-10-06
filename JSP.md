@@ -17,3 +17,4 @@
 2. As JSP output is HTML, it is not rich in features.
 3. Database connectivity is not easy.
 4. JSP pages require more disk space and time to hold JSP pages as they are compiled on the server.
+
