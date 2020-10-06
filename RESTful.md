@@ -117,15 +117,33 @@ If the request passes through a cache and the Request-URI identifies one or more
 >
 > > PUT requests are not idempotent
 >
-> > PUT can be cached
+> > PUT can not be cached
 
 ##### What is the different between POST and PUT?
-1. PUT is idempotent; POST is not. For example: when we create a blog by sending multiple POST requests, 
+1. PUT is used to update a single resource; POST is used to create a resource
+
+2. PUT is idempotent; POST is not. For example: when we create a blog by sending multiple POST requests, 
 we will create multiple blog; but if we send PUT multiple requests, we will only create one blog.
 
-2. PUT can be cached, but POST cannot
 
+#### HTTP DELETE
+As the name applies, DELETE APIs are used to delete resources (identified by the Request-URI).
 
+A successful response of DELETE requests SHOULD be HTTP response code 200 (OK) if the response includes an entity describing the status, 202 (Accepted) if the action has been queued, or 204 (No Content) if the action has been performed but the response does not include an entity.
+
+DELETE operations are idempotent. If you DELETE a resource, it’s removed from the collection of resources. Repeatedly calling DELETE API on that resource will not change the outcome – however, calling DELETE on a resource a second time will return a 404 (NOT FOUND) since it was already removed. Some may argue that it makes the DELETE method non-idempotent. It’s a matter of discussion and personal opinion.
+
+If the request passes through a cache and the Request-URI identifies one or more currently cached entities, those entries SHOULD be treated as stale. Responses to this method are not cacheable.
+
+#### HTTP PATCH
+HTTP PATCH requests are to make partial update on a resource. If you see PUT requests also modify a resource entity, so to make more clear – PATCH method is the correct choice for partially updating an existing resource, and PUT should only be used if you’re replacing a resource in its entirety.
+
+#### HTTP HEAD
+HEAD is almost identical to GET, but without the response body.
+
+In other words, if GET /users returns a list of users, then HEAD /users will make the same request but will not return the list of users.
+
+HEAD requests are useful for checking what a GET request will return before actually making a GET request - like before downloading a large file or response body.
 
 ### HTTP also defines the following standard status code
 404: RESOURCE NOT FOUND
