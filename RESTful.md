@@ -15,10 +15,16 @@ Service Definition: Service definition is the contract between the service provi
 
 Transport: Transport defines how a service is called. There is two popular way of calling a service: HTTP and Message Queue (MQ). By tying the URL of service, we can call the service over the internet. MQ communicates over the queue. The service requester puts the request in the queue. As soon as the service provider listens to the request. It takes the request, process the request, and create a response, and put the response back into MQ. The service requester gets the response from the queue. The communication happens over the queue.
 
-
-
 ## RESTful
 REST stands for REpresentational State Transfer.
+
+Three keywords in RESTful API:
+
+1. Resources: everything is a resource, use URL to represent a resource.
+
+2. Representation: pass the representation of resources between client and server, like JSON and XML format.
+
+3. State Transfer: client uses HTTP methods to operate resources on server, like GET, POST, PUT and DELETE.
 
 The main goal of RESTful web services is to make web services more effective. RESTful web services try to define services using the different concepts that are already present in HTTP. REST is an architectural approach, not a protocol.
 
