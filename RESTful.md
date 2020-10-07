@@ -34,6 +34,13 @@ It does not define the standard message exchange
   
 The key abstraction is a resource in REST. A resource can be anything. It can be accessed through a Uniform Resource Identifier (URI). For example: The resource has representations like XML, HTML, and JSON. The current state capture by representational resource. When we request a resource, we provide the representation of the resource.
 
+### What you do in RESTful APIs?
+1. Use URLs to represent resources, these URLs only contain nouns, not verbs. the nouns are matched to the table names in database.
+
+2. Use JSON format as the representation of resources, pass it between client and server
+
+3. Use HTTP methods to operate resources on the server, like GET, POST, PUT, DELETE
+
 ### HTTP Methods
 REST APIs enable you to develop any kind of web application having all possible CRUD (create, retrieve, update, delete) operations. REST guidelines suggest using a specific HTTP method on a particular type of call made to the server.
 
