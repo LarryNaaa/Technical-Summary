@@ -145,6 +145,9 @@ In other words, if GET /users returns a list of users, then HEAD /users will mak
 
 HEAD requests are useful for checking what a GET request will return before actually making a GET request - like before downloading a large file or response body.
 
+#### HTTP OPTIONS
+The OPTIONS method describes the communication options for the target resource.
+
 ### HTTP also defines the following standard status code
 404: RESOURCE NOT FOUND
 
