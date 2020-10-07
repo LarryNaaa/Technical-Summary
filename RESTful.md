@@ -162,15 +162,30 @@ HEAD requests are useful for checking what a GET request will return before actu
 The OPTIONS method describes the communication options for the target resource.
 
 ### HTTP also defines the following standard status code
-404: RESOURCE NOT FOUND
 
-200: SUCCESS
+#### Successful 2xx
+This class of status code indicates that the client's request was successfully received, understood, and accepted.
 
-201: CREATED
+##### 200 OK
+The request has succeeded. The information returned with the response is dependent on the method used in the request
 
-401: UNAUTHORIZED
+##### 201 Created
+The request has been fulfilled and resulted in a new resource being created.
 
-500: SERVER ERROR
+##### 202 Accepted
+The request has been accepted for processing, but the processing has not been completed.
+
+#### Client Error 4xx
+The 4xx class of status code is intended for cases in which the client seems to have erred. 
+
+##### 400 Bad Request
+The request could not be understood by the server due to malformed syntax. 
+
+##### 401 Unauthorized
+The request requires user authentication.
+
+##### 404 Not Found
+The server has not found anything matching the Request-URI.
 
 ### RESTful Service Constraints
 There must be a service producer and service consumer.
