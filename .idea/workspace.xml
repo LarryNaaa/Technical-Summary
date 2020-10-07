@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="205f2bf4-b7c9-44a9-9c13-e216b6600718" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JSP.md" beforeDir="false" afterPath="$PROJECT_DIR$/JSP.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Java.md" beforeDir="false" afterPath="$PROJECT_DIR$/Java.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Outer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Outer.java" afterDir="false" />
-    </list>
+    <list default="true" id="205f2bf4-b7c9-44a9-9c13-e216b6600718" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -86,6 +81,7 @@
       <workItem from="1601852801648" duration="902000" />
       <workItem from="1602010182907" duration="1776000" />
       <workItem from="1602013650250" duration="1218000" />
+      <workItem from="1602023895596" duration="6933000" />
     </task>
     <servers />
   </component>
@@ -113,5 +109,13 @@
     </state>
     <state width="1038" height="582" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1601676987991" />
     <state width="1038" height="582" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420313" />
+    <state x="-875" y="485" key="run.anything.popup" timestamp="1602028052880">
+      <screen x="-1080" y="39" width="1080" height="1920" />
+    </state>
+    <state x="-875" y="485" key="run.anything.popup/-1080.39.1080.1920/0.23.1920.1006@-1080.39.1080.1920" timestamp="1602028052880" />
+    <state x="-875" y="490" width="670" height="676" key="search.everywhere.popup" timestamp="1602028352677">
+      <screen x="-1080" y="39" width="1080" height="1920" />
+    </state>
+    <state x="-875" y="490" width="670" height="676" key="search.everywhere.popup/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1602028352677" />
   </component>
 </project>
