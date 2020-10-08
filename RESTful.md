@@ -16,13 +16,13 @@ Service Definition: Service definition is the contract between the service provi
 Transport: Transport defines how a service is called. There is two popular way of calling a service: HTTP and Message Queue (MQ). By tying the URL of service, we can call the service over the internet. MQ communicates over the queue. The service requester puts the request in the queue. As soon as the service provider listens to the request. It takes the request, process the request, and create a response, and put the response back into MQ. The service requester gets the response from the queue. The communication happens over the queue.
 
 ## RESTful
-REST stands for REpresentational State Transfer.
+REST stands for (Resource)Representational State Transfer.
 
 Three keywords in RESTful API:
 
-1. **Resources:** everything is a resource, use URL to represent a resource.
+1. **Resources:** resource is an information entity, use URL to represent a resource.
 
-2. **Representation:** pass the representation of resources between client and server, like JSON and XML format.
+2. **Representation:** resource has multiple representations, pass the representation of resources between client and server, like JSON and XML format.
 
 3. **State Transfer:** client uses HTTP methods to operate resources on server, like GET, POST, PUT and DELETE.
 
@@ -160,6 +160,23 @@ HEAD requests are useful for checking what a GET request will return before actu
 
 #### HTTP OPTIONS
 The OPTIONS method describes the communication options for the target resource.
+
+#### Example
+GET /zoos：列出所有动物园
+
+POST /zoos：新建一个动物园
+
+GET /zoos/ID：获取某个指定动物园的信息
+
+PUT /zoos/ID：更新某个指定动物园的信息（提供该动物园的全部信息）
+
+PATCH /zoos/ID：更新某个指定动物园的信息（提供该动物园的部分信息）
+
+DELETE /zoos/ID：删除某个动物园
+
+GET /zoos/ID/animals：列出某个指定动物园的所有动物
+
+DELETE /zoos/ID/animals/ID：删除某个指定动物园的指定动物
 
 ### HTTP also defines the following standard status code
 
