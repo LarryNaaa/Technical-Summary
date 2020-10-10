@@ -338,3 +338,180 @@ HAVING condition
 ORDER BY column_name(s);
 ```
 
+### Keys
+#### Primary key
+A primary key is a minimal set of attributes (columns) in a table that uniquely identifies tuples (rows) in that table.
+
+#### Super key
+A super key is a set of one or more attributes (columns), which can uniquely identify a row in a table.
+
+#### Candidate Key 
+A super key with no redundant attribute is known as candidate key. Candidate keys are selected from the set of super keys, the only thing we take care while selecting candidate key is that the candidate key should not have any redundant attributes. That’s the reason they are also termed as minimal super key.
+
+#### Foreign key
+Foreign keys are the columns of a table that points to the primary key of another table. They act as a cross-reference between tables.
+
+#### Composite key
+A key that has more than one attributes is known as composite key. It is also known as compound key.
+
+Note: Any key such as super key, primary key, candidate key etc. can be called composite key if it has more than one attributes.
+
+#### Alternate key
+As we have seen in the candidate key guide that a table can have multiple candidate keys. Among these candidate keys, only one key gets selected as primary key, the remaining keys are known as alternative or secondary keys.
+
+
+### Normalization
+Normalization is a database design technique that reduces data redundancy and eliminates undesirable characteristics like Insertion, Update and Deletion Anomalies. Normalization rules divides larger tables into smaller tables and links them using relationships. The purpose of Normalization in SQL is to eliminate redundant (repetitive) data and ensure data is stored logically.
+
+#### 1NF (First Normal Form) Rules
+Each table column should contain a single value.
+
+#### 2NF (Second Normal Form) Rules
+No non-prime attribute is dependent on the proper subset of any candidate key of table.
+
+An attribute that is not part of any candidate key is known as non-prime attribute.
+
+#### 3NF (Third Normal Form) Rules
+Transitive functional dependency of non-prime attribute on any super key should be removed.
+
+##### Transitive functional dependency
+A functional dependency is said to be transitive if it is indirectly formed by two functional dependencies. For e.g.
+
+X -> Z is a transitive dependency if the following three functional dependencies hold true:
+
+X->Y
+
+Y does not ->X
+
+Y->Z
+
+Note: A transitive dependency can only occur in a relation of three of more attributes. This dependency helps us normalizing the database in 3NF (3rd Normal Form).
+
+#### Boyce Codd normal form (BCNF)
+BCNF is stricter than 3NF. A table complies with BCNF if it is in 3NF and for every functional dependency X->Y, X should be the super key of the table.
+
+### What is the MySQL default port number?
+MySQL default port number is 3306.
+
+### What are the differences between a primary key and a foreign key?
+1. The primary key uniquely identifies a record, whereas foreign key refers to the primary key of another table.
+
+2. The primary key can never accept a NULL value but foreign key accepts a NULL value.
+
+3. When a record is inserted in a table that contains the primary key then it is not necessary to insert the value on the table that contains this primary key field as the foreign key.
+
+4. When a record is deleted from the table that contains the primary key then the corresponding record must be deleted from the table containing the foreign key for data consistency. But any record can be deleted from the table that contains a foreign key without deleting a related record of another table.
+
+### What are the differences between CHAR and VARCHAR data types?
+Both CHAR and VARCHAR data types are used to store string data in the field of the table.
+
+1. CHAR data type is used to store fixed-length string data and the VARCHAR data type is used to store variable-length string data.
+
+2. The storage size of the CHAR data type will always be the maximum length of this data type and the storage size of VARCHAR will be the length of the inserted string data. Hence, it is better to use the CHAR data type when the length of the string will be the same length for all the records.
+
+3. CHAR is used to store small data whereas VARCHAR is used to store large data.
+
+4. CHAR works faster and VARCHAR works slower.
+
+### What is the purpose of using the TIMESTAMP data type?
+A TIMESTAMP data type is used to store the combination of date and time value which is 19 characters long.
+
+### How can you filter the duplicate data while retrieving records from the table?
+A DISTINCT keyword is used to filter the duplicate data from the table while retrieving the records from a table.
+
+### What is the difference between NOW() and CURRENT_DATE()?
+Both NOW() and CURRENT_DATE() are built-in MySQL methods. NOW() is used to show the current date and time of the server and CURRENT_DATE() is used to show only the date of the server.
+
+### Which statement is used in a select query for partial matching?
+REGEXP and LIKE statements can be used in a SELECT query for partial matching. REGEXP is used to search records based on the pattern and LIKE is used to search any record by matching any string at the beginning or end or middle of a particular field value.
+
+### Which MySQL function is used to concatenate string?
+CONCAT() function is used to combine two or more string data. The use of this function is here with an example.
+
+### What is an index? How can an index be declared in MySQL?
+n index is a data structure of a MySQL table that is used to speed up the queries.
+
+It is used by the database search engine to find out the records faster. One or more fields of a table can be used as an index key. Index key can be assigned at the time of table declaration or can be assigned after creating the table.
+
+### What is the difference between the Primary key and the Unique key?
+Unique data is stored in the primary key and unique key fields. The primary key field never accepts NULL value but a unique key field accepts a NULL value.
+
+### What is the purpose of using the IFNULL() function?
+IFNULL() function takes two arguments. It returns the first argument value if the value of the first argument is not NULL and it returns the second argument if the value of the first argument is NULL.
+
+### What is a join? Explain the different types of MySQL joins.
+The SQL statement that is used to make a connection between two or more tables based on the matching columns is called a join. It is mainly used for complex queries.
+
+Different types of SQL joins are mentioned below:
+
+Inner Join: It is a default join. It returns records when the values match in the joining tables.
+
+Left Outer Join: It returns all the records from the left table based on the matched records from the right table.
+
+Right Outer Join: It returns all the records from the right table based on the matched records from the left table.
+
+Full Outer Join: It returns all the records that match from the left or right table.
+
+### How can you retrieve a particular number of records from a table?
+LIMIT clause is used with the SQL statement to retrieve a particular number of records from a table. From which record and how many records will be retrieved are defined by the LIMIT clause.
+
+### Explain the difference between DELETE and TRUNCATE.
+1. DELETE command is used to delete a single or multiple or all the records from the table. The TRUNCATE command is used to delete all the records from the table or make the table empty.
+
+2. When DELETE command is used to delete all the records from the table then it doesn’t re-initialize the table. So, the AUTO_INCREMENT field does not count from one when the user inserts any record. But when all the records of any table are deleted by using TRUNCATE command then it re-initializes the table and a new record will start from one for the AUTO_INCREMENT field.
+
+### What is a storage engine? What are the differences between InnoDB and MyISAM engines?
+One of the major components of the MySQL server is the storage engine for doing different types of database operations. Each database table created is based on the specific storage engine.
+
+MySQL supports two types of storage engines i.e transactional and non-transactional. InnoDB is the default storage engine of MySQL which is transactional. MyISAM storage engine is a non-transactional storage engine.
+
+The differences between InnoDB and MyISAM storage engines are discussed below:
+
+1. MyISAM supports the FULLTEXT index but InnoDB doesn’t support the FULLTEXT index.
+
+2. MyISAM is faster and InnoDB is slower.
+
+3. InnoDB supports ACID (Atomicity, Consistency, Isolation, and Durability) property but MyISAM doesn’t.
+
+4. InnoDB supports row-level locking and MyISAM supports table-level locking.
+
+5. InnoDB is suitable for large database and MyISAM is suitable for a small database.
+
+### What is a transaction? Describe MySQL transaction properties.
+When a group of database operations is done as a single unit then it is called a transaction. If any task of the transactional tasks remains incomplete then the transaction will not succeed. Hence, it is mandatory to complete all the tasks of a transaction to make the transaction successful.
+
+A transaction has four properties which are known as ACID property. These properties are described below.
+
+Atomicity: It ensures that all the tasks of a transaction will be completed successfully otherwise all the completed tasks will be rolled back to the previous state for any failure.
+
+Consistency: It ensures that the database state must be changed accurately for the committed transaction.
+
+Isolation: It ensures that all the tasks of a transaction will be done independently and transparently.
+
+Durability: It ensures that all the committed transaction is consistent for any type of system failure.
+
+### What are the functions of commit and rollback statements?
+Commit is a transaction command that executes when all the tasks of a transaction are completed successfully. It will modify the database permanently to confirm the transaction.
+
+Rollback is another transactional command that executes when any of the transactional tasks become unsuccessful and undoes all the changes that are made by any transactional task to make the transaction unsuccessful.
+
+### SQL Order of Operations?
+(1) FROM <left_table>
+
+(2) <join_type> JOIN <right_table>
+
+(3) ON <join_condition>
+
+(4) WHERE <where_condition>
+
+(5) GROUP BY <group_by_list>
+
+(6) HAVING <having_condition>
+
+(7) SELECT
+
+(8) DISTINCT
+
+(9) UNION
+
+(10) ORDER BY <order_by_list>
