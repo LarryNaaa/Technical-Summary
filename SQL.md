@@ -423,13 +423,13 @@ A DISTINCT keyword is used to filter the duplicate data from the table while ret
 Both NOW() and CURRENT_DATE() are built-in MySQL methods. NOW() is used to show the current date and time of the server and CURRENT_DATE() is used to show only the date of the server.
 
 ### Which statement is used in a select query for partial matching?
-REGEXP and LIKE statements can be used in a SELECT query for partial matching. REGEXP is used to search records based on the pattern and LIKE is used to search any record by matching any string at the beginning or end or middle of a particular field value.
+REGEXP(Regular Expression) and LIKE statements can be used in a SELECT query for partial matching. REGEXP is used to search records based on the pattern and LIKE is used to search any record by matching any string at the beginning or end or middle of a particular field value.
 
 ### Which MySQL function is used to concatenate string?
 CONCAT() function is used to combine two or more string data. The use of this function is here with an example.
 
 ### What is an index? How can an index be declared in MySQL?
-n index is a data structure of a MySQL table that is used to speed up the queries.
+An index is a data structure of a MySQL table that is used to speed up the queries.
 
 It is used by the database search engine to find out the records faster. One or more fields of a table can be used as an index key. Index key can be assigned at the time of table declaration or can be assigned after creating the table.
 
@@ -515,3 +515,29 @@ Rollback is another transactional command that executes when any of the transact
 (9) UNION
 
 (10) ORDER BY <order_by_list>
+
+### Isolation Levels
+#### READ UNCOMMITTED
+In READ-UNCOMMITTED isolation level, there isn’t much isolation present between the transactions at all, ie ., No locks. A transaction can see changes to data made by other transactions that are not committed yet. This is the lowest level in isolation and highly performant since there is no overhead of maintaining locks, With this isolation level, there is always for getting a “Dirty-Read”
+##### Dirty-Read
+That means transactions could be reading data that may not even exist eventually because the other transaction that was updating the data rolled-back the changes and didn’t commit. 
+
+#### READ COMMITTED
+IN READ-COMMITTED isolation level, the phenomenon of dirty read is avoided, because any uncommitted changes are not visible to any other transaction until the change is committed. This is the default isolation level with most of popular RDBMS software, but not with MySQL.
+
+Within this isolation level, each SELECT uses its own snapshot of the committed data that was committed before the execution of the SELECT. Now because each SELECT has its own snapshot, here is the trade-off now, so the same SELECT, when running multiple times during the same transaction, could return different result sets. This phenomenon is called non-repeatable read.
+##### non-repeatable read
+A non-repeatable occurs when a transaction performs the same transaction twice but gets a different result set each time. 
+
+#### REPEATABLE READ
+In REPEATABLE-READ isolation level, the phenomenon of non-repeatable read is avoided. It is the default isolation in MySQL.This isolation level returns the same result set throughout the transaction execution for the same SELECT run any number of times during the progression of a transaction.
+
+This is how it works, a snapshot of the SELECT is taken the first time the SELECT is run during the transaction and the same snapshot is used throughout the transaction when the same SELECT is executed. A transaction running in this isolation level does not take into account any changes to data made by other transactions, regardless of whether the changes have been committed or not. This ensures that reads are always consistent(repeatable). Maintaining a snapshot can cause extra overhead and impact some performance
+
+Although this isolation level solves the problem of non-repeatable read, another possible problem that occurs is phantom reads.
+##### phantom reads
+A Phantom is a row that appears where it is not visible before. 
+
+#### SERIALIZABLE
+SERIALIZABLE completely isolates the effect of one transaction from others. It is similar to REPEATABLE READ with the additional restriction that row selected by one transaction cannot be changed by another until the first transaction finishes. The phenomenon of phantom reads is avoided. This isolation level is the strongest possible isolation level. 
+
