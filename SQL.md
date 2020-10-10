@@ -541,3 +541,11 @@ A Phantom is a row that appears where it is not visible before.
 #### SERIALIZABLE
 SERIALIZABLE completely isolates the effect of one transaction from others. It is similar to REPEATABLE READ with the additional restriction that row selected by one transaction cannot be changed by another until the first transaction finishes. The phenomenon of phantom reads is avoided. This isolation level is the strongest possible isolation level. 
 
+### Concurrency Control Mechanisms
+#### Optimistic concurrency control (OCC)
+It allows multiple transactions to modify data without interfering with each other. While a transaction is running, the data that will be edited isn't locked. Before a transaction commits, optimistic concurrency control checks whether a conflicting modification exists. If a conflict exists, the committing transaction is rolled back.
+
+#### Pessimistic concurrency control
+when a transaction is modifying data, pessimistic locking applies a lock to the data so other transactions can't access the same data. After the transaction commits, the lock is released.
+
+
