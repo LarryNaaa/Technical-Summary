@@ -523,7 +523,7 @@ In READ-UNCOMMITTED isolation level, there isn’t much isolation present betwee
 That means transactions could be reading data that may not even exist eventually because the other transaction that was updating the data rolled-back the changes and didn’t commit. 
 
 #### READ COMMITTED
-IN READ-COMMITTED isolation level, the phenomenon of dirty read is avoided, because any uncommitted changes are not visible to any other transaction until the change is committed. This is the default isolation level with most of popular RDBMS software, but not with MySQL.
+In READ-COMMITTED isolation level, the phenomenon of dirty read is avoided, because any uncommitted changes are not visible to any other transaction until the change is committed. This is the default isolation level with most of popular RDBMS software, but not with MySQL.
 
 Within this isolation level, each SELECT uses its own snapshot of the committed data that was committed before the execution of the SELECT. Now because each SELECT has its own snapshot, here is the trade-off now, so the same SELECT, when running multiple times during the same transaction, could return different result sets. This phenomenon is called non-repeatable read.
 ##### non-repeatable read
