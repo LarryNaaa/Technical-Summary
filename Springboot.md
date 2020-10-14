@@ -203,6 +203,32 @@ Top / First / Distinct
 ### Controller
 **Web控制层: 导入service层，调用service方法，controller通过接受前端传来的参数进行业务操作，在返回一个制定的路径或数据表。**
 
+### Annotations
+
+#### @Bean
+indicates that a method produces a bean to be managed by Spring.
+
+#### @Service
+indicates that an annotated class is a service class.
+
+#### @Repository
+indicates that an annotated class is a repository, which is an abstraction of data access and storage.
+
+#### @Configuration
+indicates that a class is a configuration class that may contain bean definitions.
+
+#### @Controller
+marks the class as web controller, capable of handling the requests.
+
+#### @RequestMapping
+maps HTTP request with a path to a controller method.
+
+#### @Autowired
+marks a constructor, field, or setter method to be autowired by Spring dependency injection.
+
+#### @SpringBootApplication
+enables Spring Boot autoconfiguration and component scanning.
+
 #### @RestController
 It's a convenience annotation that combines @Controller and @ResponseBody – which eliminates the need to annotate every request handling method of the controller class with the @ResponseBody annotation.
 
