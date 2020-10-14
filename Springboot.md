@@ -363,19 +363,60 @@ public String method9(@RequestParam("id") int id){
 ```
 For this method to work, the parameter name should be “id” and it should be of type int.
 
+##### @GetMapping/@PostMapping/@DeleteMapping/@PutMapping/@PatchMapping
+@GetMapping annotation maps HTTP GET requests onto specific handler methods. It is a composed annotation that acts as a shortcut for @RequestMapping(method = RequestMethod.GET).
 
-@GetMapping @RequestMapping(method = RequestMethod.GET)的简写, 作用：对应查询，表明是一个查询URL映射
 
-@PostMapping @RequestMapping(method = RequestMethod.POST)的简写, 作用：对应增加，表明是一个增加URL映射
+#### @CrossOrigin
+In any modern browser, the Cross-Origin Resource Sharing (CORS) is a relevant specification with the emergence of HTML5 and JS clients that consume data via REST APIs.
+
+In many cases, the host that serves the JS (e.g., example.com) is different from the host that serves the data (e.g., api.example.com). In such a case, CORS enables cross-domain communication.
+
+##### @CrossOrigin on the Controller
+```java
+@CrossOrigin(origins = "http://example.com", maxAge = 3600)
+@RestController
+@RequestMapping("/account")
+public class AccountController {
  
-@DeleteMapping @RequestMapping(method = RequestMethod.DELETE)的简写, 作用：对应删除，表明是一个删除URL映射
+    @RequestMapping(method = RequestMethod.GET, path = "/{id}")
+    public Account retrieve(@PathVariable Long id) {
+        // ...
+    }
+ 
+    @RequestMapping(method = RequestMethod.DELETE, path = "/{id}")
+    public void remove(@PathVariable Long id) {
+        // ...
+    }
+}
+```
+This time, we added @CrossOrigin on the class level. Consequently, both retrieve() and remove() methods have it enabled. We can customize the configuration by specifying the value of one of the annotation attributes: origins, methods, allowedHeaders, exposedHeaders, allowCredentials, or maxAge.
 
-@PutMapping @RequestMapping(method = RequestMethod.PUT)的简写, 作用：对应更新，表明是一个更新URL映射
+##### @CrossOrigin on a @RequestMapping-Annotated Handler Method
+```java
+@RestController
+@RequestMapping("/account")
+public class AccountController {
+ 
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.GET, path = "/{id}")
+    public Account retrieve(@PathVariable Long id) {
+        // ...
+    }
+ 
+    @RequestMapping(method = RequestMethod.DELETE, path = "/{id}")
+    public void remove(@PathVariable Long id) {
+        // ...
+    }
+}
+```
+In the example above, we only enabled CORS for the retrieve() method. We can see that we didn't set any configuration for the @CrossOrigin annotation, so it uses the defaults:
 
-@PatchMapping 是对@PutMapping的补充，表示一个局部更新，后端只更新收到的字段。
+All origins are allowed
 
-@CrossOrigin 解决跨域问题
+The HTTP methods allowed are those specified in the @RequestMapping annotation (for this example is GET)
 
+The time that the preflight response is cached (maxAge) is 30 minutes
 
 
 
