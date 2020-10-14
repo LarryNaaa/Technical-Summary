@@ -208,6 +208,57 @@ It's a convenience annotation that combines @Controller and @ResponseBody – wh
 
 Every request handling method of the controller class automatically serializes return objects into HttpResponse.
 
+```java
+@RestController
+@RequestMapping("books-rest")
+public class SimpleBookRestController {
+    
+    @GetMapping("/{id}", produces = "application/json")
+    public Book getBook(@PathVariable int id) {
+        return findBookById(id);
+    }
+ 
+    private Book findBookById(int id) {
+        // ...
+    }
+}
+```
+
+#### @RequestBody
+@RequestBody annotation maps the HttpRequest body to a transfer or domain object, enabling automatic deserialization of the inbound HttpRequest body onto a Java object.
+
+Spring automatically deserializes the JSON into a Java type, assuming an appropriate one is specified.
+
+```java
+	@PostMapping("/request")
+public ResponseEntity postController(
+  @RequestBody LoginForm loginForm) {
+ 
+    exampleService.fakeAuthenticate(loginForm);
+    return ResponseEntity.ok(HttpStatus.OK);
+}
+```
+
+#### @ResponseBody
+@ResponseBody annotation tells a controller that the object returned is automatically serialized into JSON and passed back into the HttpResponse object.
+
+```java
+@Controller
+@RequestMapping("/post")
+public class ExamplePostController {
+ 
+    @Autowired
+    ExampleService exampleService;
+ 
+    @PostMapping("/response")
+    @ResponseBody
+    public ResponseTransfer postResponseController(
+      @RequestBody LoginForm loginForm) {
+        return new ResponseTransfer("Thanks For Posting!!!");
+     }
+}
+```
+
 #### @RequestMapping
 @RequestMapping annotation is used to map web requests onto specific handler classes and/or handler methods.
 
@@ -325,13 +376,7 @@ For this method to work, the parameter name should be “id” and it should be 
 
 @CrossOrigin 解决跨域问题
 
-#### @RequestBody
-@RequestBody annotation maps the HttpRequest body to a transfer or domain object, enabling automatic deserialization of the inbound HttpRequest body onto a Java object.
 
-Spring automatically deserializes the JSON into a Java type, assuming an appropriate one is specified.
-
-#### @ResponseBody
-@ResponseBody annotation tells a controller that the object returned is automatically serialized into JSON and passed back into the HttpResponse object.
 
 
 
