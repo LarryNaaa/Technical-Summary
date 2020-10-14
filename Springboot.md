@@ -259,7 +259,58 @@ public String method3(){
 }
 ```
 
+##### @RequestMapping with Headers
+We can specify the headers that should be present to invoke the handler method. For example:
+```java
+@RequestMapping(value="/method4", headers="name=pankaj")
+@ResponseBody
+public String method4(){
+	return "method4";
+}
+	
+@RequestMapping(value="/method5", headers={"name=pankaj", "id=1"})
+@ResponseBody
+public String method5(){
+	return "method5";
+}
+```
 
+##### @RequestMapping with Produces and Consumes
+We can use header Content-Type and Accept to find out request contents and what is the mime message it wants in response. For clarity, @RequestMapping provides produces and consumes variables where we can specify the request content-type for which method will be invoked and the response content type. For example:
+```java
+@RequestMapping(value="/method6", produces={"application/json","application/xml"}, consumes="text/html")
+@ResponseBody
+public String method6(){
+	return "method6";
+}
+```
+Above method can consume message only with Content-Type as text/html and is able to produce messages of type application/json and application/xml.
+
+##### @RequestMapping with @PathVariable
+RequestMapping annotation can be used to handle dynamic URIs where one or more of the URI value works as a parameter. We can even specify Regular Expression for URI dynamic parameter to accept only specific type of input. It works with @PathVariable annotation through which we can map the URI variable to one of the method arguments. For example:
+```java
+@RequestMapping(value="/method7/{id}")
+@ResponseBody
+public String method7(@PathVariable("id") int id){
+	return "method7 with id="+id;
+}
+	
+@RequestMapping(value="/method8/{id:[\\d]+}/{name}")
+@ResponseBody
+public String method8(@PathVariable("id") long id, @PathVariable("name") String name){
+	return "method8 with id= "+id+" and name="+name;
+}
+```
+##### @RequestMapping with @RequestParam for URL parameters
+Sometimes we get parameters in the request URL, mostly in GET requests. We can use @RequestMapping with @RequestParam annotation to retrieve the URL parameter and map it to the method argument. For example:
+```java
+@RequestMapping(value="/method9")
+@ResponseBody
+public String method9(@RequestParam("id") int id){
+	return "method9 with id= "+id;
+}
+```
+For this method to work, the parameter name should be “id” and it should be of type int.
 
 
 @GetMapping @RequestMapping(method = RequestMethod.GET)的简写, 作用：对应查询，表明是一个查询URL映射
@@ -282,6 +333,5 @@ Spring automatically deserializes the JSON into a Java type, assuming an appropr
 #### @ResponseBody
 @ResponseBody annotation tells a controller that the object returned is automatically serialized into JSON and passed back into the HttpResponse object.
 
-@PathVariable: 可以将 URL 中占位符参数绑定到控制器处理方法的入参中：
-URL 中的 {xxx} 占位符可以通过@PathVariable(“xxx“) 绑定到操作方法的入参中。
+
 
