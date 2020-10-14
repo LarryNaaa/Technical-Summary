@@ -199,13 +199,68 @@ Top / First / Distinct
 
 ### Service
 **业务逻辑层: 存放业务逻辑处理，不直接对数据库进行操作，有接口和接口实现类，提供 controller 层调用方法。**
+
 ### Controller
 **Web控制层: 导入service层，调用service方法，controller通过接受前端传来的参数进行业务操作，在返回一个制定的路径或数据表。**
 
-@RestController 该注解的作用将结果以jason的格式返回
-相当于@Controller+@ResponseBody两个注解的结合。
+#### @RestController
+It's a convenience annotation that combines @Controller and @ResponseBody – which eliminates the need to annotate every request handling method of the controller class with the @ResponseBody annotation.
 
-@RequestMapping 用来和http请求进行交互, 当前台界面调用Controller处理数据时候告诉控制器怎么操作。
+Every request handling method of the controller class automatically serializes return objects into HttpResponse.
+
+#### @RequestMapping
+@RequestMapping annotation is used to map web requests onto specific handler classes and/or handler methods.
+
+##### @RequestMapping with Class
+We can use it with class definition to create the base URI. For example:
+```java
+@Controller
+@RequestMapping("/home")
+public class HomeController {
+
+}
+```
+Now /home is the URI for which this controller will be used. This concept is very similar to servlet context of a web application.
+
+##### @RequestMapping with Method
+We can use it with method to provide the URI pattern for which handler method will be used. For example:
+
+```java
+@RequestMapping(value="/method0")
+@ResponseBody
+public String method0(){
+	return "method0";
+}
+```
+##### @RequestMapping with Multiple URI:
+We can use a single method for handling multiple URIs, for example:
+```java
+@RequestMapping(value={"/method1","/method1/second"})
+@ResponseBody
+public String method1(){
+	return "method1";
+}
+```
+If you will look at the source code of RequestMapping annotation, you will see that all of it’s variables are arrays. We can create String array for the URI mappings for the handler method.
+
+##### @RequestMapping with HTTP Method
+Sometimes we want to perform different operations based on the HTTP method used, even though request URI remains same. We can use @RequestMapping method variable to narrow down the HTTP methods for which this method will be invoked. For example:
+```java
+@RequestMapping(value="/method2", method=RequestMethod.POST)
+@ResponseBody
+public String method2(){
+	return "method2";
+}
+	
+@RequestMapping(value="/method3", method={RequestMethod.POST,RequestMethod.GET})
+@ResponseBody
+public String method3(){
+	return "method3";
+}
+```
+
+
+
 
 @GetMapping @RequestMapping(method = RequestMethod.GET)的简写, 作用：对应查询，表明是一个查询URL映射
 
@@ -219,10 +274,13 @@ Top / First / Distinct
 
 @CrossOrigin 解决跨域问题
 
-@RequestBody: 
-主要用来接收前端传递给后端的json字符串中的数据的(请求体中的数据的), 
-GET方式无请求体，所以使用@RequestBody接收数据时，
-前端不能使用GET方式提交数据，而是用POST方式进行提交。
+#### @RequestBody
+@RequestBody annotation maps the HttpRequest body to a transfer or domain object, enabling automatic deserialization of the inbound HttpRequest body onto a Java object.
+
+Spring automatically deserializes the JSON into a Java type, assuming an appropriate one is specified.
+
+#### @ResponseBody
+@ResponseBody annotation tells a controller that the object returned is automatically serialized into JSON and passed back into the HttpResponse object.
 
 @PathVariable: 可以将 URL 中占位符参数绑定到控制器处理方法的入参中：
 URL 中的 {xxx} 占位符可以通过@PathVariable(“xxx“) 绑定到操作方法的入参中。
