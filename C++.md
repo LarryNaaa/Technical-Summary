@@ -81,7 +81,7 @@ an exam
 
 
 ### In the compilation process, what is the translation unit?
-
+The preprocessor takes a C++ source code file and deals with the #includes, #defines and other preprocessor directives. The output of this step is a "pure" C++ file without preprocessor directives, the translation unit.
 
 ### What is the purpose of a class?
 
