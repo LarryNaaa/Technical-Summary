@@ -64,7 +64,18 @@ int main()
 int v1[4] = {1, 5, 3, 7};
 
 ### In which ways can you access individual members of a struct? Give an example
-
+```c++
+Address jd;
+jd.name = "Jim Dandy";
+void f(Address &addr) {
+   addr.name = "Jim Dandy";
+}
+void f(Address *addr) {
+   addr->name = "Jim Dandy";
+   // or
+   (*addr).name = "Jim Dandy";
+}
+```
 
 ### What will this snippet of code print to the terminal?
 ```c++
@@ -87,6 +98,9 @@ switch(x) {
 }
 ```
 
+this is
+an exam
+
 ### What does the socket option REUSEADDR do?
 
 
@@ -104,7 +118,23 @@ switch(x) {
 
 
 ### What is lazy evaluation? Why is it useful? To which problems can it lead? Give an example.
+ lazy evaluation is an evaluation strategy which delays the evaluation of an expression until its value is needed and which also avoids repeated evaluations. It always check the first condition in expressions with logical operators. Evaluate the second only it the first is not enough. 
 
+```c++
+bool c1 = false;
+bool c2 = true;
+if (c1 && c2)
+{ // c2 is not evaluated }
+if (c2 && c1)
+{ // both evaluated }
+if (c1 && someFunction(c2))
+{ 
+// someFunction(c2) is not evaluated
+// this may be done on purpose (always comment it!)
+// it could also lead to errors if not done on 
+purpose
+}
+```
 
 
 
