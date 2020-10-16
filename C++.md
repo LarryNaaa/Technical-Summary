@@ -74,11 +74,13 @@ this is
 an exam
 
 ### What does the socket option REUSEADDR do?
-
+by default the kernel blocks a socket port for few minutes after the socket destruction: to reuse the port immediatelly use the option REUSEADDR
 
 ## Midterm dry-run 2
 ### What is a server and what is a client? 
+If a server program runs a host with ip ip1 listening at port port1, port1 must be known to the clients
 
+A client program runs in a different or in the same host and accesses the server, as it knows the server ip and port number.
 
 ### In the compilation process, what is the translation unit?
 The preprocessor takes a C++ source code file and deals with the #includes, #defines and other preprocessor directives. The output of this step is a "pure" C++ file without preprocessor directives, the translation unit.
