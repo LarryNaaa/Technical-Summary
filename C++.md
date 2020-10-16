@@ -1,33 +1,5 @@
 # C++
 
-## C++ types
-### Fundamental Types
-Available without any additional declaration Example: int, bool
-#### Boolean (bool)
-One value between true (1) or false (0)
-
-Used to represent logical conditions or results of logical operations
-
-bool b1 {1 == 0};
-
-#### Character (e.g., char)
-Different types are available (char, signed char, unsigned char, wchar_t)
-
-Almost always char has 8 bit
-
-7 bit are enough to represent ASCII
-
-signed vs unsigned char:
-
-• A char may be represented either as signed or unsigned
-
-• Implementation-defined behavior (Windows vs Linux, 32 vs 64 bit, arm vs x86)
-
-
-
-### User-Defined Types
-Introduced by the user and/or by a library Example: std::vector
-
 ## Midterm dry-run 1
 
 ### What is variable shadowing? Give an example
