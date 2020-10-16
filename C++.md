@@ -87,7 +87,7 @@ an exam
 
 
 ### What is the effect of the inline keyword? Is it guaranteed?
-
+Inline keyword suggests to the compiler to generate new code for every function call, instead than of a single code in memory that is pointed to by every function call. This enables an optimization in terms of execution speed. The compiler is not required to respect the inline keyword
 
 ### What is lazy evaluation? Why is it useful? To which problems can it lead? Give an example.
  lazy evaluation is an evaluation strategy which delays the evaluation of an expression until its value is needed and which also avoids repeated evaluations. It always check the first condition in expressions with logical operators. Evaluate the second only it the first is not enough. 
