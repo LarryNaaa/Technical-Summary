@@ -29,6 +29,7 @@ signed vs unsigned char:
 Introduced by the user and/or by a library Example: std::vector
 
 ## Midterm dry-run 1
+
 ### What is variable shadowing? Give an example
 we have a variable inside a nested block that has the same name as a variable in an outer block, the nested variable “hides” the outer variable in areas where they are both in scope. This is called name hiding or shadowing.
 
@@ -59,3 +60,52 @@ int main()
     return 0;
 } // outer block apples destroyed
 ```
+### How is it possible to initialize an array of int with the numbers 1, 5, 3, 7?
+int v1[4] = {1, 5, 3, 7};
+
+### In which ways can you access individual members of a struct? Give an example
+
+
+### What will this snippet of code print to the terminal?
+```c++
+int x = 10;
+
+switch(x) {
+
+       case 1:
+
+                std::cout << “hello” << std::endl;
+
+       case 10:
+
+                std::cout << “this is ” << std::endl;
+
+       case 11:
+
+                std::cout << “an exam” << std::endl;
+
+}
+```
+
+### What does the socket option REUSEADDR do?
+
+
+## Midterm dry-run 2
+### What is a server and what is a client? 
+
+
+### In the compilation process, what is the translation unit?
+
+
+### What is the purpose of a class?
+
+
+### What is the effect of the inline keyword? Is it guaranteed?
+
+
+### What is lazy evaluation? Why is it useful? To which problems can it lead? Give an example.
+
+
+
+
+
