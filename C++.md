@@ -86,7 +86,9 @@ A client program runs in a different or in the same host and accesses the server
 The preprocessor takes a C++ source code file and deals with the #includes, #defines and other preprocessor directives. The output of this step is a "pure" C++ file without preprocessor directives, the translation unit.
 
 ### What is the purpose of a class?
+A class is a user-defined type with a set of members
 
+The creation of a class allows a programmer to separate the details of the implementation and the properties essential to the use of the type.
 
 ### What is the effect of the inline keyword? Is it guaranteed?
 Inline keyword suggests to the compiler to generate new code for every function call, instead than of a single code in memory that is pointed to by every function call. This enables an optimization in terms of execution speed. The compiler is not required to respect the inline keyword
