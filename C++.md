@@ -71,6 +71,7 @@ switch(x) {
 ```
 
 this is
+
 an exam
 
 ### What does the socket option REUSEADDR do?
