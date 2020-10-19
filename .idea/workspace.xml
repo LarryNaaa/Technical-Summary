@@ -90,6 +90,7 @@
       <workItem from="1602455267206" duration="1975000" />
       <workItem from="1602611000262" duration="2502000" />
       <workItem from="1602782357590" duration="374000" />
+      <workItem from="1602991601463" duration="760000" />
     </task>
     <servers />
   </component>
@@ -97,6 +98,10 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="-727" y="690" key="#com.intellij.ide.util.MemberChooser" timestamp="1602991836930">
+      <screen x="-1080" y="39" width="1080" height="1920" />
+    </state>
+    <state x="-727" y="690" key="#com.intellij.ide.util.MemberChooser/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1602991836930" />
     <state width="1038" height="582" key="GridCell.Tab.0.bottom" timestamp="1601852420314">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
