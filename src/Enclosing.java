@@ -40,7 +40,7 @@ public class Enclosing {
     }
 
     public static void main(String[] args) {
-        StaticNested staticNested = new StaticNested();
+        Enclosing.StaticNested staticNested = new StaticNested();
         staticNested.run();
         staticNested.testAllAccessModifier();
         staticNested.testAccessStaticMemberOfEnclosingClass();

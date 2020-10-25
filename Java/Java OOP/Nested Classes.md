@@ -12,12 +12,31 @@ There are several types of nested classes:
 2. They can have all types of access modifiers in their declaration
 3. They only have access to static members in the enclosing class
 4. They can define both static and non-static members
+```java
+public class Outer {
+    public static class StaticNested {
+        //...
+    }
+}
+```
+We can instantiate an static nested class directly.
+```java
+Outer.StaticNested staticNested = new Outer.StaticNested();
+```  
 
 ## Non-Static Nested Classes / Inner Classes
 1. They can have all types of access modifiers in their declaration
 2. Just like instance variables and methods, inner classes are associated with an instance of the enclosing class
 3. They have access to all members of the enclosing class, regardless of whether they are static or non-static
 4. They can only define non-static members
+```java
+public class Outer {
+    
+    public class Inner {
+        // ...
+    }
+}
+```
 
 To instantiate an inner class, we must first instantiate its enclosing class.
 ```java
