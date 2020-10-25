@@ -10,9 +10,11 @@ public class B extends A{
     }
 
     public static void main(String[] args) {
-        boolean b1 = true, b2 = false;
-        int i1 = 1, i2 = 2;
-        System.out.println((i1 | i2) == 3);
+        String str = "\"abcde\"";
+        str.trim();
+        str.toUpperCase();
+        str.substring(3, 4);
+        System.out.println(str);
     }
 }
 

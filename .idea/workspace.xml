@@ -49,9 +49,16 @@
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="settings.editor.selected.configurable" value="MavenSettings" />
   </component>
-  <component name="RunManager" selected="Application.Solution">
-    <configuration name="Outer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="Outer" />
+  <component name="RunManager" selected="Application.Enclosing">
+    <configuration name="B" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="B" />
+      <module name="Technical summary" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Enclosing" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Enclosing" />
       <module name="Technical summary" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -71,11 +78,20 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Test" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Test" />
+      <module name="Technical summary" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Enclosing" />
+        <item itemvalue="Application.Test" />
+        <item itemvalue="Application.B" />
         <item itemvalue="Application.Solution" />
         <item itemvalue="Application.Palindrome" />
-        <item itemvalue="Application.Outer" />
       </list>
     </recent_temporary>
   </component>
@@ -102,7 +118,7 @@
       <workItem from="1602782357590" duration="374000" />
       <workItem from="1602991601463" duration="760000" />
       <workItem from="1603066124578" duration="3084000" />
-      <workItem from="1603498581027" duration="867000" />
+      <workItem from="1603498581027" duration="9502000" />
     </task>
     <servers />
   </component>
@@ -114,30 +130,34 @@
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state x="-727" y="690" key="#com.intellij.ide.util.MemberChooser/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1602991836930" />
-    <state width="1038" height="711" key="GridCell.Tab.0.bottom" timestamp="1603306019875">
-      <screen x="-1080" y="0" width="1080" height="1920" />
+    <state width="1038" height="582" key="GridCell.Tab.0.bottom" timestamp="1603669132915">
+      <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.bottom/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019875" />
     <state width="1038" height="711" key="GridCell.Tab.0.bottom/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116633" />
     <state width="1038" height="582" key="GridCell.Tab.0.bottom/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420314" />
-    <state width="1038" height="711" key="GridCell.Tab.0.center" timestamp="1603306019873">
-      <screen x="-1080" y="0" width="1080" height="1920" />
+    <state width="1038" height="582" key="GridCell.Tab.0.bottom/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603669132915" />
+    <state width="1038" height="582" key="GridCell.Tab.0.center" timestamp="1603669132913">
+      <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.center/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019873" />
     <state width="1038" height="711" key="GridCell.Tab.0.center/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116632" />
     <state width="1038" height="582" key="GridCell.Tab.0.center/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420312" />
-    <state width="1038" height="711" key="GridCell.Tab.0.left" timestamp="1603306019873">
-      <screen x="-1080" y="0" width="1080" height="1920" />
+    <state width="1038" height="582" key="GridCell.Tab.0.center/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603669132913" />
+    <state width="1038" height="582" key="GridCell.Tab.0.left" timestamp="1603669132912">
+      <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.left/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019873" />
     <state width="1038" height="711" key="GridCell.Tab.0.left/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116631" />
     <state width="1038" height="582" key="GridCell.Tab.0.left/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420156" />
-    <state width="1038" height="711" key="GridCell.Tab.0.right" timestamp="1603306019874">
-      <screen x="-1080" y="0" width="1080" height="1920" />
+    <state width="1038" height="582" key="GridCell.Tab.0.left/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603669132912" />
+    <state width="1038" height="582" key="GridCell.Tab.0.right" timestamp="1603669132914">
+      <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.right/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019874" />
     <state width="1038" height="711" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116632" />
     <state width="1038" height="582" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420313" />
+    <state width="1038" height="582" key="GridCell.Tab.0.right/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603669132914" />
     <state width="1038" height="711" key="GridCell.Tab.1.bottom" timestamp="1603306019877">
       <screen x="-1080" y="0" width="1080" height="1920" />
     </state>
@@ -158,13 +178,16 @@
     </state>
     <state width="1038" height="711" key="GridCell.Tab.1.right/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019876" />
     <state width="1038" height="711" key="GridCell.Tab.1.right/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116635" />
-    <state x="-875" y="485" key="run.anything.popup" timestamp="1602028052880">
-      <screen x="-1080" y="39" width="1080" height="1920" />
+    <state x="-875" y="431" key="run.anything.popup" timestamp="1603565508858">
+      <screen x="-1080" y="62" width="1080" height="1897" />
     </state>
     <state x="-875" y="485" key="run.anything.popup/-1080.39.1080.1920/0.23.1920.1006@-1080.39.1080.1920" timestamp="1602028052880" />
-    <state x="-875" y="490" width="670" height="676" key="search.everywhere.popup" timestamp="1602028352677">
+    <state x="-875" y="431" key="run.anything.popup/0.23.1920.1004/-1080.62.1080.1897@-1080.62.1080.1897" timestamp="1603565508858" />
+    <state x="-875" y="449" key="run.anything.popup/0.23.1920.1005/-1080.62.1080.1897@-1080.62.1080.1897" timestamp="1603564601646" />
+    <state x="-875" y="490" width="670" height="676" key="search.everywhere.popup" timestamp="1603500215475">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state x="-875" y="490" width="670" height="676" key="search.everywhere.popup/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1602028352677" />
+    <state x="-875" y="490" width="670" height="676" key="search.everywhere.popup/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603500215475" />
   </component>
 </project>

@@ -238,6 +238,9 @@ public class MyClass {
 }
 ```
 
+### instanceof
+Checks whether an object is an instance of a specific class or an interface
+
 ## Encapsulation
 > The meaning of Encapsulation, is to make sure that "sensitive" data is hidden from users. To achieve this, you must:
 >
@@ -538,6 +541,8 @@ Pass by value: A copy of the actual parameter is passed to the function when the
 Pass by reference: The address of the actual parameter is passed directly to the function when the function is called, so that if the parameter is modified in the function, the actual parameter will be affected.
 
 in Java we call functions pass parameters by value!
+
+## 
 
 ## Data Structures
 ### Linked List
