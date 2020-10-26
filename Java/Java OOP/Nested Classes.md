@@ -105,6 +105,20 @@ public class AnonymousInnerUnitTest {
     }
 }
 ```
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+       new Thread(new Runnable() {
+           @Override
+           public void run() {
+               System.out.println();
+           }
+       }).start();
+ 
+    }
+}
+```
 The syntax of anonymous classes does not allow us to make them implement multiple interfaces. During construction, there might exist exactly one instance of an anonymous class. Therefore, they can never be abstract. Since they have no name, we can't extend them. For the same reason, anonymous classes cannot have explicitly declared constructors.
 
 In fact, the absence of a constructor doesn't represent any problem for us for the following reasons:
@@ -126,3 +140,70 @@ non-static member of Outer class.
 
 3. Static nested class cam define both static and non-static members, 
 but Inner class can only define non-static members.
+
+## Shadowing
+The declaration of the members of an inner class shadow those of the enclosing class if they have the same name.
+
+In this case, the this keyword refers to the instances of the nested class and the members of the outer class can be referred to using the name of the outer class.
+
+```java
+class Outer {
+      public int age = 18;    
+      class Inner {
+          public int age = 20;    
+          public viod showAge() {
+              int age  = 25;
+              System.out.println(age);//25
+              System.out.println(this.age);//20
+              System.out.println(Outer.this.age);//18
+          }
+      }
+  }
+```
+
+## Why we use a nested class?
+1. Java does not allow multiple inheritance, 
+but it is possible to have multiple inner classes within an outer class, 
+with each inner class implementing one inheritance, 
+thereby implementing multiple inheritance of an external class.
+
+## Why we use a anonymous class?
+Saves the process of defining implementation classes, and enables automatic upward transitions.
+```java
+public class Demo {
+
+    public void test(String title) {
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                System.out.println(title);
+            }
+        });
+        thread.start();
+    }
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 10; i++) {
+            Demo demo = new Demo();
+            demo.test("title" + i);
+        }
+    }
+}
+```
+Use anonymous classes to simplify the following:
+```java
+// 实现Runnable接口
+class MyRunnable implements Runnable {
+
+    @Override
+    public void run() {
+        
+    }
+}
+
+// 向上转型
+Runnable myRunnable = new MyRunnable();
+```
+## Why we use a local class?
+When we need to define a inner class in the method of the outer class.

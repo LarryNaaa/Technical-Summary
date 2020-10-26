@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="205f2bf4-b7c9-44a9-9c13-e216b6600718" name="Default Changelist" comment="" />
+    <list default="true" id="205f2bf4-b7c9-44a9-9c13-e216b6600718" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Java/Java OOP/Nested Classes.md" beforeDir="false" afterPath="$PROJECT_DIR$/Java/Java OOP/Nested Classes.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Outer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Outer.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -45,9 +49,16 @@
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="settings.editor.selected.configurable" value="MavenSettings" />
   </component>
-  <component name="RunManager" selected="Application.Enclosing">
+  <component name="RunManager" selected="Application.Demo">
     <configuration name="B" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="B" />
+      <module name="Technical summary" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Demo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Demo" />
       <module name="Technical summary" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -60,15 +71,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Palindrome" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="Palindrome" />
-      <module name="Technical summary" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Solution" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="Solution" />
+    <configuration name="Outer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Outer" />
       <module name="Technical summary" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -83,11 +87,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Demo" />
+        <item itemvalue="Application.Outer" />
         <item itemvalue="Application.Enclosing" />
         <item itemvalue="Application.Test" />
         <item itemvalue="Application.B" />
-        <item itemvalue="Application.Solution" />
-        <item itemvalue="Application.Palindrome" />
       </list>
     </recent_temporary>
   </component>
@@ -114,7 +118,7 @@
       <workItem from="1602782357590" duration="374000" />
       <workItem from="1602991601463" duration="760000" />
       <workItem from="1603066124578" duration="3084000" />
-      <workItem from="1603498581027" duration="13548000" />
+      <workItem from="1603498581027" duration="16275000" />
     </task>
     <servers />
   </component>
@@ -126,34 +130,34 @@
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state x="-727" y="690" key="#com.intellij.ide.util.MemberChooser/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1602991836930" />
-    <state width="1038" height="582" key="GridCell.Tab.0.bottom" timestamp="1603673710833">
+    <state width="1038" height="582" key="GridCell.Tab.0.bottom" timestamp="1603682450967">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.bottom/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019875" />
     <state width="1038" height="711" key="GridCell.Tab.0.bottom/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116633" />
     <state width="1038" height="582" key="GridCell.Tab.0.bottom/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420314" />
-    <state width="1038" height="582" key="GridCell.Tab.0.bottom/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603673710833" />
-    <state width="1038" height="582" key="GridCell.Tab.0.center" timestamp="1603673710832">
+    <state width="1038" height="582" key="GridCell.Tab.0.bottom/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603682450967" />
+    <state width="1038" height="582" key="GridCell.Tab.0.center" timestamp="1603682450965">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.center/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019873" />
     <state width="1038" height="711" key="GridCell.Tab.0.center/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116632" />
     <state width="1038" height="582" key="GridCell.Tab.0.center/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420312" />
-    <state width="1038" height="582" key="GridCell.Tab.0.center/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603673710832" />
-    <state width="1038" height="582" key="GridCell.Tab.0.left" timestamp="1603673710831">
+    <state width="1038" height="582" key="GridCell.Tab.0.center/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603682450965" />
+    <state width="1038" height="582" key="GridCell.Tab.0.left" timestamp="1603682450964">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.left/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019873" />
     <state width="1038" height="711" key="GridCell.Tab.0.left/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116631" />
     <state width="1038" height="582" key="GridCell.Tab.0.left/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420156" />
-    <state width="1038" height="582" key="GridCell.Tab.0.left/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603673710831" />
-    <state width="1038" height="582" key="GridCell.Tab.0.right" timestamp="1603673710833">
+    <state width="1038" height="582" key="GridCell.Tab.0.left/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603682450964" />
+    <state width="1038" height="582" key="GridCell.Tab.0.right" timestamp="1603682450966">
       <screen x="-1080" y="39" width="1080" height="1920" />
     </state>
     <state width="1038" height="711" key="GridCell.Tab.0.right/-1080.0.1080.1920/0.0.1792.1120@-1080.0.1080.1920" timestamp="1603306019874" />
     <state width="1038" height="711" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.0.1920.1080@-1080.39.1080.1920" timestamp="1603166116632" />
     <state width="1038" height="582" key="GridCell.Tab.0.right/-1080.39.1080.1920/0.23.1920.1057@-1080.39.1080.1920" timestamp="1601852420313" />
-    <state width="1038" height="582" key="GridCell.Tab.0.right/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603673710833" />
+    <state width="1038" height="582" key="GridCell.Tab.0.right/0.0.1920.1080/-1080.39.1080.1920@-1080.39.1080.1920" timestamp="1603682450966" />
     <state width="1038" height="711" key="GridCell.Tab.1.bottom" timestamp="1603306019877">
       <screen x="-1080" y="0" width="1080" height="1920" />
     </state>
