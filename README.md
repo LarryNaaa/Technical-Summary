@@ -1,6 +1,6 @@
 # Technical-Summary
 
-[Java](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java.md)
+[Java](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java.md)
 
 [Spring](https://github.com/LarryNaaa/Technical-Summary/blob/master/Spring.md)
 
