@@ -7,6 +7,8 @@ There are several types of nested classes:
 3. Local classes
 4. Anonymous classes
 
+![Nested Classes](https://www.baeldung.com/wp-content/uploads/2019/04/nested-classes.png)
+
 ## Static Nested Classes
 1. As with static members, these belong to their enclosing class, and not to an instance of the class
 2. They can have all types of access modifiers in their declaration
@@ -24,7 +26,7 @@ We can instantiate an static nested class directly.
 Outer.StaticNested staticNested = new Outer.StaticNested();
 ```  
 
-## Non-Static Nested Classes / Inner Classes
+## Inner Classes / Non-Static Nested Classes
 1. They can have all types of access modifiers in their declaration
 2. Just like instance variables and methods, inner classes are associated with an instance of the enclosing class
 3. They have access to all members of the enclosing class, regardless of whether they are static or non-static
@@ -42,6 +44,62 @@ To instantiate an inner class, we must first instantiate its enclosing class.
 ```java
 Outer outer = new Outer();
 Outer.Inner inner = outer.new Inner();
+```
+
+### Local Classes
+Local classes are a special type of inner classes – in which **the class is defined inside a method or scope block**.
+
+1. They cannot have access modifiers in their declaration
+2. They have access to both static and non-static members in the enclosing context
+3. They can only define instance members
+```java
+public class NewEnclosing {
+    
+    void run() {
+        class Local {
+ 
+            void run() {
+                // method implementation
+            }
+        }
+        Local local = new Local();
+        local.run();
+    }
+    
+    @Test
+    public void test() {
+        NewEnclosing newEnclosing = new NewEnclosing();
+        newEnclosing.run();
+    }
+}
+```
+
+### Anonymous Classes
+Anonymous classes are inner classes with no name. Since they have no name, we can't use them in order to create instances of anonymous classes. As a result, we have to declare and instantiate anonymous classes in a single expression at the point of use.
+
+We may either extend an existing class or implement an interface.
+
+1. They cannot have access modifiers in their declaration
+2. They have access to both static and non-static members in the enclosing context
+3. They can only define instance members
+4. They're the only type of nested classes that cannot define constructors or extend/implement other classes or interfaces
+```java
+abstract class SimpleAbstractClass {
+    abstract void run();
+}
+
+public class AnonymousInnerUnitTest {
+    
+    @Test
+    public void whenRunAnonymousClass_thenCorrect() {
+        SimpleAbstractClass simpleAbstractClass = new SimpleAbstractClass() {
+            void run() {
+                // method implementation
+            }
+        };
+        simpleAbstractClass.run();
+    }
+}
 ```
 
 ## What is the difference between static nested class and inner class?
