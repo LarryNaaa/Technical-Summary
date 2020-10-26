@@ -205,5 +205,9 @@ class MyRunnable implements Runnable {
 // 向上转型
 Runnable myRunnable = new MyRunnable();
 ```
+
+## Why we use a inner class?
+When we need a nested class to have access to all the members of an outer class, we use the inner class.
+
 ## Why we use a local class?
 When we need to define a inner class in the method of the outer class.
