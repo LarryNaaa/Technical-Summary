@@ -3,12 +3,8 @@ import mypackage.elementary.*;
 
 public class Test {
     public static void main(String[] args) {
-        try{
-            System.out.print("Hello World");
-        }catch(Exception e){
-            System.out.println("e");
-        } finally{
-            System.out.println("!");
-        }
+        int x = 5;
+        x = 10;
+        System.out.println(x);
     }
 }
