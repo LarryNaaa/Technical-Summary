@@ -51,7 +51,7 @@ Local classes are a special type of inner classes – in which **the class is de
 
 1. They cannot have access modifiers in their declaration
 2. They have access to both static and non-static members in the enclosing context
-3. They can only define instance members
+3. They can only define instance members and non-static members
 ```java
 public class NewEnclosing {
     
@@ -75,14 +75,18 @@ public class NewEnclosing {
 ```
 
 ### Anonymous Classes
-Anonymous classes are inner classes with no name. Since they have no name, we can't use them in order to create instances of anonymous classes. As a result, we have to declare and instantiate anonymous classes in a single expression at the point of use.
+**Anonymous classes are inner classes with no name.** 
+Since they have no name, we can't use them in order to create instances of anonymous classes. As a result, we have to declare and instantiate anonymous classes in a single expression at the point of use.
 
-We may either extend an existing class or implement an interface.
+**We may either extend an existing class or implement an interface.**
 
 1. They cannot have access modifiers in their declaration
 2. They have access to both static and non-static members in the enclosing context
-3. They can only define instance members
+3. They can only define instance members and non-static members
 4. They're the only type of nested classes that cannot define constructors or extend/implement other classes or interfaces
+
+![Anonymous Classes](https://www.runoob.com/wp-content/uploads/2020/06/nm-word-image-145.png)
+
 ```java
 abstract class SimpleAbstractClass {
     abstract void run();
@@ -101,6 +105,13 @@ public class AnonymousInnerUnitTest {
     }
 }
 ```
+The syntax of anonymous classes does not allow us to make them implement multiple interfaces. During construction, there might exist exactly one instance of an anonymous class. Therefore, they can never be abstract. Since they have no name, we can't extend them. For the same reason, anonymous classes cannot have explicitly declared constructors.
+
+In fact, the absence of a constructor doesn't represent any problem for us for the following reasons:
+
+1. we create anonymous class instances at the same moment as we declare them
+2. from anonymous class instances, we can access local variables and enclosing class's members
+
 
 ## What is the difference between static nested class and inner class?
 1. Static nested class are belong to the Outer class, not to an instance of the class, 
