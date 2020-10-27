@@ -35,3 +35,7 @@ Shift right by pushing copies of the leftmost bit in from the left and letting t
 
 ### Zero-fill right shift(>>>)
 Shift right by pushing zeroes in from the left and letting the rightmost bits fall off
+
+## What is the different between & and &&?
+1. & is a bitwise operator and compares each operand bitwise. It is a binary AND Operator and copies a bit to the result if it exists in both operands.
+2. && is a logical AND operator and operates on boolean operands. If both the operands are true, then the condition becomes true otherwise it is false.
