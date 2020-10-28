@@ -36,3 +36,7 @@
 > > static: Attributes and methods belongs to the class, rather than an object
 >
 > > abstract: Can only be used in an abstract class, and can only be used on methods. The method does not have a body, for example abstract void run();. The body is provided by the subclass (inherited from). 
+
+### synchronized
+Methods can only be accessed by one thread at a time
+
