@@ -30,3 +30,45 @@ In this case, both the string objects get created in the stack, but another inst
 One way to skip this memory allocation is to use the new keyword while creating a new string object. The ‘new’ keyword forces a new instance to always be created regardless of whether the same value was used previously or not. Using ‘new’ forces the instance to be created in the heap outside the string constant pool which is clear, since caching and re-using of instances isn’t allowed here. 
 
 ![string constant pool 4](https://media.geeksforgeeks.org/wp-content/uploads/20200602104736/output_string_4.png)
+
+## What is the difference between String and StringBuilder?
+String is immutable, but StringBuffer is mutable.
+
+## What is the difference between StringBuilder and StringBuffer?
+StringBuilder is being used bu a single thread, it is faster than StringBuffer.
+
+StringBuffer is safe for use by multiple threads, some methods are synchronized.
+
+## Conversion between types of strings
+### From String to StringBuffer and StringBuilder
+We can directly pass String class object to StringBuffer and StringBuilder class constructors.
+```java
+String str = "Geeks"; 
+          
+// conversion from String object to StringBuffer 
+StringBuffer sbr = new StringBuffer(str); 
+
+// conversion from String object to StringBuilder 
+StringBuilder sbl = new StringBuilder(str); 
+```
+### From StringBuffer and StringBuilder to String
+This conversions can be perform using toString() method which is overridden in both StringBuffer and StringBuilder classes.
+```java
+StringBuffer sbr = new StringBuffer("Geeks"); 
+StringBuilder sbdr = new StringBuilder("Hello"); 
+          
+// conversion from StringBuffer object to String 
+String str = sbr.toString(); 
+
+// conversion from StringBuilder object to String 
+String str1 = sbdr.toString(); 
+```
+### From StringBuffer to StringBuilder or vice-versa
+We first convert StringBuffer/StringBuilder object to String using toString() method and then from String to StringBuilder/StringBuffer using constructors.
+```java
+StringBuffer sbr = new StringBuffer("Geeks"); 
+          
+// conversion from StringBuffer object to StringBuilder 
+String str = sbr.toString(); 
+StringBuilder sbl = new StringBuilder(str); 
+```
