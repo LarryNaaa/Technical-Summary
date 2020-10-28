@@ -7,5 +7,7 @@
 
 [Keywords](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20Basic/Keywords.md)
 
+[String](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20Basic/String.md)
+
 ## Java OOP
 [Nested Classes](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Nested%20Classes.md)
