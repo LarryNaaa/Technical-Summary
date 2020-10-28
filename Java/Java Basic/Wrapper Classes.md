@@ -10,9 +10,19 @@ A Wrapper class is a class whose object wraps or contains primitive data types.
 
 ## Autoboxing
 Automatic conversion of primitive types to the object of their corresponding wrapper classes is known as autoboxing.
+```java
+Integer wrapper=1;
+// or
+Integer wrapper=Integer.valueOf(1);
+```
 
 ## Unboxing
 It is just the reverse process of autoboxing.
+```java
+int original=wrapper;
+//or
+int original=wrapper.intValue();
+```
 
 ## What is the difference between wrapper and primitive data type?
 1. The Storage of both also differ Primitive types are stored in Stack while reference types are store in Heap
