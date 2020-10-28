@@ -5,11 +5,13 @@ public class Main {
 
 
     public static void main(String[] args) {
-        List<Boolean> list = new ArrayList<>();
-        list.add(true);
-        list.add(Boolean.parseBoolean("FalSe"));
-        list.add(Boolean.TRUE);
-        System.out.println(list.size());
-        System.out.println(list.get(1) instanceof Boolean);
+        Integer i1 = 100;
+        Integer i2 = 100;
+        Integer i3 = 200;
+        Integer i4 = 200;
+
+        System.out.println(i1 == i2);//第一行
+        System.out.println(i3 == i4);//第二行
+
     }
 }
