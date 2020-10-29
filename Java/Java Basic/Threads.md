@@ -136,22 +136,42 @@ A thread terminates because of either of the following reasons:
 
 A thread that lies in a terminated state does no longer consumes any cycles of CPU.
 
-## What is the difference between sleep() and wait() method?
-### Wait
+## Methods of Thread
+### run()
+If this thread was constructed using a separate Runnable run object, then that Runnable object’s run method is called; otherwise, this method does nothing and returns
+
+### start()
+Causes this thread to begin execution; the Java Virtual Machine calls the run method of this thread
+
+### wait()
 The thread releases ownership of this monitor and waits until another thread notifies threads waiting on this object's monitor to wake up either through a call to the notify() method or the notifyAll() method. The thread then waits until it can re-obtain ownership of the monitor and resumes execution.
 
-### Sleep
+### sleep()
 This method causes the currently executing thread to sleep (temporarily cease execution) for the specified number of milliseconds. The thread does not lose ownership of any monitors. It sends the current thread into the “Not Runnable” state for a specified amount of time.
 
-### Difference
+### What is the difference between sleep() and wait() method?
 1. Wait() method belongs to Object class, but Sleep() method belongs to Thread class.
 2. Wait() releases the lock on an object, but Sleep() does not.
 3. Wait() can be called on object itself, but Sleep() can be called on thread.
 4. Wait() will wake up until call notify(), notifyAll() from object, Sleep() will wake up until at least time expire or call interrupt
 5. Wait() can lead program to get spurious wakeups, but Sleep() cannot.
 
+### yield()
+The thread is not doing anything particularly important and if any other threads or processes need to be run, they should run. Otherwise, the current thread will continue to run.
+
+### What is the difference between sleep() and yield() method?
+yield:() indicates that the thread is not doing anything particularly important and if any other threads or processes need to be run, they can. **Otherwise, the current thread will continue to run.**
+
+sleep(): causes the thread to definitely stop executing for a given amount of time; **if no other thread or process needs to be run, the CPU will be idle (and probably enter a power saving mode).**
+
+### join()
+java.lang.Thread class provides the join() method which allows one thread to wait until another thread completes its execution. If join() is called on a Thread instance, the currently running thread will block until the Thread instance has finished executing.
+
+
 ## synchronized
 All synchronized blocks synchronized on the same object can only have one thread executing inside them at a time. All other threads attempting to enter the synchronized block are blocked until the thread inside the synchronized block exits the block.
+
+**We can use synchronized keyword in the class on defined methods or blocks.** Synchronized keyword can not be used with variables or attributes in class definition.
 
 ```java
 // Only one thread can execute at a time. 
@@ -167,5 +187,87 @@ synchronized(sync_object)
 ```
 
 This synchronization is implemented in Java with a concept called monitors. Only one thread can own a monitor at a given time. When a thread acquires a lock, it is said to have entered the monitor. All other threads attempting to enter the locked monitor will be suspended until the first thread exits the monitor.
+
+When a method is declared as synchronized; the thread holds the monitor or lock object for that method’s object. If another thread is executing the synchronized method, your thread is blocked until that thread releases the monitor.
+
+### Object level lock and Class level lock
+#### Object level lock
+Object level lock is mechanism when we want to **synchronize a non-static method or non-static code block** such that only one thread will be able to execute the code block on given instance of the class. This should always be done to make instance level data thread safe.
+
+```java
+public class DemoClass
+{
+    public synchronized void demoMethod(){}
+}
+ 
+or
+ 
+public class DemoClass
+{
+    public void demoMethod(){
+        synchronized (this)
+        {
+            //other thread safe code
+        }
+    }
+}
+ 
+or
+ 
+public class DemoClass
+{
+    private final Object lock = new Object();
+    public void demoMethod(){
+        synchronized (lock)
+        {
+            //other thread safe code
+        }
+    }
+}
+```
+#### Class level lock
+Class level lock prevents multiple threads to enter in synchronized block in any of all available instances of the class on runtime. This means if in runtime there are 100 instances of DemoClass, then only one thread will be able to execute demoMethod() in any one of instance at a time, and all other instances will be locked for other threads.
+
+Class level locking should always be done to make static data thread safe. As we know that static keyword associate data of methods to class level, so use locking at static fields or methods to make it on class level.
+
+```java
+public class DemoClass
+{
+    //Method is static
+    public synchronized static void demoMethod(){
+ 
+    }
+}
+ 
+or
+ 
+public class DemoClass
+{
+    public void demoMethod()
+    {
+        //Acquire lock on .class reference
+        synchronized (DemoClass.class)
+        {
+            //other thread safe code
+        }
+    }
+}
+ 
+or
+ 
+public class DemoClass
+{
+    private final static Object lock = new Object();
+ 
+    public void demoMethod()
+    {
+        //Lock object is static
+        synchronized (lock)
+        {
+            //other thread safe code
+        }
+    }
+}
+```
 
 
