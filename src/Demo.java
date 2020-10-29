@@ -1,19 +1,50 @@
-public class Demo {
-    public void test(String title) {
-        Thread thread = new Thread(new Runnable() {
+import java.util.concurrent.TimeUnit;
 
+public class Demo{
+    private static Object lock=new Object();
+
+    public static void main(String[] args) throws Exception {
+        Thread t1=new Thread(new Runnable() {
             @Override
             public void run() {
-                System.out.println(title);
+                synchronized (lock){
+                    System.out.println("t1 executing...");
+                    try {
+                        TimeUnit.SECONDS.sleep(10);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
             }
         });
-        thread.start();
-    }
+        Thread t2=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (lock){
+                    System.out.println("t2 executing...");
+                    try {
+                        TimeUnit.SECONDS.sleep(10);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        System.out.println("t1 "+ t1.getState());
+        System.out.println("t2 "+ t2.getState());
 
-    public static void main(String[] args) {
-        for (int i = 0; i < 10; i++) {
-            Demo demo = new Demo();
-            demo.test("我要吃鸡" + i);
-        }
+        t1.start();
+        t2.start();
+        System.out.println("t1 "+ t1.getState());
+        System.out.println("t2 "+ t2.getState());
+
+        TimeUnit.SECONDS.sleep(11);
+        System.out.println("t1 "+ t1.getState());
+        System.out.println("t2 "+ t2.getState());
+
+        TimeUnit.SECONDS.sleep(11);
+        System.out.println("t1 "+ t1.getState());
+        System.out.println("t2 "+ t2.getState());
+
     }
 }
