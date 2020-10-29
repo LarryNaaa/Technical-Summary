@@ -88,7 +88,7 @@ class Multithread
 2. We can achieve basic functionality of a thread by extending Thread class because it provides some inbuilt methods like yield(), interrupt() etc. that are not available in Runnable interface.
 
 ## Lifecycle and States of a Thread
-!(States of a Thread)[https://pic2.zhimg.com/v2-54ad049834f12e2f839f14c51fab3299_b.jpg]
+![States of a Thread](https://pic2.zhimg.com/v2-54ad049834f12e2f839f14c51fab3299_b.jpg)
 
 ### New State
 **Thread state for a thread which has not yet started.**
