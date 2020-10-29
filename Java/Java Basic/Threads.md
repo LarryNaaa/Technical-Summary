@@ -136,6 +136,20 @@ A thread terminates because of either of the following reasons:
 
 A thread that lies in a terminated state does no longer consumes any cycles of CPU.
 
+## What is the difference between sleep() and wait() method?
+### Wait
+The thread releases ownership of this monitor and waits until another thread notifies threads waiting on this object's monitor to wake up either through a call to the notify() method or the notifyAll() method. The thread then waits until it can re-obtain ownership of the monitor and resumes execution.
+
+### Sleep
+This method causes the currently executing thread to sleep (temporarily cease execution) for the specified number of milliseconds. The thread does not lose ownership of any monitors. It sends the current thread into the “Not Runnable” state for a specified amount of time.
+
+### Difference
+1. Wait() method belongs to Object class, but Sleep() method belongs to Thread class.
+2. Wait() releases the lock on an object, but Sleep() does not.
+3. Wait() can be called on object itself, but Sleep() can be called on thread.
+4. Wait() will wake up until call notify(), notifyAll() from object, Sleep() will wake up until at least time expire or call interrupt
+5. Wait() can lead program to get spurious wakeups, but Sleep() cannot.
+
 ## synchronized
 All synchronized blocks synchronized on the same object can only have one thread executing inside them at a time. All other threads attempting to enter the synchronized block are blocked until the thread inside the synchronized block exits the block.
 
