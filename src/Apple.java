@@ -1,4 +1,7 @@
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class Apple {
     private String color;
@@ -29,5 +32,13 @@ public class Apple {
         m.put(a1, 10);
         m.put(a2, 20);
         System.out.println(m.get(new Apple("green")));
+
+        int[] array = {1, 2, 3};
+        List<int[]> arrayList = Arrays.asList(array);
+
+        ArrayList<Integer> arrayList1 = new ArrayList<>();
+        arrayList1.add(1);
+        arrayList1.add(100);
+        arrayList1.toArray();
     }
 }

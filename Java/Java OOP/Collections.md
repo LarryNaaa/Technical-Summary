@@ -15,6 +15,11 @@ ArrayList provides us with **dynamic arrays** in Java. Though, it may be **slowe
 ### LinkedList
 LinkedList class is an implementation of the LinkedList data structure which is a linear data structure where **the elements are not stored in contiguous locations and every element is a separate object with a data part and address part.** The elements are **linked using pointers and addresses.** Each element is known as a node.
 
+#### Conversion between Array and ArrayList
+Array to ArrayList Conversion: call Arrays.asList(Array) method, it will return a List object
+
+ArrayList to Array Conversion: call toArray() method of ArrayList
+
 ### Vector
 A vector provides us with dynamic arrays in Java. It is identical to ArrayList in terms of implementation. However, the primary difference between a vector and an ArrayList is that **a Vector is synchronized and an ArrayList is non-synchronized.**
 
@@ -146,6 +151,92 @@ A List can be used when insertion order of elements needs to maintained. A Set c
 ### What is the difference between Collection and Collections?
 1. Collection is a interface present in java.util.package. It is used to represent a group of individual objects as a single unit. The List, Set, and Queue are the main sub-interfaces of the collection interface. The map interface is also part of the java collection framework, but it doesn’t inherit the collection of the interface. The add(), remove(), clear(), size(), and contains() are the important methods of the Collection interface.
 2. Collections is a utility class present in java.util.package. It defines several utility methods like sorting and searching which is used to operate on collection. It has all static methods. For example, It has a method sort() to sort the collection elements according to default sorting order, and it has a method min(), and max() to find the minimum and maximum value respectively in the collection elements.
+
+## Iterator
+‘Iterator’ is an interface which belongs to collection framework. It allows us to traverse the collection, access the data element and remove the data elements of the collection.
+java.util package has public interface Iterator and contains three methods:
+
+1. boolean hasNext(): It returns true if Iterator has more element to iterate.
+2. Object next(): It returns the next element in the collection until the hasNext()method return true. This method throws ‘NoSuchElementException’ if there is no next element.
+3. void remove(): It removes the current element in the collection. This method throws ‘IllegalStateException’ if this function is called before next( ) is invoked.
+
+```java
+class Test { 
+    public static void main(String[] args) 
+    { 
+        ArrayList<String> list = new ArrayList<String>(); 
+  
+        list.add("A"); 
+        list.add("B"); 
+        list.add("C"); 
+        list.add("D"); 
+        list.add("E"); 
+  
+        // Iterator to traverse the list 
+        Iterator iterator = list.iterator(); 
+  
+        System.out.println("List elements : "); 
+  
+        while (iterator.hasNext()) 
+            System.out.print(iterator.next() + " "); 
+  
+        System.out.println(); 
+    } 
+}
+```
+## ListIterator
+‘ListIterator’ in Java is an Iterator which allows users to traverse Collection in both direction. It contains the following methods:
+
+> + hasNext(): If returns true confirms that there are more elements in a collection.
+> + next(): Returns next elements of the list.
+> + nextIndex(): Returns the index of next elements in the list.
+> + hasPrevious(): Returns true if there are elements in the reverse direction in a collection.
+> + previous(): Returns the previous element in a collection.
+> + previousIndex(): Returns index of the previous element in a collection.
+> + remove(): Delete the element from a collection.
+> + set(): Modifies the element in a collection.
+> + add(): Adds the new element in a collection.
+
+```java
+class Test { 
+    public static void main(String[] args) 
+    { 
+        ArrayList<String> list = new ArrayList<String>(); 
+  
+        list.add("A"); 
+        list.add("B"); 
+        list.add("C"); 
+        list.add("D"); 
+        list.add("E"); 
+  
+        // ListIterator to traverse the list 
+        ListIterator iterator = list.listIterator(); 
+  
+        // Traversing the list in forward direction 
+        System.out.println("Displaying list elements in forward direction : "); 
+  
+        while (iterator.hasNext()) 
+            System.out.print(iterator.next() + " "); 
+  
+        System.out.println(); 
+  
+        // Traversing the list in backward direction 
+        System.out.println("Displaying list elements in backward direction : "); 
+  
+        while (iterator.hasPrevious()) 
+            System.out.print(iterator.previous() + " "); 
+  
+        System.out.println(); 
+    } 
+} 
+```
+
+## What is the difference between Iterator and ListIterator?
+1. Iterator can traverse Map, List and Set; ListIterator can traverse List objects only.
+2. Iterator can traverse the elements in a collection only in forward direction; ListIterator can traverse the elements in a collection in forward as well as the backwards direction.
+3. Iterator is unable to add/set/remove elements to a collection, but ListIterator can.
+4. Using ListIterator, we can obtain an index of the element in a collection, but Iterator cannot.
+
 
 
 
