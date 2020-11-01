@@ -37,3 +37,53 @@ Stack class models and implements the Stack data structure. The class is based o
 
 ## Queue
 A queue interface maintains the **FIFO(First In First Out) order** similar to a real-world queue line. This interface is dedicated to **storing all the elements where the order of the elements matter.** 
+```java
+Queue <T> pq = new PriorityQueue<> ();
+Queue <T> ad = new ArrayDeque<> ();
+Where T is the type of the object.
+```
+
+### Priority Queue
+A PriorityQueue is used when the objects are supposed to be processed **based on the priority**. It is known that a queue follows the First-In-First-Out algorithm, but sometimes the elements of the queue are needed to be processed according to the priority and this class is used in these cases. **The PriorityQueue is based on the priority heap**. The elements of the priority queue are ordered according to the natural ordering, or by **a Comparator provided at queue construction time**, depending on which constructor is used.
+
+## Set
+A set is **an unordered collection of objects in which duplicate values cannot be stored**. This collection is used when we wish to **avoid the duplication of the objects and wish to store only the unique objects**. This set interface is implemented by various classes like HashSet, TreeSet, LinkedHashSet, etc. Since all the subclasses implement the set, we can instantiate a set object with any of these classes.
+
+```java
+Set<T> hs = new HashSet<> ();
+Set<T> lhs = new LinkedHashSet<> ();
+Set<T> ts = new TreeSet<> ();
+Where T is the type of the object.
+```
+
+### HashSet
+The HashSet class is an inherent implementation of the **hash table data structure**. It implements the Set interface, backed by a hash table which is actually a HashMap instance.The objects that we insert into the HashSet **do not guarantee to be inserted in the same order**. The objects are inserted **based on their hashcode**. This class also allows the **insertion of NULL elements**.
+
+### LinkedHashSet
+A LinkedHashSet is very similar to a HashSet. The difference is that this uses **a doubly linked list to store the data** and **retains the ordering of the elements**.
+
+### Sorted Set
+This interface is very similar to the set interface. The only difference is that this interface has extra methods that maintain the ordering of the elements. The sorted set interface extends the set interface and is used to handle the data which needs to be sorted. The class which implements this interface is TreeSet. Since this class implements the SortedSet, we can instantiate a SortedSet object with this class.
+
+```java
+SortedSet<T> ts = new TreeSet<> ();
+Where T is the type of the object.
+```
+#### TreeSet
+The TreeSet class uses a Tree for storage. The ordering of the elements is maintained by a set using their natural ordering whether or not an explicit comparator is provided. This must be consistent with equals if it is to correctly implement the Set interface. It can also be ordered by a Comparator provided at set creation time, depending on which constructor is used.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
