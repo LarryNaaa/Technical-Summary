@@ -84,18 +84,45 @@ Where T is the type of the object.
 ### HashMap
 HashMap provides the basic implementation of the Map interface of Java. **It stores the data in (Key, Value) pairs**. **To access a value in a HashMap, we must know its key**. HashMap uses a technique called Hashing. Hashing is a technique of converting a large String to small String that represents the same String so that the indexing and search operations are faster. HashSet also uses HashMap internally.
 
+**It may have one null key and multiple null values.**
+
+**It maintains no order.**
+
+**If the key of the HashMap is self-defined objects, then equals() and hashCode() contract need to be followed.**
+
 ### HashTable
 This class implements a hash table, which maps keys to values. **Any non-null object can be used as a key or as a value**. To successfully store and retrieve objects from a hashtable, the objects used as keys must implement the hashCode method and the equals method.
 
-1. **It is similar to HashMap, but is synchronised.**
-2. HashTable stores key/value pair in hash table.
-3. In HashTable we specify an object that is used as a key, and the value we want to associate to that key. **The key is then hashed, and the resulting hash code is used as the index at which the value is stored within the table.**
+**A Hashtable is an array of list. Each list is known as a bucket. The position of bucket is identified by calling the hashcode() method. A Hashtable contains values based on the key.**
+
+**It can not have any null key or value.**
+
+**It is synchronized.**
+
+### LinkedHashMap
+**The LinkedHashMap is just like HashMap with an additional feature of maintaining an order of elements inserted into it.** HashMap provided the advantage of quick insertion, search, and deletion but it never maintained the track and order of insertion which the LinkedHashMap provides where the elements can be accessed in their insertion order. 
+
+**It may have one null key and multiple null values.**
+
+**It is non-synchronized.**
+
+### TreeMap
+The TreeMap in Java is used to implement Map interface and NavigableMap along with the AbstractMap Class. The map is **sorted according to the ordering of its keys**, or **by a Comparator provided at map creation time, depending on which constructor is used.** This proves to be an efficient way of sorting and storing the key-value pairs.
+
+**It cannot have null key but can have multiple null values.**
+
+**It is non-synchronized.**
 
 #### What is the difference between HashMap and HashTable
 1. HashTable is synchronised, but HashMap is not.
-2. HashTable does not allow null key or value, but HashMap allows null key also but only once and multiple null values.
+2. HashTable does not allow null key or value, but HashMap may have one null key and multiple null values.
 
+#### HashMap vs. TreeMap vs. LinkedHashMap  
+1. HashMap is implemented as a hash table, and there is no ordering on keys or values. 
+2. TreeMap is implemented based on red-black tree structure, and it is ordered by the key. 
+3. LinkedHashMap preserves the insertion order 
 
+![Comparison Table](https://media.geeksforgeeks.org/wp-content/uploads/comparisonTable.png)
 
 
 
