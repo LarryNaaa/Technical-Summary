@@ -72,11 +72,28 @@ Where T is the type of the object.
 #### TreeSet
 The TreeSet class uses a Tree for storage. The ordering of the elements is maintained by a set using their natural ordering whether or not an explicit comparator is provided. This must be consistent with equals if it is to correctly implement the Set interface. It can also be ordered by a Comparator provided at set creation time, depending on which constructor is used.
 
+## Map
+A map is a data structure which supports **the key-value pair mapping for the data**. This interface **doesn’t support duplicate keys because the same key cannot have multiple mappings**. A map is useful if there is a data and **we wish to perform operations on the basis of the key**. This map interface is implemented by various classes like HashMap, TreeMap etc. Since all the subclasses implement the map, we can instantiate a map object with any of these classes.
 
+```java
+Map<T> hm = new HashMap<> ();
+Map<T> tm = new TreeMap<> ();
+Where T is the type of the object.
+```
 
+### HashMap
+HashMap provides the basic implementation of the Map interface of Java. **It stores the data in (Key, Value) pairs**. **To access a value in a HashMap, we must know its key**. HashMap uses a technique called Hashing. Hashing is a technique of converting a large String to small String that represents the same String so that the indexing and search operations are faster. HashSet also uses HashMap internally.
 
+### HashTable
+This class implements a hash table, which maps keys to values. **Any non-null object can be used as a key or as a value**. To successfully store and retrieve objects from a hashtable, the objects used as keys must implement the hashCode method and the equals method.
 
+1. **It is similar to HashMap, but is synchronised.**
+2. HashTable stores key/value pair in hash table.
+3. In HashTable we specify an object that is used as a key, and the value we want to associate to that key. **The key is then hashed, and the resulting hash code is used as the index at which the value is stored within the table.**
 
+#### What is the difference between HashMap and HashTable
+1. HashTable is synchronised, but HashMap is not.
+2. HashTable does not allow null key or value, but HashMap allows null key also but only once and multiple null values.
 
 
 
