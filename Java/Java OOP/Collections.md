@@ -19,16 +19,16 @@ LinkedList class is an implementation of the LinkedList data structure which is 
 A vector provides us with dynamic arrays in Java. It is identical to ArrayList in terms of implementation. However, the primary difference between a vector and an ArrayList is that **a Vector is synchronized and an ArrayList is non-synchronized.**
 
 ### Stack
-Stack class models and implements the Stack data structure. The class is based on the basic principle of **last-in-first-out**. In addition to the basic push and pop operations, the class provides three more functions of empty, search and peek. The class can also be referred to as **the subclass of Vector**. 
+Stack class models and implements the Stack data structure. The class is based on the basic principle of **last-in-first-out**. In addition to the basic push and pop operations, the class provides three more functions of empty, search and peek. **The class can also be referred to as the subclass of Vector, so stack is synchronized.**
 
-### What is the difference between ArrayList and LinkedList and Vector
+### What is the difference between ArrayList and LinkedList and Vector?
 1. ArrayList is a dynamic array, it's elements can be accessed directly by using the get and set methods.
 
 2. LinkedList is implemented as a double linked list, its performance on add and remove is better than arraylist, but worse on get and set methods.
 
 3. Vector is similar with arraylist, but it is synchronized.
 
-### What is the difference between ArrayList and Array
+### What is the difference between ArrayList and Array?
 1. An array is basic functionality provided by Java. ArrayList is part of collection framework in Java.
 2. Array can contain both primitive data types as well as objects of a class . However, ArrayList only supports object entries.
 3. Array is a fixed size data structure while ArrayList is not.
@@ -112,21 +112,34 @@ The TreeMap in Java is used to implement Map interface and NavigableMap along wi
 
 **It is non-synchronized.**
 
-### What is the difference between HashMap and HashTable
+### What is the difference between HashMap and HashTable?
 1. HashTable is synchronised, but HashMap is not.
 2. HashTable does not allow null key or value, but HashMap may have one null key and multiple null values.
 
-### What is the difference between HashMap and TreeMap and LinkedHashMap  
+### What is the difference between HashMap and TreeMap and LinkedHashMap?  
 1. HashMap is implemented as a hash table, and there is no ordering on keys or values. 
 2. TreeMap is implemented based on red-black tree structure, and it is ordered by the key. 
 3. LinkedHashMap preserves the insertion order 
 
 ![Comparison Table](https://media.geeksforgeeks.org/wp-content/uploads/comparisonTable.png)
 
+### What is the difference between List and Set and Map?
+1. Order
 
+> + List is an ordered collection it maintains the insertion order.
+> + Set represents a distinct collection of elements in Java which can be either ordered or unordered, depending on the implementation. For example, HashSet implementation is unordered, LinkedHashSet implementation is ordered, and TreeSet implementation is ordered by natural order or by provided comparator. 
+> + Map represents mapping of key to values in Java. The ordering in Map is also implementation specific. For example, TreeMap class is ordered while HashMap class is not.
+2. Duplicates
 
+> + List allows duplicates.
+> + Set doesn’t allow duplicate elements. All the elements of a Set should be unique if we try to insert the duplicate element in Set it would replace the existing value.
+> + Map doesn’t permit duplicate keys i.e. each key can map to at most one value.
+3. Null values
 
+> + List allows any number of null values. 
+> + Set contains at most one null element.
+> + Map typically allows null as a key and value but some implementations prohibit null keys and values.
 
-
-
+### When to use List, Set and Map?
+A List can be used when insertion order of elements needs to maintained. A Set can be used if we need to maintain a collection that contains no duplicates. And Map when data is key-value pairs and need fast retrieval of value based on some key.
 
