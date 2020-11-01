@@ -26,11 +26,11 @@ Stack class models and implements the Stack data structure. The class is based o
 
 2. LinkedList is implemented as a double linked list, its performance on add and remove is better than arraylist, but worse on get and set methods.
 
-3. Vector is similar with arraylist, but it is synchronized.
+3. Vector is similar with arraylist, but it is synchronized, Arraylist is faster than Vector.
 
 ### What is the difference between ArrayList and Array?
 1. An array is basic functionality provided by Java. ArrayList is part of collection framework in Java.
-2. Array can contain both primitive data types as well as objects of a class . However, ArrayList only supports object entries.
+2. Array can contain both primitive data types as well as objects of a class. However, ArrayList only supports object entries.
 3. Array is a fixed size data structure while ArrayList is not.
 4. ArrayList supports many additional operations like indexOf(), remove(), etc. These functions are not supported by Arrays.
 
@@ -142,4 +142,10 @@ The TreeMap in Java is used to implement Map interface and NavigableMap along wi
 
 ### When to use List, Set and Map?
 A List can be used when insertion order of elements needs to maintained. A Set can be used if we need to maintain a collection that contains no duplicates. And Map when data is key-value pairs and need fast retrieval of value based on some key.
+
+### What is the difference between Collection and Collections?
+1. Collection is a interface present in java.util.package. It is used to represent a group of individual objects as a single unit. The List, Set, and Queue are the main sub-interfaces of the collection interface. The map interface is also part of the java collection framework, but it doesn’t inherit the collection of the interface. The add(), remove(), clear(), size(), and contains() are the important methods of the Collection interface.
+2. Collections is a utility class present in java.util.package. It defines several utility methods like sorting and searching which is used to operate on collection. It has all static methods. For example, It has a method sort() to sort the collection elements according to default sorting order, and it has a method min(), and max() to find the minimum and maximum value respectively in the collection elements.
+
+
 
