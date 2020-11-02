@@ -19,3 +19,13 @@
 [Nested Classes](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Nested%20Classes.md)
 
 [Collections](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Collections.md)
+
+[Abstraction](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Abstraction.md)
+
+[Encapsulation](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Encapsulation.md)
+
+[Inheritance](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Inheritance.md)
+
+[Overload and Override](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Overload%20and%20Override.md)
+
+[Others](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Others.md)
