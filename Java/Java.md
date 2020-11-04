@@ -26,6 +26,6 @@
 
 [Inheritance](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Inheritance.md)
 
-[Overload and Override](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Overload%20and%20Override.md)
+[Polymorphism](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Polymorphism.md)
 
 [Others](https://github.com/LarryNaaa/Technical-Summary/blob/master/Java/Java%20OOP/Others.md)
