@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class Apple {
     private String color;
@@ -40,5 +37,31 @@ public class Apple {
         arrayList1.add(1);
         arrayList1.add(100);
         arrayList1.toArray();
+
+
+        int[] arr = {1,  3, 4};
+        int[] arr1 = new int[3];
+        System.out.println("----------------");
+        for(int i : arr){
+            System.out.println(i);
+        }
+        for(int j : arr1){
+            System.out.println(j);
+        }
+        System.out.println("------------------");
+        ArrayList<Integer> arrayList2 = new ArrayList<>();
+        arrayList2.add(10);
+        arrayList2.add(11);
+        System.out.println(arrayList2);
+        arrayList2.add(1,12);
+        System.out.println(arrayList2);
+
+        System.out.println("---------------------");
+        Iterator<Integer> iterator = arrayList2.iterator();
+        while(iterator.hasNext()){
+            Integer i = iterator.next();
+            System.out.println(i);
+        }
+
     }
 }
