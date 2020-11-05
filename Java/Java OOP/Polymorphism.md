@@ -37,3 +37,36 @@ Method overriding, occurs when a derived class has a definition for one of the m
 6. Invoking overridden method from sub-class : We can call parent class method in overriding method using super keyword.
 
 7. Overriding and constructor : We can not override constructor as parent and child class can never have constructor with same name(Constructor name must always be same as Class name).
+
+## Typecasting
+Typecasting is one of the most important concepts which basically deals with the conversion of one data type to another datatype implicitly or explicitly.
+
+In objects, there are only two types of objects (i.e.) parent object and child object. Therefore, typecasting of objects basically mean that one type of object (i.e.) child or parent to another. 
+
+### Upcasting
+Upcasting is the typecasting of a child object to a parent object. Upcasting can be done implicitly. Upcasting gives us the flexibility to access the parent class members but it is not possible to access all the child class members using this feature. Instead of all the members, we can access some specified members of the child class. For instance, we can access the overridden methods.
+
+```java
+Parent p = new Child();
+```
+
+### Downcasting
+Similarly, downcasting means the typecasting of a parent object to a child object. Downcasting cannot be implicitly.
+```java
+Parent p = new Child();
+Child c = (Child)p;
+```
+
+**In order to avoid ClassCastException, we can use keyword instanceof before downcasting:**
+```java
+Animal a = new Dog();
+Cat c = (Cat) a; // java.lang.ClassCastException
+// use instanceof
+if(a instanceof Cat){
+	Cat c = (Cat) a;
+}
+```
+
+
+
+
