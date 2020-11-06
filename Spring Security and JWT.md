@@ -7,10 +7,10 @@
 
 ![](https://miro.medium.com/max/700/0*xLJ-xTHdjY0LA_mb.png)
 
-1. The user calls authentication service, usually sending username and password.
-2. The authentication service responds with a signed JWT, which says who the user is.
-3. The user requests access to a secured service sending the token back.
-4. Security layer checks the signature on the token and if it's genuine the access is granted.
+1. The client calls authentication service, like POST /users/login with username and password.
+2. The server creates a JWT with a secret, return it to the client.
+3. The client requests access to a secured service and sends the JWT on the Authorization Header.
+4. Security layer checks the signature on the token and if it's genuine the access is granted. And then get user information from the JWT and send response to the client.
 
 ## Authorization/Access Control
 ![authorization/access control](https://pic1.zhimg.com/v2-63dea95302a35394bc33e6d4a3f9699c_r.jpg)
