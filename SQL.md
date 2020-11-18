@@ -401,7 +401,9 @@ This is where a row from one table can have multiple matching rows in another ta
 
 #### Many to Many
 A row from one table can have multiple matching rows in another table, and a row in the other table can also have multiple matching rows in the first table this relationship is defined as a many to many relationship. **This type of relationship can be created using a third table called “Junction table” or “Bridging table”.** This Junction or Bridging table can be assumed as a place where attributes of the relationships between two lists of entities are stored.
+
 ![Many to Many](https://miro.medium.com/max/700/1*bu6jeY3VvDhoXfYyTsDExQ.jpeg)
+
 ![Many to Many](https://miro.medium.com/max/700/1*YADgXTsD5FgETPDJd4EjTw.jpeg)
 
 ### What is the MySQL default port number?
