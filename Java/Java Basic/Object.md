@@ -91,3 +91,32 @@ class Hello {
     } 
 } 
 ```
+
+### clone()
+Cloning is a process of creating an exact copy of an existing object in the memory. In java, clone() method of java.lang.Object class is used for cloning process. This method creates an exact copy of an object on which it is called through field-by-field assignment and returns the reference of that object. Not all the objects in java are eligible for cloning process. The objects which implement Cloneable interface are only eligible for cloning process. Cloneable interface is a marker interface which is used to provide the marker to cloning process. Click here to see more info on clone() method in java.
+
+Both shallow copy and deep copy are related to this cloning process. The default version of clone() method creates the shallow copy of an object. To create the deep copy of an object, you have to override the clone() method.
+
+#### Shallow Copy
+The default version of clone() method creates the shallow copy of an object. The shallow copy of an object will have exact copy of all the fields of original object. If original object has any references to other objects as fields, then only references of those objects are copied into clone object, copy of those objects are not created. That means any changes made to those objects through clone object will be reflected in original object or vice-versa. Shallow copy is not 100% disjoint from original object. Shallow copy is not 100% independent of original object.
+
+![Shallow Copy](https://i0.wp.com/javaconceptoftheday.com/wp-content/uploads/2015/04/ShallowCopy.png?w=1200)
+
+#### Deep Copy
+Deep copy of an object will have exact copy of all the fields of original object just like shallow copy. But in additional, if original object has any references to other objects as fields, then copy of those objects are also created by calling clone() method on them. That means clone object and original object will be 100% disjoint. They will be 100% independent of each other. Any changes made to clone object will not be reflected in original object or vice-versa.
+
+![Deep Copy](https://i2.wp.com/javaconceptoftheday.com/wp-content/uploads/2015/04/DeepCopy.png?w=1200)
+
+#### What is the difference between shallow copy and depy copy
+1. Cloned Object and original object are not 100% disjoint in shallow copy, but they are 100% disjoint in deep copy.
+2. Any changes made to cloned object will be reflected in original object or vice versa in shallow copy, but they are not in deep copy.
+3. Default version of clone method creates the shallow copy of an object, to create the deep copy of an object, we have to override clone method.
+4. Shallow copy is preferred if an object has only primitive fields, deep copy is preferred if an object has references to other objects as fields.
+5. Shallow copy is fast and also less expensive, Deep copy is slow and very expensive.
+
+
+
+
+
+
+
