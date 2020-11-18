@@ -390,6 +390,20 @@ Note: A transitive dependency can only occur in a relation of three of more attr
 #### Boyce Codd normal form (BCNF)
 BCNF is stricter than 3NF. A table complies with BCNF if it is in 3NF and for every functional dependency X->Y, X should be the super key of the table.
 
+### How To Implement One to One, One to Many and Many to Many Relationships When Designing A Database
+#### One to One
+When a row in a table is related to only one role in another table and vice versa,we say that is a one to one relationship. **This relationship can be created using Primary key-Unique foreign key constraints.**
+![One to One](https://miro.medium.com/max/700/1*xU6r-U1V_aWBJIH5myTU6g.jpeg)
+
+#### One to Many
+This is where a row from one table can have multiple matching rows in another table this relationship is defined as a one to many relationship. **This type of relationship can be created using Primary key-Foreign key relationship.**
+![One to Many](https://miro.medium.com/max/700/1*R_PRNxKs2NWu4GxT8vs1kw.jpeg)
+
+#### Many to Many
+A row from one table can have multiple matching rows in another table, and a row in the other table can also have multiple matching rows in the first table this relationship is defined as a many to many relationship. **This type of relationship can be created using a third table called “Junction table” or “Bridging table”.** This Junction or Bridging table can be assumed as a place where attributes of the relationships between two lists of entities are stored.
+![Many to Many](https://miro.medium.com/max/700/1*bu6jeY3VvDhoXfYyTsDExQ.jpeg)
+![Many to Many](https://miro.medium.com/max/700/1*YADgXTsD5FgETPDJd4EjTw.jpeg)
+
 ### What is the MySQL default port number?
 MySQL default port number is 3306.
 
@@ -547,5 +561,7 @@ It allows multiple transactions to modify data without interfering with each oth
 
 #### Pessimistic concurrency control
 when a transaction is modifying data, pessimistic locking applies a lock to the data so other transactions can't access the same data. After the transaction commits, the lock is released.
+
+
 
 
