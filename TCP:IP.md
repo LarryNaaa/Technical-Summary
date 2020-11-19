@@ -9,7 +9,7 @@ Helps to confirm to the other side that it has received the SYN.
 #### FIN
 Used to terminate a connection.
 
-### 3-Way Handshake
+### 3-Way Handshake/TCP Connection Establishment
 ![3-Way Handshake](https://raw.githubusercontent.com/HIT-Alibaba/interview/master/img/tcp-connection-made-three-way-handshake.png)
 
 Step 1 (SYN = 1 + Seq = x from Client) : Client wants to establish a connection with server, so it sends a segment with SYN which informs server that client is likely to start communication and with what sequence number it starts segments with.
@@ -18,7 +18,7 @@ Step 2 (SYN = 1 + Seq = y + ACK = 1 + ACKnum = x + 1 from Server): Server respon
 
 Step 3 (ACK = 1 + ACKnum = y + 1 from Client) : In the final part client acknowledges the response of server and they both establish a reliable connection with which they will start the actual data transfer.
 
-### 4-way handshake
+### 4-way handshake/TCP Connection Termination
 ![4-way handshake](https://raw.githubusercontent.com/HIT-Alibaba/interview/master/img/tcp-connection-closed-four-way-handshake.png)
 
 Step 1 (FIN = 1 + Seq = x From Client) – Client wants to close the connection. (Note that the server could also choose to close the connection). This causes the client send a TCP segment with the FIN bit set to 1 to server and to enter the FIN_WAIT_1 state. While in the FIN_WAIT_1 state, the client waits for a TCP segment from the server with an acknowledgment (ACK).
