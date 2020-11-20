@@ -18,7 +18,7 @@
 
 [JWT](https://github.com/LarryNaaa/Technical-Summary/blob/master/Spring%20Security%20and%20JWT.md)
 
-[Spring Security]()
+[Spring Security](https://github.com/LarryNaaa/Technical-Summary/blob/master/Spring%20Security.md)
 
 [TCP/IP](https://github.com/LarryNaaa/Technical-Summary/blob/master/TCP:IP.md)
 
