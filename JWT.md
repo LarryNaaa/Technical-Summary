@@ -227,11 +227,11 @@ public class User implements UserDetails {
 ```
 This entity class contains some properties:
 
-> the `id` that works as the primary identifier of a user instance in the application,
+> + the `id` that works as the primary identifier of a user instance in the application,
 
-> the `username` that will be used by users to identify themselves,
+> + the `username` that will be used by users to identify themselves,
 
-> and the `password` to check the user identity.
+> + and the `password` to check the user identity.
 
 #### Repository Class
 In order to manage the persistence layer of this entity, we will create an interface called `UserRepository`. This interface will be an extension of `CrudRepository`, which gives us access to some common methods like `save`, `findById`, `findAll`, `Delete`:
