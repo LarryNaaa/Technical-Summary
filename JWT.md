@@ -228,9 +228,7 @@ public class User implements UserDetails {
 This entity class contains some properties:
 
 > + the `id` that works as the primary identifier of a user instance in the application,
-
 > + the `username` that will be used by users to identify themselves,
-
 > + and the `password` to check the user identity.
 
 #### Repository Class
@@ -385,12 +383,270 @@ To support both authentication and authorization in our application, we are goin
 
 > + implement an authentication filter to issue JWTS to users sending credentials,
 > + implement an authorization filter to validate requests containing JWTS,
-> + create a custom implementation of UserDetailsService to help Spring Security loading user-specific data in the framework,
-> + and extend the WebSecurityConfigurerAdapter class to customize the security framework to our needs.
+> + create a custom implementation of `UserDetailsService` to help Spring Security loading user-specific data in the framework,
+> + and extend the `WebSecurityConfigurerAdapter` class to customize the security framework to our needs.
+
+#### The Authentication Filter
+The first element that we are going to create is the class responsible for the authentication process. We are going to call this class `JwtAuthenticationFilter`, and we will implement it with the following code:
+
+```java
+package com.jinyu.ppmtool.security;
+
+import com.jinyu.ppmtool.domain.User;
+import com.jinyu.ppmtool.services.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.util.Collections;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.HEADER_STRING;
+import static com.jinyu.ppmtool.security.SecurityConstants.TOKEN_PREFIX;
+
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        try {
+
+            String jwt = getJWTFromRequest(httpServletRequest);
+
+            if(StringUtils.hasText(jwt)&& tokenProvider.validateToken(jwt)){
+                Long userId = tokenProvider.getUserIdFromJWT(jwt);
+                User userDetails = customUserDetailsService.loadUserById(userId);
+
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, Collections.emptyList());
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            }
+
+        }catch (Exception ex){
+            logger.error("Could not set user authentication in security context", ex);
+        }
+
+
+        filterChain.doFilter(httpServletRequest, httpServletResponse);
+
+    }
 
 
 
+    private String getJWTFromRequest(HttpServletRequest request){
+        String bearerToken = request.getHeader(HEADER_STRING);
 
+        if(StringUtils.hasText(bearerToken)&&bearerToken.startsWith(TOKEN_PREFIX)){
+            return bearerToken.substring(7, bearerToken.length());
+        }
+
+        return null;
+    }
+}
+
+```
+
+Now we have to create the `SecurityConstants` class:
+
+```java
+package com.jinyu.ppmtool.security;
+
+public class SecurityConstants {
+
+    public static final String SIGN_UP_URLS = "/api/users/**";
+    public static final String H2_URL = "h2-console/**";
+    public static final String SECRET ="SecretKeyToGenJWTs";
+    public static final String TOKEN_PREFIX= "Bearer ";
+    public static final String HEADER_STRING = "Authorization";
+    public static final long EXPIRATION_TIME = 300_000; //300 seconds
+}
+```
+This class contains some constants referenced by the `JwtAuthenticationFilter` class.
+
+#### The Authorization Filter
+As we have implemented the filter responsible for authenticating users, we now need to implement the filter responsible for user authorization. We create this filter as a new class, called `JWTAuthorizationFilter`:
+
+```java
+package com.jinyu.ppmtool.security;
+
+import com.jinyu.ppmtool.domain.User;
+import com.jinyu.ppmtool.services.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.util.Collections;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.HEADER_STRING;
+import static com.jinyu.ppmtool.security.SecurityConstants.TOKEN_PREFIX;
+
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        try {
+
+            String jwt = getJWTFromRequest(httpServletRequest);
+
+            if(StringUtils.hasText(jwt)&& tokenProvider.validateToken(jwt)){
+                Long userId = tokenProvider.getUserIdFromJWT(jwt);
+                User userDetails = customUserDetailsService.loadUserById(userId);
+
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, Collections.emptyList());
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            }
+
+        }catch (Exception ex){
+            logger.error("Could not set user authentication in security context", ex);
+        }
+
+
+        filterChain.doFilter(httpServletRequest, httpServletResponse);
+
+    }
+
+
+
+    private String getJWTFromRequest(HttpServletRequest request){
+        String bearerToken = request.getHeader(HEADER_STRING);
+
+        if(StringUtils.hasText(bearerToken)&&bearerToken.startsWith(TOKEN_PREFIX)){
+            return bearerToken.substring(7, bearerToken.length());
+        }
+
+        return null;
+    }
+}
+
+```
+
+We have extended the `OncePerRequestFilter` to make Spring replace it in the filter chain with our custom implementation. The most important part of the filter that we've implemented is the private `getJWTFromRequest` method. This method reads the JWT from the Authorization header, and then uses JWT to validate the token. If everything is in place, we set the user in the `SecurityContext` and allow the request to move on.
+
+
+#### Integrating the Security Filters on Spring Boot
+Now that we have both security filters properly created, we have to configure them on the Spring Security filter chain. To do that, we are going to create a new class called `SecurityConfig`:
+
+```java
+package com.jinyu.ppmtool.security;
+
+import com.jinyu.ppmtool.services.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.BeanIds;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.H2_URL;
+import static com.jinyu.ppmtool.security.SecurityConstants.SIGN_UP_URLS;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(
+        securedEnabled = true,
+        jsr250Enabled = true,
+        prePostEnabled = true
+)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {return  new JwtAuthenticationFilter();}
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+        authenticationManagerBuilder.userDetailsService(customUserDetailsService).passwordEncoder(bCryptPasswordEncoder);
+    }
+
+    @Override
+    @Bean(BeanIds.AUTHENTICATION_MANAGER)
+    protected AuthenticationManager authenticationManager() throws Exception {
+        return super.authenticationManager();
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.cors().and().csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .headers().frameOptions().sameOrigin() //To enable H2 Database
+                .and()
+                .authorizeRequests()
+                .antMatchers(
+                        "/",
+                        "/favicon.ico",
+                        "/**/*.png",
+                        "/**/*.gif",
+                        "/**/*.svg",
+                        "/**/*.jpg",
+                        "/**/*.html",
+                        "/**/*.css",
+                        "/**/*.js"
+                ).permitAll()
+                .antMatchers(SIGN_UP_URLS).permitAll()
+                .antMatchers(H2_URL).permitAll()
+                .anyRequest().authenticated();
+
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
+}
+```
 
 
 
