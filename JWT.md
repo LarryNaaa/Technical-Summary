@@ -73,7 +73,7 @@ It  used to validate that the token is trustworthy and has not been tampered wit
 ## Process of implement JWT
 ### Enabling User Registration on Spring Boot APIs
 #### Entity Class
-Before we start secure our application, the first step is to allow users to register themselves. So first we create a new entity class called `User`:
+Before we start secure our application, the first step is to allow users to register themselves. So first we create a new entity class called `User`, which implements `UserDetails`:
 ```java
 package com.jinyu.ppmtool.domain;
 
@@ -231,8 +231,12 @@ This entity class contains some properties:
 > + the `username` that will be used by users to identify themselves,
 > + and the `password` to check the user identity.
 
+We use some annotations to do validation for some attributes of user, like `@NotBlank` on `username`, when the username is blank, it will display a message to user that username is required.
+
+`UserDetails` is an interface in Spring Security, we can override some methods like `isAccountNonExpired`.
+
 #### Repository Class
-In order to manage the persistence layer of this entity, we will create an interface called `UserRepository`. This interface will be an extension of `CrudRepository`, which gives us access to some common methods like `save`, `findById`, `findAll`, `Delete`:
+In order to manage the persistence layer of this entity, we will create an interface called `UserRepository`. This interface will be an extension of `CrudRepository`, which is an interface in Spring framework and gives us access to some common methods like `save`, `findById`, `findAll`, `Delete`:
 
 ```java
 package com.jinyu.ppmtool.repositories;
