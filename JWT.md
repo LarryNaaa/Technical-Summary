@@ -648,9 +648,51 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 }
 ```
 
+We have annotated this class with `@EnableWebSecurity` and made it extend `WebSecurityConfigurerAdapter` to take advantage of the default web security configuration provided by Spring Security. This allows us to fine-tune the framework to our needs by defining three methods:
+
+> + `configure(HttpSecurity http)`: a method where we can define which resources are public and which are secured. In our case, we set the `SIGN_UP_URL` endpoint as being public and everything else as being secured. We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and we add a custom security filter in the Spring Security filter chain.
+> + `configure(AuthenticationManagerBuilder auth)`: a method where we defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
+
+Spring Security doesn't come with a concrete implementation of `UserDetailsService` that we could use out of the box with our in-memory database. Therefore, we create a new class called `CustomUserDetailsService`:
+
+```java
+package com.jinyu.ppmtool.services;
 
 
+import com.jinyu.ppmtool.domain.User;
+import com.jinyu.ppmtool.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username);
+        if(user==null) new UsernameNotFoundException("User not found");
+        return user;
+    }
+
+
+    @Transactional
+    public User loadUserById(Long id){
+        User user = userRepository.getById(id);
+        if(user==null) new UsernameNotFoundException("User not found");
+        return user;
+
+    }
+}
+```
+
+The methods that we had to implement are `loadUserByUsername` and `loadUserById`. When a user tries to authenticate, these method receives the `username` or `id`, searches the database for a record containing it, and (if found) returns an instance of User. The properties of this instance (username and password) are then checked against the credentials passed by the user in the login request. This last process is executed outside this class, by the Spring Security framework.
 
 
 
