@@ -563,7 +563,7 @@ We have extended the `OncePerRequestFilter` to make Spring replace it in the fil
 
 
 #### Integrating the Security Filters on Spring Boot
-Now that we have both security filters properly created, we have to configure them on the Spring Security filter chain. To do that, we are going to create a new class called `SecurityConfig`:
+Now that we have both security filters properly created, we have to configure them on the Spring Security filter chain. To do that, we are going to create a new class called `SecurityConfig` to extend `WebSecurityConfigurerAdapter`. `WebSecurityConfigurerAdapter` is an abstract class in Spring Security, it provides default security configurations. By extending it, we are allowed to customize those security configurations by overriding some of the methods:
 
 ```java
 package com.jinyu.ppmtool.security;
@@ -620,13 +620,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+    	// enable Cross-Origin Resource Sharing and disable Cross-Site Request Forgery
         http.cors().and().csrf().disable()
+                // exception handling
                 .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                // manage session, it's a RESTful API and we want to use JWT, so the  // server should not hold a session, the SessionCreationPolicy should // be STATELESS.
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .headers().frameOptions().sameOrigin() //To enable H2 Database
+                // to enable H2 Database
+                .headers().frameOptions().sameOrigin() 
                 .and()
+                // to specify some of the routes that we want to make them public,
+                // the suffix of the routes are png, jpg, html, js, css...
                 .authorizeRequests()
                 .antMatchers(
                         "/",
@@ -641,6 +647,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 ).permitAll()
                 .antMatchers(SIGN_UP_URLS).permitAll()
                 .antMatchers(H2_URL).permitAll()
+                // any thing other than that should have an authentication
                 .anyRequest().authenticated();
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
