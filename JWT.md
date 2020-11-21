@@ -657,8 +657,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 We have annotated this class with `@EnableWebSecurity` and made it extend `WebSecurityConfigurerAdapter` to take advantage of the default web security configuration provided by Spring Security. This allows us to fine-tune the framework to our needs by defining three methods:
 
-> + `configure(HttpSecurity http)`: a method where we can define which resources are public and which are secured. In our case, we set the `SIGN_UP_URL` endpoint as being public and everything else as being secured. We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and we add a custom security filter in the Spring Security filter chain.
-> + `configure(AuthenticationManagerBuilder auth)`: a method where we defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
+##### `configure(HttpSecurity http)` method
+a method where we can define which resources are public and which are secured: 
+> + In our case, we set the `SIGN_UP_URL` endpoint and some routes(which suffix are png, jpg, html, css...) as being public and everything else as being secured. 
+> + We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and disable CSRF(Cross-Site Request Forgery). 
+> + We configure the exception handling. 
+> + We configure the session, it's a RESTful API and we want to use JWT, so the server should not hold a session, the SessionCreationPolicy should be STATELESS. 
+
+##### `configure(AuthenticationManagerBuilder auth)`
+ a method where we defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
 
 Spring Security doesn't come with a concrete implementation of `UserDetailsService` that we could use out of the box with our in-memory database. Therefore, we create a new class called `CustomUserDetailsService`:
 
