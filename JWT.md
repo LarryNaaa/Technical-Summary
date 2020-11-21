@@ -661,8 +661,70 @@ We have annotated this class with `@EnableWebSecurity` and made it extend `WebSe
 a method where we can define which resources are public and which are secured: 
 > + In our case, we set the `SIGN_UP_URL` endpoint and some routes(which suffix are png, jpg, html, css...) as being public and everything else as being secured. 
 > + We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and disable CSRF(Cross-Site Request Forgery). 
+> + We configure the session, it's a RESTful API and we want to use JWT, so the server should not hold a session, the `SessionCreationPolicy` should be STATELESS.
 > + We configure the exception handling. 
-> + We configure the session, it's a RESTful API and we want to use JWT, so the server should not hold a session, the SessionCreationPolicy should be STATELESS. 
+
+In order to handle the exception, we need to create a new class called `JwtAuthenticationEntryPoint`, which implements `AuthenticationEntryPoint` , this class will display some massage when the users are fail for the authentication:
+```java
+package com.jinyu.ppmtool.security;
+
+import com.google.gson.Gson;
+import com.jinyu.ppmtool.exceptions.InvalidLoginResponse;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Component
+public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+    @Override
+    public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
+                         AuthenticationException e) throws IOException, ServletException {
+
+        InvalidLoginResponse loginResponse = new InvalidLoginResponse();
+        String jsonLoginResponse = new Gson().toJson(loginResponse);
+
+        httpServletResponse.setContentType("application/json");
+        httpServletResponse.setStatus(401);
+        httpServletResponse.getWriter().print(jsonLoginResponse);
+    }
+}
+```
+When the users are fail for the authentication, it will return a JSON object(`InvalidLoginResponse`) to tell them that their username or password is invalid:
+```java
+package com.jinyu.ppmtool.exceptions;
+
+public class InvalidLoginResponse {
+    private String username;
+    private String password;
+
+    public InvalidLoginResponse() {
+        this.username = "Invalid Username";
+        this.password = "Invalid Password";
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+```
 
 ##### `configure(AuthenticationManagerBuilder auth)`
  a method where we defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
