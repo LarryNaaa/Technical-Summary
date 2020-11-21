@@ -622,7 +622,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
     	// enable Cross-Origin Resource Sharing and disable Cross-Site Request Forgery
         http.cors().and().csrf().disable()
-                // exception handling
+                // to handle exception, return a JSON object to tell users that their // username or password is invalid
                 .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
                 // manage session, it's a RESTful API and we want to use JWT, so the  // server should not hold a session, the SessionCreationPolicy should // be STATELESS.
                 .sessionManagement()
@@ -660,11 +660,11 @@ We have annotated this class with `@EnableWebSecurity` and made it extend `WebSe
 ##### `configure(HttpSecurity http)` method
 a method where we can define which resources are public and which are secured: 
 > + In our case, we set the `SIGN_UP_URL` endpoint and some routes(which suffix are png, jpg, html, css...) as being public and everything else as being secured. 
-> + We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and disable CSRF(Cross-Site Request Forgery). 
+> + We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and disable CSRF(Cross-Site Request Forgery) through `csrf().disable()`. 
 > + We configure the session, it's a RESTful API and we want to use JWT, so the server should not hold a session, the `SessionCreationPolicy` should be STATELESS.
-> + We configure the exception handling. 
+> + We configure the exception handling by using `.exceptionHandling().authenticationEntryPoint(unauthorizedHandler)`. 
 
-In order to handle the exception, we need to create a new class called `JwtAuthenticationEntryPoint`, which implements `AuthenticationEntryPoint` , this class will display some massage when the users are fail for the authentication:
+In order to handle the exception, we need to create a new class called `JwtAuthenticationEntryPoint`, which implements `AuthenticationEntryPoint` , this class will display some massage to users instead of an error(401 unauthorized) when the users are fail for the authentication:
 ```java
 package com.jinyu.ppmtool.security;
 
@@ -679,6 +679,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+// for autowired
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
