@@ -384,11 +384,8 @@ public class UserController {
 To support both authentication and authorization in our application, we are going to:
 
 > + implement an authentication filter to issue JWTS to users sending credentials,
-
 > + implement an authorization filter to validate requests containing JWTS,
-
 > + create a custom implementation of UserDetailsService to help Spring Security loading user-specific data in the framework,
-
 > + and extend the WebSecurityConfigurerAdapter class to customize the security framework to our needs.
 
 
