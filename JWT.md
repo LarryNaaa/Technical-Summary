@@ -224,9 +224,8 @@ public class User implements UserDetails {
         return true;
     }
 }
-
 ```
-This entity class contains three properties:
+This entity class contains some properties:
 
 > the `id` that works as the primary identifier of a user instance in the application,
 
@@ -235,9 +234,153 @@ This entity class contains three properties:
 > and the `password` to check the user identity.
 
 #### Repository Class
-In order to manage the persistence layer of this entity, we will create an interface called `UserRepository`. This interface will be an extension of `CrudRepository`, which gives us access to some common methods like `save`.
+In order to manage the persistence layer of this entity, we will create an interface called `UserRepository`. This interface will be an extension of `CrudRepository`, which gives us access to some common methods like `save`, `findById`, `findAll`, `Delete`:
+
+```java
+package com.jinyu.ppmtool.repositories;
+
+import com.jinyu.ppmtool.domain.User;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserRepository extends CrudRepository<User, Long> {
+    User findByUsername(String username);
+    User getById(Long id);
+}
+```
+
+We have also added two methods called `findByUsername` and `getById` to this interface. These methods will be used when we implement the authentication feature.
+
+#### Service Class
+We need to create a service class which called `UserService` to store new users in our database:
+
+```java
+package com.jinyu.ppmtool.services;
+
+import com.jinyu.ppmtool.domain.User;
+import com.jinyu.ppmtool.exceptions.UsernameAlreadyExistsException;
+import com.jinyu.ppmtool.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public User saveUser (User newUser){
+        try{
+            newUser.setPassword(bCryptPasswordEncoder.encode(newUser.getPassword()));
+            //Username has to be unique (exception)
+            newUser.setUsername(newUser.getUsername());
+            // Make sure that password and confirmPassword match
+            // We don't persist or show the confirmPassword
+            newUser.setConfirmPassword("");
+            return userRepository.save(newUser);
+
+        }catch (Exception e){
+            throw new UsernameAlreadyExistsException("Username '"+newUser.getUsername()+"' already exists");
+        }
+
+    }
+}
+
+```
+
+All it does is encrypt the password of the new user (holding it as plain text wouldn't be a good idea) and then save it to the database. The encryption process is handled by an instance of `BCryptPasswordEncoder`, which is a class that belongs to the Spring Security framework.
+
+#### Controller Class
+The endpoint that enables new users to register will be handled by a new `@Controller` class. We will call this controller `UserController`:
+
+```java
+package com.jinyu.ppmtool.web;
+
+import com.jinyu.ppmtool.domain.User;
+import com.jinyu.ppmtool.payload.JWTLoginSucessReponse;
+import com.jinyu.ppmtool.payload.LoginRequest;
+import com.jinyu.ppmtool.security.JwtTokenProvider;
+import com.jinyu.ppmtool.services.MapValidationErrorService;
+import com.jinyu.ppmtool.services.UserService;
+import com.jinyu.ppmtool.validator.UserValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.TOKEN_PREFIX;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private MapValidationErrorService mapValidationErrorService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserValidator userValidator;
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
 
+
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result){
+        ResponseEntity<?> errorMap = mapValidationErrorService.MapValidationService(result);
+        if(errorMap != null) return errorMap;
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = TOKEN_PREFIX +  tokenProvider.generateToken(authentication);
+
+        return ResponseEntity.ok(new JWTLoginSucessReponse(true, jwt));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody User user, BindingResult result){
+        // Validate passwords match
+        userValidator.validate(user, result);
+
+        ResponseEntity<?> errorMap = mapValidationErrorService.MapValidationService(result);
+        if(errorMap != null)return errorMap;
+
+        User newUser = userService.saveUser(user);
+
+        return  new ResponseEntity<User>(newUser, HttpStatus.CREATED);
+    }
+}
+
+```
+
+### User Authentication and Authorization on Spring Boot
 
 
 
