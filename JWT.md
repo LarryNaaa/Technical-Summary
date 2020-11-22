@@ -295,7 +295,31 @@ public class UserService {
 
 ```
 
-All it does is encrypt the password of the new user (holding it as plain text wouldn't be a good idea) and then save it to the database. The encryption process is handled by an instance of `BCryptPasswordEncoder`, which is a class that belongs to the Spring Security framework.
+All it does is encrypt the password of the new user (make password unreadable instead of holding it as a plain text) and then save it to the database. The encryption process is handled by an instance of `BCryptPasswordEncoder`, which is a class that belongs to the Spring Security framework.
+
+Before we use the instance of `BCryptPasswordEncoder`, we need to generate it, This method must be annotated with `@Bean` and we will add it in the `PpmtoolApplication` class, which is the main `SpringBootApplication`:
+```java
+package com.jinyu.ppmtool;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+@SpringBootApplication
+public class PpmtoolApplication {
+
+	@Bean
+	BCryptPasswordEncoder bCryptPasswordEncoder(){
+		return new BCryptPasswordEncoder();
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(PpmtoolApplication.class, args);
+	}
+
+}
+```
 
 #### Controller Class
 The endpoint that enables new users to register will be handled by a new `@Controller` class. We will call this controller `UserController`:
