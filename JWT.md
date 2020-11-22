@@ -405,6 +405,40 @@ public class UserController {
 }
 
 ```
+We have a method `registerUser` to save new users in our database, in this method we need to validate the password through `UserValidator` class. It implements `Validator` interface, we override `validate` method to make sure the length of password must be at least 6 characters and the password and the confirm password are matched:
+```java
+package com.jinyu.ppmtool.validator;
+
+import com.jinyu.ppmtool.domain.User;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+@Component
+public class UserValidator implements Validator {
+
+    @Override
+    public boolean supports(Class<?> aClass) {
+        return User.class.equals(aClass);
+    }
+
+    @Override
+    public void validate(Object object, Errors errors) {
+
+        User user = (User) object;
+
+        if(user.getPassword().length() <6){
+            errors.rejectValue("password","Length", "Password must be at least 6 characters");
+        }
+
+        //confirmPassword
+        if(!user.getPassword().equals(user.getConfirmPassword())){
+            errors.rejectValue("confirmPassword","Match", "Passwords must match");
+
+        }
+    }
+}
+``` 
 
 ### User Authentication and Authorization on Spring Boot
 To support both authentication and authorization in our application, we are going to:
@@ -687,7 +721,7 @@ We have annotated this class with `@EnableWebSecurity` and made it extend `WebSe
 
 ##### `configure(HttpSecurity http)` method
 a method where we can define which resources are public and which are secured: 
-> + In our case, we set the `SIGN_UP_URL` endpoint and some routes(which suffix are png, jpg, html, css...) as being public and everything else as being secured. 
+> + In our case, we set the urls of user login, sign-up(`SIGN_UP_URL`) and some other routes(which suffix are png, jpg, html, css...) as being public and everything else as being secured. 
 > + We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and disable CSRF(Cross-Site Request Forgery) through `csrf().disable()`. 
 > + We configure the session, it's a RESTful API and we want to use JWT, so the server should not hold a session, the `SessionCreationPolicy` should be STATELESS.
 > + We configure the exception handling by using `.exceptionHandling().authenticationEntryPoint(unauthorizedHandler)`. 
