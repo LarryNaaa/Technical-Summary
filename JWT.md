@@ -231,7 +231,7 @@ This entity class contains some properties like:
 > + the `username` that will be used by users to identify themselves,
 > + and the `password` to check the user identity.
 
-We use some annotations to do validation for some attributes of user, like `@NotBlank` on `username`, when the username is blank, it will display a message to user that username is required. `@Email` annotation on `username`, it requires that the style of username needs to be an email. `@Transient` on `confirmPassword` means that `confirmPassword` is like a temporary variable, we use it to validate whether it is matched with password, and we don't want to store it in our database, because we already have password, we don't need to store it twice.
+We use some annotations to do validation for some attributes of user, like `@NotBlank` on `username`, when the username is blank, it will display a message to user that username is required. `@Email` annotation on `username`, it requires that the style of username needs to be an email. `@Transient` on `confirmPassword` means that `confirmPassword` is like a temporary variable, we use it to validate whether it is matched with `password`, and we don't want to store it in our database, because we already have `password`, we don't need to store it twice.
 
 `UserDetails` is an interface in Spring Security, we can override some methods like `isAccountNonExpired`.
 
@@ -832,7 +832,7 @@ public class InvalidLoginResponse {
 ```
 
 ##### `configure(AuthenticationManagerBuilder auth)`
- a method where we defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
+a method where we defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
 
 Spring Security doesn't come with a concrete implementation of `UserDetailsService` that we could use out of the box with our in-memory database. Therefore, we create a new class called `CustomUserDetailsService`:
 
@@ -875,5 +875,81 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 The methods that we had to implement are `loadUserByUsername` and `loadUserById`. When a user tries to authenticate, these method receives the `username` or `id`, searches the database for a record containing it, and (if found) returns an instance of User. The properties of this instance (username and password) are then checked against the credentials passed by the user in the login request. This last process is executed outside this class, by the Spring Security framework.
 
+#### JwtTokenProvider
+
+```java
+package com.jinyu.ppmtool.security;
+
+import com.jinyu.ppmtool.domain.User;
+import io.jsonwebtoken.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.EXPIRATION_TIME;
+import static com.jinyu.ppmtool.security.SecurityConstants.SECRET;
+
+@Component
+public class JwtTokenProvider {
+
+    //Generate the token
+
+    public String generateToken(Authentication authentication){
+        User user = (User)authentication.getPrincipal();
+        Date now = new Date(System.currentTimeMillis());
+
+        Date expiryDate = new Date(now.getTime()+EXPIRATION_TIME);
+
+        String userId = Long.toString(user.getId());
+
+        Map<String,Object> claims = new HashMap<>();
+        claims.put("id", (Long.toString(user.getId())));
+        claims.put("username", user.getUsername());
+        claims.put("fullName", user.getFullName());
+
+        return Jwts.builder()
+                .setSubject(userId)
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS512, SECRET)
+                .compact();
+    }
+
+    //Validate the token
+    public boolean validateToken(String token){
+        try{
+            Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
+            return true;
+        }catch (SignatureException ex){
+            System.out.println("Invalid JWT Signature");
+        }catch (MalformedJwtException ex){
+            System.out.println("Invalid JWT Token");
+        }catch (ExpiredJwtException ex){
+            System.out.println("Expired JWT token");
+        }catch (UnsupportedJwtException ex){
+            System.out.println("Unsupported JWT token");
+        }catch (IllegalArgumentException ex){
+            System.out.println("JWT claims string is empty");
+        }
+        return false;
+    }
+
+
+    //Get user Id from token
+
+    public Long getUserIdFromJWT(String token){
+        Claims claims = Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody();
+        String id = (String)claims.get("id");
+
+        return Long.parseLong(id);
+    }
+}
+```
+##### `generateToken` method
+This method is used to generate tokens when we have valid username and password. We can use `Jwts.builder()` to generate tokens with some reserved claims(subject of the JWT (the user), issue time, expiration time), custom claims(user id, username, fullname) and signature algorithm(HS512).
 
 
