@@ -72,6 +72,171 @@ It  used to validate that the token is trustworthy and has not been tampered wit
 
 ## Process of implement JWT
 ### Enabling User Registration on Spring Boot APIs
+#### Configure `HttpSecurity`
+We create a new class called `SecurityConfig` to extend `WebSecurityConfigurerAdapter`. `WebSecurityConfigurerAdapter` is an abstract class in Spring Security, it provides default security configurations. By extending it, we are allowed to customize those security configurations by overriding some of the methods:
+
+```java
+package com.jinyu.ppmtool.security;
+
+import com.jinyu.ppmtool.services.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.BeanIds;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.H2_URL;
+import static com.jinyu.ppmtool.security.SecurityConstants.SIGN_UP_URLS;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(
+        securedEnabled = true,
+        jsr250Enabled = true,
+        prePostEnabled = true
+)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {return  new JwtAuthenticationFilter();}
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+        authenticationManagerBuilder.userDetailsService(customUserDetailsService).passwordEncoder(bCryptPasswordEncoder);
+    }
+
+    @Override
+    @Bean(BeanIds.AUTHENTICATION_MANAGER)
+    protected AuthenticationManager authenticationManager() throws Exception {
+        return super.authenticationManager();
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+    	// enable Cross-Origin Resource Sharing and disable Cross-Site Request Forgery
+        http.cors().and().csrf().disable()
+                // to handle exception, return a JSON object to tell users that their // username or password is invalid
+                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                // manage session, it's a RESTful API and we want to use JWT, so the  // server should not hold a session, the SessionCreationPolicy should // be STATELESS.
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                // to enable H2 Database
+                .headers().frameOptions().sameOrigin() 
+                .and()
+                // to specify some of the routes that we want to make them public,
+                // the suffix of the routes are png, jpg, html, js, css...
+                .authorizeRequests()
+                .antMatchers(
+                        "/",
+                        "/favicon.ico",
+                        "/**/*.png",
+                        "/**/*.gif",
+                        "/**/*.svg",
+                        "/**/*.jpg",
+                        "/**/*.html",
+                        "/**/*.css",
+                        "/**/*.js"
+                ).permitAll()
+                .antMatchers(SIGN_UP_URLS).permitAll()
+                .antMatchers(H2_URL).permitAll()
+                // any thing other than that should have an authentication
+                .anyRequest().authenticated();
+
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
+}
+```
+
+We have annotated this class with `@EnableWebSecurity` and made it extend `WebSecurityConfigurerAdapter` to take advantage of the default web security configuration provided by Spring Security. This allows us to fine-tune the framework to our needs by defining three methods:
+
+##### `configure(HttpSecurity http)` method
+a method where we can define which resources are public and which are secured: 
+> + In our case, we set the urls of user login, sign-up(`SIGN_UP_URL`) and some other routes(which suffix are png, jpg, html, css...) as being public and everything else as being secured. 
+> + We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and disable CSRF(Cross-Site Request Forgery) through `csrf().disable()`. 
+> + We configure the session, it's a RESTful API and we want to use JWT, so the server should not hold a session, the `SessionCreationPolicy` should be STATELESS.
+> + We configure the exception handling by using `.exceptionHandling().authenticationEntryPoint(unauthorizedHandler)`. 
+
+In order to handle the exception, we need to create a new class called `JwtAuthenticationEntryPoint`, which implements `AuthenticationEntryPoint` , this class will display some massage to users instead of an error(401 unauthorized) when the users are fail for the authentication:
+```java
+package com.jinyu.ppmtool.security;
+
+import com.google.gson.Gson;
+import com.jinyu.ppmtool.exceptions.InvalidLoginResponse;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+// for autowired
+@Component
+public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+    @Override
+    public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
+                         AuthenticationException e) throws IOException, ServletException {
+
+        InvalidLoginResponse loginResponse = new InvalidLoginResponse();
+        String jsonLoginResponse = new Gson().toJson(loginResponse);
+
+        httpServletResponse.setContentType("application/json");
+        httpServletResponse.setStatus(401);
+        httpServletResponse.getWriter().print(jsonLoginResponse);
+    }
+}
+```
+When the users are fail for the authentication, it will return a JSON object(`InvalidLoginResponse`) to tell them that their username or password is invalid:
+```java
+package com.jinyu.ppmtool.exceptions;
+
+public class InvalidLoginResponse {
+    private String username;
+    private String password;
+
+    public InvalidLoginResponse() {
+        this.username = "Invalid Username";
+        this.password = "Invalid Password";
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+```
+
 #### Entity Class
 Before we start secure our application, the first step is to allow users to register themselves. So first we create a new entity class called `User`, which implements `UserDetails`:
 ```java
@@ -665,10 +830,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 We have extended the `OncePerRequestFilter` to make Spring replace it in the filter chain with our custom implementation. The most important part of the filter that we've implemented is the private `getJWTFromRequest` method. This method reads the JWT from the Authorization header, and then uses JWT to validate the token. If everything is in place, we set the user in the `SecurityContext` and allow the request to move on.
 
-
-#### Integrating the Security Filters on Spring Boot
-Now that we have both security filters properly created, we have to configure them on the Spring Security filter chain. To do that, we are going to create a new class called `SecurityConfig` to extend `WebSecurityConfigurerAdapter`. `WebSecurityConfigurerAdapter` is an abstract class in Spring Security, it provides default security configurations. By extending it, we are allowed to customize those security configurations by overriding some of the methods:
-
+### Authenticate User and Generate Jwt Token
+#### Configure `AuthenticationManagerBuilder` and Generate `authenticationManager`
+We need to use `authenticationManager` to authenticate user, so first we configure `AuthenticationManagerBuilder` and then generate `authenticationManager`.
 ```java
 package com.jinyu.ppmtool.security;
 
@@ -758,81 +922,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 }
 ```
-
-We have annotated this class with `@EnableWebSecurity` and made it extend `WebSecurityConfigurerAdapter` to take advantage of the default web security configuration provided by Spring Security. This allows us to fine-tune the framework to our needs by defining three methods:
-
-##### `configure(HttpSecurity http)` method
-a method where we can define which resources are public and which are secured: 
-> + In our case, we set the urls of user login, sign-up(`SIGN_UP_URL`) and some other routes(which suffix are png, jpg, html, css...) as being public and everything else as being secured. 
-> + We also configure CORS (Cross-Origin Resource Sharing) support through `http.cors()` and disable CSRF(Cross-Site Request Forgery) through `csrf().disable()`. 
-> + We configure the session, it's a RESTful API and we want to use JWT, so the server should not hold a session, the `SessionCreationPolicy` should be STATELESS.
-> + We configure the exception handling by using `.exceptionHandling().authenticationEntryPoint(unauthorizedHandler)`. 
-
-In order to handle the exception, we need to create a new class called `JwtAuthenticationEntryPoint`, which implements `AuthenticationEntryPoint` , this class will display some massage to users instead of an error(401 unauthorized) when the users are fail for the authentication:
-```java
-package com.jinyu.ppmtool.security;
-
-import com.google.gson.Gson;
-import com.jinyu.ppmtool.exceptions.InvalidLoginResponse;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.stereotype.Component;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
-// for autowired
-@Component
-public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
-
-    @Override
-    public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                         AuthenticationException e) throws IOException, ServletException {
-
-        InvalidLoginResponse loginResponse = new InvalidLoginResponse();
-        String jsonLoginResponse = new Gson().toJson(loginResponse);
-
-        httpServletResponse.setContentType("application/json");
-        httpServletResponse.setStatus(401);
-        httpServletResponse.getWriter().print(jsonLoginResponse);
-    }
-}
-```
-When the users are fail for the authentication, it will return a JSON object(`InvalidLoginResponse`) to tell them that their username or password is invalid:
-```java
-package com.jinyu.ppmtool.exceptions;
-
-public class InvalidLoginResponse {
-    private String username;
-    private String password;
-
-    public InvalidLoginResponse() {
-        this.username = "Invalid Username";
-        this.password = "Invalid Password";
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-}
-```
-
 ##### `configure(AuthenticationManagerBuilder auth)`
-a method where we defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
+We need to configure `AuthenticationManagerBuilder` and use it to generate `authenticationManager`. We defined a custom implementation of `UserDetailsService` to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (`BCryptPasswordEncoder`).
 
 Spring Security doesn't come with a concrete implementation of `UserDetailsService` that we could use out of the box with our in-memory database. Therefore, we create a new class called `CustomUserDetailsService`:
 
@@ -872,12 +963,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 }
 ```
-
 The methods that we had to implement are `loadUserByUsername` and `loadUserById`. When a user tries to authenticate, these method receives the `username` or `id`, searches the database for a record containing it, and (if found) returns an instance of User. The properties of this instance (username and password) are then checked against the credentials passed by the user in the login request. This last process is executed outside this class, by the Spring Security framework.
 
-### Authenticate User and Generate Jwt Token
 #### JwtTokenProvider
-
+We create a class called `JwtTokenProvider`, this class is used to generate token, validate token and get user id from token:
 ```java
 package com.jinyu.ppmtool.security;
 
@@ -954,7 +1043,7 @@ public class JwtTokenProvider {
 This method is used to generate tokens when we have valid username and password. We can use `Jwts.builder()` to generate tokens with some reserved claims(subject of the JWT (the user), issue time, expiration time), custom claims(user id, username, fullname) and signature algorithm(HS512).
 
 ##### Controller Class
-In our `UserController` class, we need to add a method `authenticateUser` to use `authenticationManager` to generate authentication and token with username and password:
+Next step is to authenticate user. In our `UserController` class, we need to add a method `authenticateUser` to use `authenticationManager` to generate authentication with username and password, and then use `tokenProvider` to generate a token:
 
 ```java
 package com.jinyu.ppmtool.web;
