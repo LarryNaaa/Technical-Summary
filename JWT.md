@@ -231,7 +231,7 @@ This entity class contains some properties like:
 > + the `username` that will be used by users to identify themselves,
 > + and the `password` to check the user identity.
 
-We use some annotations to do validation for some attributes of user, like `@NotBlank` on `username`, when the username is blank, it will display a message to user that username is required.
+We use some annotations to do validation for some attributes of user, like `@NotBlank` on `username`, when the username is blank, it will display a message to user that username is required. `@Email` annotation on `username`, it requires that the style of username needs to be an email.
 
 `UserDetails` is an interface in Spring Security, we can override some methods like `isAccountNonExpired`.
 
