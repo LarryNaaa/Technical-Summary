@@ -297,6 +297,7 @@ public class UserService {
 
 ```
 
+##### Encrypt Password
 All it does is encrypt the password of the new user (make password unreadable instead of holding it as a plain text) and then save it to the database. The encryption process is handled by an instance of `BCryptPasswordEncoder`, which is a class that belongs to the Spring Security framework.
 
 Before we use the instance of `BCryptPasswordEncoder`, we need to generate it, This method must be annotated with `@Bean` and we will add it in the `PpmtoolApplication` class, which is the main `SpringBootApplication`:
@@ -322,6 +323,45 @@ public class PpmtoolApplication {
 
 }
 ```
+##### Throw UsernameAlreadyExistsException
+The username is unique, when user register with a username that is already existed, the apllication will display a message to user that they need to choose some other username.
+
+The `CustomResponseEntityExceptionHandler` class manage all exception handlers
+```java
+package com.jinyu.ppmtool.exceptions;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+@ControllerAdvice
+@RestController
+public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleProjectIdException(ProjectIdException ex, WebRequest request){
+        ProjectIdExceptionResponse exceptionResponse = new ProjectIdExceptionResponse(ex.getMessage());
+        return new ResponseEntity<Object>(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleProjectNotFoundException(ProjectNotFoundException ex, WebRequest request){
+        ProjectNotFoundExceptionResponse exceptionResponse = new ProjectNotFoundExceptionResponse(ex.getMessage());
+        return new ResponseEntity<Object>(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex, WebRequest request){
+        UsernameAlreadyExistsResponse exceptionResponse = new UsernameAlreadyExistsResponse(ex.getMessage());
+        return new ResponseEntity<Object>(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
+}
+```
+
 
 #### Controller Class
 The endpoint that enables new users to register will be handled by a new `@Controller` class. We will call this controller `UserController`:
