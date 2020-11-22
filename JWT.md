@@ -875,6 +875,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 The methods that we had to implement are `loadUserByUsername` and `loadUserById`. When a user tries to authenticate, these method receives the `username` or `id`, searches the database for a record containing it, and (if found) returns an instance of User. The properties of this instance (username and password) are then checked against the credentials passed by the user in the login request. This last process is executed outside this class, by the Spring Security framework.
 
+### Authenticate User and Generate Jwt Token
 #### JwtTokenProvider
 
 ```java
@@ -951,5 +952,165 @@ public class JwtTokenProvider {
 ```
 ##### `generateToken` method
 This method is used to generate tokens when we have valid username and password. We can use `Jwts.builder()` to generate tokens with some reserved claims(subject of the JWT (the user), issue time, expiration time), custom claims(user id, username, fullname) and signature algorithm(HS512).
+
+##### Controller Class
+In our `UserController` class, we need to add a method `authenticateUser` to use `authenticationManager` to generate authentication and token with username and password:
+
+```java
+package com.jinyu.ppmtool.web;
+
+import com.jinyu.ppmtool.domain.User;
+import com.jinyu.ppmtool.payload.JWTLoginSucessReponse;
+import com.jinyu.ppmtool.payload.LoginRequest;
+import com.jinyu.ppmtool.security.JwtTokenProvider;
+import com.jinyu.ppmtool.services.MapValidationErrorService;
+import com.jinyu.ppmtool.services.UserService;
+import com.jinyu.ppmtool.validator.UserValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.TOKEN_PREFIX;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private MapValidationErrorService mapValidationErrorService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserValidator userValidator;
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result){
+        ResponseEntity<?> errorMap = mapValidationErrorService.MapValidationService(result);
+        if(errorMap != null) return errorMap;
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = TOKEN_PREFIX +  tokenProvider.generateToken(authentication);
+
+        return ResponseEntity.ok(new JWTLoginSucessReponse(true, jwt));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody User user, BindingResult result){
+        // Validate passwords match
+        userValidator.validate(user, result);
+
+        ResponseEntity<?> errorMap = mapValidationErrorService.MapValidationService(result);
+        if(errorMap != null)return errorMap;
+
+        User newUser = userService.saveUser(user);
+
+        return  new ResponseEntity<User>(newUser, HttpStatus.CREATED);
+    }
+}
+
+```
+
+The input parameter of this method `authenticateUser` is a custom object `LoginRequest`, which contains `username` and `password` of users:
+```java
+package com.jinyu.ppmtool.payload;
+
+import javax.validation.constraints.NotBlank;
+
+public class LoginRequest {
+    @NotBlank(message = "Username cannot be blank")
+    private String username;
+    @NotBlank(message = "Password cannot be blank")
+    private String password;
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+```
+
+The output parameter of this method `authenticateUser` is also a custom object `JWTLoginSucessReponse`, which contains a boolean variable `success` and `token` which generated by this method:
+```java
+package com.jinyu.ppmtool.payload;
+
+public class JWTLoginSucessReponse {
+    private boolean success;
+    private String token;
+
+    public JWTLoginSucessReponse(boolean success, String token) {
+        this.success = success;
+        this.token = token;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    @Override
+    public String toString() {
+        return "JWTLoginSucessReponse{" +
+                "success=" + success +
+                ", token='" + token + '\'' +
+                '}';
+    }
+}
+```
+
+
+
+
+
+
+
+
 
 
