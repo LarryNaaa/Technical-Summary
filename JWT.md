@@ -324,7 +324,7 @@ public class PpmtoolApplication {
 }
 ```
 ##### Throw UsernameAlreadyExistsException
-The username is unique, when user register with a username that is already existed, the apllication will display a message to user that they need to choose some other username.
+We set a unique restriction on username in `User` class, so when user register with a username that has already existed in database, the apllication will display a message to user that they need to choose some other username.
 
 The `CustomResponseEntityExceptionHandler` class manage all exception handlers
 ```java
