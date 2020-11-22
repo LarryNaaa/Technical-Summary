@@ -1193,7 +1193,19 @@ public class JWTLoginSucessReponse {
     }
 }
 ```
-
+Now, we can get valid token with valid username and password:
+```JSON
+{
+    "username": "test1@email.com",
+    "password": "123456"
+}
+``` 
+```JSON
+{
+    "success": true,
+    "token": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJmdWxsTmFtZSI6IkxhcnJ5IE5hIiwiaWQiOiIyIiwiZXhwIjoxNjA2MDg4MzY3LCJpYXQiOjE2MDYwODgwNjcsInVzZXJuYW1lIjoidGVzdDFAZW1haWwuY29tIn0.LUiu4lSbHED4QkMVqysoTL0aujgZS0ntfAOpFWbN4VAoiAovBdVQom7BVB9XnK6mmZRR-Felukx8wVC66RsXjA"
+}
+```
 
 
 
