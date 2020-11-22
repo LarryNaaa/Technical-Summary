@@ -225,7 +225,7 @@ public class User implements UserDetails {
     }
 }
 ```
-This entity class contains some properties:
+This entity class contains some properties like:
 
 > + the `id` that works as the primary identifier of a user instance in the application,
 > + the `username` that will be used by users to identify themselves,
@@ -234,6 +234,8 @@ This entity class contains some properties:
 We use some annotations to do validation for some attributes of user, like `@NotBlank` on `username`, when the username is blank, it will display a message to user that username is required.
 
 `UserDetails` is an interface in Spring Security, we can override some methods like `isAccountNonExpired`.
+
+`@JsonIgnore` annotation make the overriding methods of `UserDetails` not be a part of JSON object.
 
 #### Repository Class
 In order to manage the persistence layer of this entity, we will create an interface called `UserRepository`. This interface will be an extension of `CrudRepository`, which is an interface in Spring framework and gives us access to some common methods like `save`, `findById`, `findAll`, `Delete`:
