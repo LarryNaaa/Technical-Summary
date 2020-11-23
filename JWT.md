@@ -1345,7 +1345,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 We have extended the `OncePerRequestFilter` to make Spring replace it in the filter chain with our custom implementation. The most important part of the filter that we've implemented is the private `getJWTFromRequest` method. This method reads the JWT from the Authorization header, and then uses JWT to validate the token. If everything is in place, we set the user in the `SecurityContext` and allow the request to move on.
 
 ##### `getJWTFromRequest` method
-This method is used to get JWT from the headers of the request, the key is `Authorization`, which is defined in `SecurityConstants` class:
+This method is used to get JWT from the `Authorization` header of the request, `HEADER_STRING`is defined in `SecurityConstants` class:
 ```java
 package com.jinyu.ppmtool.security;
 
