@@ -915,7 +915,7 @@ public class UserController {
 In this method, we do three things:
 > + use `authenticationManager` to generate authentication with username and password, 
 > + store it in the `SecurityContext`, 
-> + use `tokenProvider` to generate a token.
+> + use `JwtTokenProvider` to generate a token.
 
 The input parameter of this method is a custom object `LoginRequest`, which contains `username` and `password` of users:
 ```java
