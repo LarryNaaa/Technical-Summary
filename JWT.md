@@ -465,7 +465,7 @@ public class UserService {
 ##### Encrypt Password
 All it does is encrypt the password of the new user (make password unreadable instead of holding it as a plain text) and then save it to the database. The encryption process is handled by an instance of `BCryptPasswordEncoder`, which is a class that belongs to the Spring Security framework.
 
-Before we use the instance of `BCryptPasswordEncoder`, we need to generate it, This method must be annotated with `@Bean` and we will add it in the `PpmtoolApplication` class, which is the main `SpringBootApplication`:
+Before we use the instance of `BCryptPasswordEncoder`, we need to generate it, This method must be annotated with `@Bean` and we will add it in the `PpmtoolApplication` class, which is the main `SpringBootApplication`, and `BCryptPasswordEncoder` should be annotated with `Autowired` in `UserService`:
 ```java
 package com.jinyu.ppmtool;
 
