@@ -73,7 +73,7 @@ It  used to validate that the token is trustworthy and has not been tampered wit
 ## Process of implement JWT
 ### Enabling User Registration on Spring Boot APIs
 #### Configure `HttpSecurity`
-We create a new class called `SecurityConfig` to extend `WebSecurityConfigurerAdapter`. `WebSecurityConfigurerAdapter` is an abstract class in Spring Security, it provides default security configurations. By extending it, we are allowed to customize those security configurations by overriding some of the methods:
+The first step is to customize the security framework to our needs, so we create a new class called `SecurityConfig` to extend `WebSecurityConfigurerAdapter`. `WebSecurityConfigurerAdapter` is an abstract class in Spring Security, it provides default security configurations. By extending it, we are allowed to customize those security configurations by overriding some of the methods:
 
 ```java
 package com.jinyu.ppmtool.security;
@@ -238,7 +238,7 @@ public class InvalidLoginResponse {
 ```
 
 #### Entity Class
-Before we start secure our application, the first step is to allow users to register themselves. So first we create a new entity class called `User`, which implements `UserDetails`:
+Before we start secure our application, we should allow users to register themselves. So first we create a new entity class called `User`, which implements `UserDetails`:
 ```java
 package com.jinyu.ppmtool.domain;
 
@@ -402,7 +402,7 @@ We use some annotations to do validation for some attributes of user, like `@Not
 
 `@JsonIgnore` annotation make the overriding methods of `UserDetails` not be a part of JSON object.
 
-#### Repository Class
+#### Repository Interface
 In order to manage the persistence layer of this entity, we will create an interface called `UserRepository`. This interface will be an extension of `CrudRepository`, which is an interface in Spring framework and gives us access to some common methods like `save`, `findById`, `findAll`, `Delete`:
 
 ```java
@@ -646,189 +646,6 @@ public class UserValidator implements Validator {
     }
 }
 ``` 
-
-### User Authentication and Authorization on Spring Boot
-To support both authentication and authorization in our application, we are going to:
-
-> + implement an authentication filter to issue JWTS to users sending credentials,
-> + implement an authorization filter to validate requests containing JWTS,
-> + create a custom implementation of `UserDetailsService` to help Spring Security loading user-specific data in the framework,
-> + and extend the `WebSecurityConfigurerAdapter` class to customize the security framework to our needs.
-
-#### The Authentication Filter
-The first element that we are going to create is the class responsible for the authentication process. We are going to call this class `JwtAuthenticationFilter`, and we will implement it with the following code:
-
-```java
-package com.jinyu.ppmtool.security;
-
-import com.jinyu.ppmtool.domain.User;
-import com.jinyu.ppmtool.services.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
-import java.util.Collections;
-
-import static com.jinyu.ppmtool.security.SecurityConstants.HEADER_STRING;
-import static com.jinyu.ppmtool.security.SecurityConstants.TOKEN_PREFIX;
-
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    @Autowired
-    private JwtTokenProvider tokenProvider;
-
-    @Autowired
-    private CustomUserDetailsService customUserDetailsService;
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        try {
-
-            String jwt = getJWTFromRequest(httpServletRequest);
-
-            if(StringUtils.hasText(jwt)&& tokenProvider.validateToken(jwt)){
-                Long userId = tokenProvider.getUserIdFromJWT(jwt);
-                User userDetails = customUserDetailsService.loadUserById(userId);
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, Collections.emptyList());
-
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            }
-
-        }catch (Exception ex){
-            logger.error("Could not set user authentication in security context", ex);
-        }
-
-
-        filterChain.doFilter(httpServletRequest, httpServletResponse);
-
-    }
-
-
-
-    private String getJWTFromRequest(HttpServletRequest request){
-        String bearerToken = request.getHeader(HEADER_STRING);
-
-        if(StringUtils.hasText(bearerToken)&&bearerToken.startsWith(TOKEN_PREFIX)){
-            return bearerToken.substring(7, bearerToken.length());
-        }
-
-        return null;
-    }
-}
-
-```
-
-Now we have to create the `SecurityConstants` class:
-
-```java
-package com.jinyu.ppmtool.security;
-
-public class SecurityConstants {
-
-    public static final String SIGN_UP_URLS = "/api/users/**";
-    public static final String H2_URL = "h2-console/**";
-    public static final String SECRET ="SecretKeyToGenJWTs";
-    public static final String TOKEN_PREFIX= "Bearer ";
-    public static final String HEADER_STRING = "Authorization";
-    public static final long EXPIRATION_TIME = 300_000; //300 seconds
-}
-```
-This class contains some constants referenced by the `JwtAuthenticationFilter` class.
-
-#### The Authorization Filter
-As we have implemented the filter responsible for authenticating users, we now need to implement the filter responsible for user authorization. We create this filter as a new class, called `JWTAuthorizationFilter`:
-
-```java
-package com.jinyu.ppmtool.security;
-
-import com.jinyu.ppmtool.domain.User;
-import com.jinyu.ppmtool.services.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
-import java.util.Collections;
-
-import static com.jinyu.ppmtool.security.SecurityConstants.HEADER_STRING;
-import static com.jinyu.ppmtool.security.SecurityConstants.TOKEN_PREFIX;
-
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    @Autowired
-    private JwtTokenProvider tokenProvider;
-
-    @Autowired
-    private CustomUserDetailsService customUserDetailsService;
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        try {
-
-            String jwt = getJWTFromRequest(httpServletRequest);
-
-            if(StringUtils.hasText(jwt)&& tokenProvider.validateToken(jwt)){
-                Long userId = tokenProvider.getUserIdFromJWT(jwt);
-                User userDetails = customUserDetailsService.loadUserById(userId);
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, Collections.emptyList());
-
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            }
-
-        }catch (Exception ex){
-            logger.error("Could not set user authentication in security context", ex);
-        }
-
-
-        filterChain.doFilter(httpServletRequest, httpServletResponse);
-
-    }
-
-
-
-    private String getJWTFromRequest(HttpServletRequest request){
-        String bearerToken = request.getHeader(HEADER_STRING);
-
-        if(StringUtils.hasText(bearerToken)&&bearerToken.startsWith(TOKEN_PREFIX)){
-            return bearerToken.substring(7, bearerToken.length());
-        }
-
-        return null;
-    }
-}
-
-```
-
-We have extended the `OncePerRequestFilter` to make Spring replace it in the filter chain with our custom implementation. The most important part of the filter that we've implemented is the private `getJWTFromRequest` method. This method reads the JWT from the Authorization header, and then uses JWT to validate the token. If everything is in place, we set the user in the `SecurityContext` and allow the request to move on.
 
 ### Generate Jwt Token
 #### Configure `AuthenticationManagerBuilder` and Generate `authenticationManager`
