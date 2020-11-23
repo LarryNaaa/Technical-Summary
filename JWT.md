@@ -71,6 +71,9 @@ It  used to validate that the token is trustworthy and has not been tampered wit
 
 
 ## Process of implement JWT
+
+![Process of implement JWT](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/JWT%20Implement.png)
+
 ### Enabling User Registration on Spring Boot APIs
 #### Entity Class
 Before we start secure our application, we should allow users to register themselves. So first we create a new entity class called `User`, which implements `UserDetails`:
