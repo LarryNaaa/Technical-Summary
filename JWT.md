@@ -830,7 +830,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 We have extended the `OncePerRequestFilter` to make Spring replace it in the filter chain with our custom implementation. The most important part of the filter that we've implemented is the private `getJWTFromRequest` method. This method reads the JWT from the Authorization header, and then uses JWT to validate the token. If everything is in place, we set the user in the `SecurityContext` and allow the request to move on.
 
-### Authenticate User and Generate Jwt Token
+### Generate Jwt Token
 #### Configure `AuthenticationManagerBuilder` and Generate `authenticationManager`
 We need to use `authenticationManager` to authenticate user, so first we configure `AuthenticationManagerBuilder` and then generate `authenticationManager`.
 ```java
@@ -966,7 +966,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 The methods that we had to implement are `loadUserByUsername` and `loadUserById`. When a user tries to authenticate, these method receives the `username` or `id`, searches the database for a record containing it, and (if found) returns an instance of User. The properties of this instance (username and password) are then checked against the credentials passed by the user in the login request. This last process is executed outside this class, by the Spring Security framework.
 
 #### JwtTokenProvider
-We create a class called `JwtTokenProvider`, this class is used to generate token, validate token and get user id from token:
+We create a class called `JwtTokenProvider`, and add a method called `generateToken`:
 ```java
 package com.jinyu.ppmtool.security;
 
@@ -1008,42 +1008,13 @@ public class JwtTokenProvider {
                 .signWith(SignatureAlgorithm.HS512, SECRET)
                 .compact();
     }
-
-    //Validate the token
-    public boolean validateToken(String token){
-        try{
-            Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
-            return true;
-        }catch (SignatureException ex){
-            System.out.println("Invalid JWT Signature");
-        }catch (MalformedJwtException ex){
-            System.out.println("Invalid JWT Token");
-        }catch (ExpiredJwtException ex){
-            System.out.println("Expired JWT token");
-        }catch (UnsupportedJwtException ex){
-            System.out.println("Unsupported JWT token");
-        }catch (IllegalArgumentException ex){
-            System.out.println("JWT claims string is empty");
-        }
-        return false;
-    }
-
-
-    //Get user Id from token
-
-    public Long getUserIdFromJWT(String token){
-        Claims claims = Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody();
-        String id = (String)claims.get("id");
-
-        return Long.parseLong(id);
-    }
 }
 ```
 ##### `generateToken` method
 This method is used to generate tokens when we have valid username and password. We can use `Jwts.builder()` to generate tokens with some reserved claims(subject of the JWT (the user), issue time, expiration time), custom claims(user id, username, fullname) and signature algorithm(HS512).
 
-##### Controller Class
-Next step is to authenticate user. In our `UserController` class, we need to add a method `authenticateUser` to use `authenticationManager` to generate authentication with username and password, and then use `tokenProvider` to generate a token:
+#### Controller Class
+Next step is to authenticate user, in our `UserController` class, we need to add a method called `authenticateUser`:
 
 ```java
 package com.jinyu.ppmtool.web;
@@ -1124,6 +1095,11 @@ public class UserController {
 }
 
 ```
+##### `authenticateUser` method
+In this method, we do three things:
+> + use `authenticationManager` to generate authentication with username and password, 
+> + store it in the `SecurityContext`, 
+> + use `tokenProvider` to generate a token.
 
 The input parameter of this method `authenticateUser` is a custom object `LoginRequest`, which contains `username` and `password` of users:
 ```java
@@ -1207,8 +1183,182 @@ Now, we can get valid token with valid username and password:
 }
 ```
 
+### Authenticate User
+#### JwtTokenProvider
+In `JwtTokenProvider` class, we need to add two methods, which are `validateToken` and `getUserIdFromJWT`:
+```java
+package com.jinyu.ppmtool.security;
+
+import com.jinyu.ppmtool.domain.User;
+import io.jsonwebtoken.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.EXPIRATION_TIME;
+import static com.jinyu.ppmtool.security.SecurityConstants.SECRET;
+
+@Component
+public class JwtTokenProvider {
+
+    //Generate the token
+
+    public String generateToken(Authentication authentication){
+        User user = (User)authentication.getPrincipal();
+        Date now = new Date(System.currentTimeMillis());
+
+        Date expiryDate = new Date(now.getTime()+EXPIRATION_TIME);
+
+        String userId = Long.toString(user.getId());
+
+        Map<String,Object> claims = new HashMap<>();
+        claims.put("id", (Long.toString(user.getId())));
+        claims.put("username", user.getUsername());
+        claims.put("fullName", user.getFullName());
+
+        return Jwts.builder()
+                .setSubject(userId)
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS512, SECRET)
+                .compact();
+    }
+
+    //Validate the token
+    public boolean validateToken(String token){
+        try{
+            Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
+            return true;
+        }catch (SignatureException ex){
+            System.out.println("Invalid JWT Signature");
+        }catch (MalformedJwtException ex){
+            System.out.println("Invalid JWT Token");
+        }catch (ExpiredJwtException ex){
+            System.out.println("Expired JWT token");
+        }catch (UnsupportedJwtException ex){
+            System.out.println("Unsupported JWT token");
+        }catch (IllegalArgumentException ex){
+            System.out.println("JWT claims string is empty");
+        }
+        return false;
+    }
 
 
+    //Get user Id from token
+
+    public Long getUserIdFromJWT(String token){
+        Claims claims = Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody();
+        String id = (String)claims.get("id");
+
+        return Long.parseLong(id);
+    }
+}
+```
+##### `validateToken` method
+
+##### `getUserIdFromJWT` method
+
+#### The Authorization Filter
+As we have implemented the filter responsible for authenticating users, we now need to implement the filter responsible for user authorization. We create this filter as a new class, called `JWTAuthorizationFilter`:
+
+```java
+package com.jinyu.ppmtool.security;
+
+import com.jinyu.ppmtool.domain.User;
+import com.jinyu.ppmtool.services.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.util.Collections;
+
+import static com.jinyu.ppmtool.security.SecurityConstants.HEADER_STRING;
+import static com.jinyu.ppmtool.security.SecurityConstants.TOKEN_PREFIX;
+
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        try {
+
+            String jwt = getJWTFromRequest(httpServletRequest);
+
+            if(StringUtils.hasText(jwt)&& tokenProvider.validateToken(jwt)){
+                Long userId = tokenProvider.getUserIdFromJWT(jwt);
+                User userDetails = customUserDetailsService.loadUserById(userId);
+
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, Collections.emptyList());
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            }
+
+        }catch (Exception ex){
+            logger.error("Could not set user authentication in security context", ex);
+        }
+
+
+        filterChain.doFilter(httpServletRequest, httpServletResponse);
+
+    }
+
+
+
+    private String getJWTFromRequest(HttpServletRequest request){
+        String bearerToken = request.getHeader(HEADER_STRING);
+
+        if(StringUtils.hasText(bearerToken)&&bearerToken.startsWith(TOKEN_PREFIX)){
+            return bearerToken.substring(7, bearerToken.length());
+        }
+
+        return null;
+    }
+}
+
+```
+
+We have extended the `OncePerRequestFilter` to make Spring replace it in the filter chain with our custom implementation. The most important part of the filter that we've implemented is the private `getJWTFromRequest` method. This method reads the JWT from the Authorization header, and then uses JWT to validate the token. If everything is in place, we set the user in the `SecurityContext` and allow the request to move on.
+
+##### `getJWTFromRequest` method
+This method is used to get JWT from the headers of the request, the key is `Authorization`, which is defined in `SecurityConstants` class:
+```java
+package com.jinyu.ppmtool.security;
+
+public class SecurityConstants {
+
+    public static final String SIGN_UP_URLS = "/api/users/**";
+    public static final String H2_URL = "h2-console/**";
+    public static final String SECRET ="SecretKeyToGenJWTs";
+    public static final String TOKEN_PREFIX= "Bearer ";
+    public static final String HEADER_STRING = "Authorization";
+    public static final long EXPIRATION_TIME = 300_000; //300 seconds
+}
+```
+
+##### `doFilterInternal` method
 
 
 
