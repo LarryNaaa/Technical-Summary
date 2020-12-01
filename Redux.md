@@ -13,6 +13,7 @@
 ![Redux_1](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_1.png)
 
 ### View
+Create a component called `AddProject`.
 ```JavaScript
 import React, { Component } from "react";
 import PropTypes from "prop-types";
@@ -180,7 +181,7 @@ const mapStateToProps = (state) => ({
 
 export default connect(mapStateToProps, { createProject })(AddProject);
 
-````
+```
 
 ### Store
 Create a `Store` to manage states.
@@ -219,25 +220,7 @@ if (window.navigator.userAgent.includes("Chrome") && ReactReduxDevTools) {
 
 export default store;
 ```
-#### combineReducers
-Create a main `Reducer` called `combineReducers`.
-```JavaScript
-import { combineReducers } from "redux";
-import errorReducer from "./errorReducer";
-import projectReducer from "./projectReducer";
-import backlogReducer from "./backlogReducer";
-import securityReducer from "./securityReducer";
 
-// Redux 提供了一个combineReducers方法，用于 Reducer 的拆分。
-// 只要定义各个子 Reducer 函数，然后用这个方法，将它们合成一个大的 Reducer。
-
-export default combineReducers({
-  errors: errorReducer,
-  project: projectReducer,
-  backlog: backlogReducer,
-  security: securityReducer,
-});
-```
 #### Provider
 The <Provider /> makes the Redux store available to any nested components that have been wrapped in the connect() function.
 
@@ -376,7 +359,7 @@ export default function (state = initialState, action) {
 }
 ```
 #### combineReducers
-Add `errorReducer` into the main `Reducer`(`combineReducers`).
+Create a main `Reducer` called `combineReducers` and add `errorReducer` into the main `Reducer`(`combineReducers`).
 ```JavaScript
 import { combineReducers } from "redux";
 import errorReducer from "./errorReducer";
@@ -395,8 +378,191 @@ export default combineReducers({
 });
 ```
 
-#### axios
-Use `axios` to interact with backend.
+### Connect a React component to a Redux store
+```JavaScript
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { createProject } from "../../actions/projectActions";
+import classnames from "classnames";
+
+class AddProject extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      projectName: "",
+      projectIdentifier: "",
+      description: "",
+      start_date: "",
+      end_date: "",
+      errors: {},
+    };
+
+    this.onChange = this.onChange.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
+  }
+
+  //life cycle hooks
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.errors) {
+      this.setState({ errors: nextProps.errors });
+    }
+  }
+
+  onChange(e) {
+    this.setState({ [e.target.name]: e.target.value });
+  }
+
+  onSubmit(e) {
+    e.preventDefault();
+    const newProject = {
+      projectName: this.state.projectName,
+      projectIdentifier: this.state.projectIdentifier,
+      description: this.state.description,
+      start_date: this.state.start_date,
+      end_date: this.state.end_date,
+    };
+
+    this.props.createProject(newProject, this.props.history);
+  }
+
+  render() {
+    const { errors } = this.state;
+
+    return (
+      <div>
+        {
+          //check name attribute input fields
+          //create constructor
+          //set state
+          //set value on input fields
+          //create onChange function
+          //set onChange on each input field
+          //bind on constructor
+          //check state change in the react extension
+        }
+
+        <div className="project">
+          <div className="container">
+            <div className="row">
+              <div className="col-md-8 m-auto">
+                <h5 className="display-4 text-center">Create Project form</h5>
+                <hr />
+                <form onSubmit={this.onSubmit}>
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      className={classnames("form-control form-control-lg", {
+                        "is-invalid": errors.projectName,
+                      })}
+                      placeholder="Project Name"
+                      name="projectName"
+                      value={this.state.projectName}
+                      onChange={this.onChange}
+                    />
+                    {errors.projectName && (
+                      <div className="invalid-feedback">
+                        {errors.projectName}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      className={classnames("form-control form-control-lg", {
+                        "is-invalid": errors.projectIdentifier,
+                      })}
+                      placeholder="Unique Project ID"
+                      name="projectIdentifier"
+                      value={this.state.projectIdentifier}
+                      onChange={this.onChange}
+                    />
+                    {errors.projectIdentifier && (
+                      <div className="invalid-feedback">
+                        {errors.projectIdentifier}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <textarea
+                      className={classnames("form-control form-control-lg", {
+                        "is-invalid": errors.description,
+                      })}
+                      placeholder="Project Description"
+                      name="description"
+                      value={this.state.description}
+                      onChange={this.onChange}
+                    />
+                    {errors.description && (
+                      <div className="invalid-feedback">
+                        {errors.description}
+                      </div>
+                    )}
+                  </div>
+                  <h6>Start Date</h6>
+                  <div className="form-group">
+                    <input
+                      type="date"
+                      className="form-control form-control-lg"
+                      name="start_date"
+                      value={this.state.start_date}
+                      onChange={this.onChange}
+                    />
+                  </div>
+                  <h6>Estimated End Date</h6>
+                  <div className="form-group">
+                    <input
+                      type="date"
+                      className="form-control form-control-lg"
+                      name="end_date"
+                      value={this.state.end_date}
+                      onChange={this.onChange}
+                    />
+                  </div>
+
+                  <input
+                    type="submit"
+                    className="btn btn-primary btn-block mt-4"
+                  />
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+AddProject.propTypes = {
+  createProject: PropTypes.func.isRequired,
+  errors: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  errors: state.errors,
+});
+
+export default connect(mapStateToProps, { createProject })(AddProject);
+
+```
+#### connect() method
+The connect() function connects a React component to a Redux store.
+
+It provides its connected component with the pieces of the data it needs from the store, and the functions it can use to dispatch actions to the store.
+
+It does not modify the component class passed to it; instead, it returns a new, connected component class that wraps the component you passed in.
+
+```JavaScript
+function connect(mapStateToProps?, mapDispatchToProps?, mergeProps?, options?)
+```
+The mapStateToProps and mapDispatchToProps deals with your Redux store’s state and dispatch, respectively. state and dispatch will be supplied to your mapStateToProps or mapDispatchToProps functions as the first argument.
+
+#### `mapDispatchToProps`(`projectActions`)
+Use `Axios` to interact with backend. `Axios` is a promise-based HTTP client for JavaScript that can be used in front-end applications and Node.js backends. A POST request can be made using Axios to “post” data to an endpoint. This endpoint may then use this POST request to perform a certain task or trigger an event. The HTTP post request is performed by calling axios.post(). This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
+
+In the `createProject` action, if it is a happy path and we get our project object, then we go to the dashboard pages; otherwise, we catch an error and dispatch it.
 ```JavaScript
 import axios from "axios";
 import { GET_ERRORS, GET_PROJECTS, GET_PROJECT, DELETE_PROJECT } from "./types";
@@ -417,42 +583,13 @@ export const createProject = (project, history) => async (dispatch) => {
     });
   }
 };
-
-export const getProjects = () => async (dispatch) => {
-  const res = await axios.get("/api/project/all");
-  dispatch({
-    type: GET_PROJECTS,
-    payload: res.data,
-  });
-};
-
-export const getProject = (id, history) => async (dispatch) => {
-  // access the project that does not exist
-  try {
-    const res = await axios.get(`/api/project/${id}`);
-    dispatch({
-      type: GET_PROJECT,
-      payload: res.data,
-    });
-  } catch (error) {
-    history.push("/dashboard");
-  }
-};
-
-export const deleteProject = (id) => async (dispatch) => {
-  if (
-    window.confirm(
-      "Are you sure? This will delete the project and all the data related to it"
-    )
-  ) {
-    await axios.delete(`/api/project/${id}`);
-    dispatch({
-      type: DELETE_PROJECT,
-      payload: id,
-    });
-  }
-};
 ```
+
+#### `mapStateToProps`
+
+#### `propTypes` method
+Can be used to ensure that the parameters received are valid
+
 
 
 
