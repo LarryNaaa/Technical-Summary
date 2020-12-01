@@ -183,6 +183,7 @@ export default connect(mapStateToProps, { createProject })(AddProject);
 ````
 
 ### Store
+Create a `Store` to manage states.
 ```JavaScript
 import { createStore, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
@@ -219,6 +220,7 @@ if (window.navigator.userAgent.includes("Chrome") && ReactReduxDevTools) {
 export default store;
 ```
 #### combineReducers
+Create a main `Reducer` called `combineReducers`.
 ```JavaScript
 import { combineReducers } from "redux";
 import errorReducer from "./errorReducer";
@@ -235,7 +237,7 @@ export default combineReducers({
   backlog: backlogReducer,
   security: securityReducer,
 });
-````
+```
 #### Provider
 The <Provider /> makes the Redux store available to any nested components that have been wrapped in the connect() function.
 
@@ -341,6 +343,7 @@ export default App;
 ```
 ### Actions
 #### Types of Action
+Create a action type called `GET_ERRORS`.
 ```JavaScript
 export const GET_ERRORS = "GET_ERRORS";
 export const GET_PROJECTS = "GET_PROJECTS";
@@ -356,6 +359,7 @@ export const SET_CURRENT_USER = "SET_CURRENT_USER";
 ```
 
 #### errorReducer
+Create a `Reducer` to handle error.
 ```JavaScript
 import { GET_ERRORS } from "../actions/types";
 
@@ -371,7 +375,84 @@ export default function (state = initialState, action) {
   }
 }
 ```
+#### combineReducers
+Add `errorReducer` into the main `Reducer`(`combineReducers`).
+```JavaScript
+import { combineReducers } from "redux";
+import errorReducer from "./errorReducer";
+import projectReducer from "./projectReducer";
+import backlogReducer from "./backlogReducer";
+import securityReducer from "./securityReducer";
 
+// Redux 提供了一个combineReducers方法，用于 Reducer 的拆分。
+// 只要定义各个子 Reducer 函数，然后用这个方法，将它们合成一个大的 Reducer。
+
+export default combineReducers({
+  errors: errorReducer,
+  project: projectReducer,
+  backlog: backlogReducer,
+  security: securityReducer,
+});
+```
+
+#### axios
+Use `axios` to interact with backend.
+```JavaScript
+import axios from "axios";
+import { GET_ERRORS, GET_PROJECTS, GET_PROJECT, DELETE_PROJECT } from "./types";
+
+export const createProject = (project, history) => async (dispatch) => {
+  try {
+    await axios.post("/api/project", project);
+    history.push("/dashboard");
+    // reset error
+    dispatch({
+      type: GET_ERRORS,
+      payload: {},
+    });
+  } catch (err) {
+    dispatch({
+      type: GET_ERRORS,
+      payload: err.response.data,
+    });
+  }
+};
+
+export const getProjects = () => async (dispatch) => {
+  const res = await axios.get("/api/project/all");
+  dispatch({
+    type: GET_PROJECTS,
+    payload: res.data,
+  });
+};
+
+export const getProject = (id, history) => async (dispatch) => {
+  // access the project that does not exist
+  try {
+    const res = await axios.get(`/api/project/${id}`);
+    dispatch({
+      type: GET_PROJECT,
+      payload: res.data,
+    });
+  } catch (error) {
+    history.push("/dashboard");
+  }
+};
+
+export const deleteProject = (id) => async (dispatch) => {
+  if (
+    window.confirm(
+      "Are you sure? This will delete the project and all the data related to it"
+    )
+  ) {
+    await axios.delete(`/api/project/${id}`);
+    dispatch({
+      type: DELETE_PROJECT,
+      payload: id,
+    });
+  }
+};
+```
 
 
 
