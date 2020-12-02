@@ -590,8 +590,378 @@ export const createProject = (project, history) => async (dispatch) => {
 #### `propTypes` method
 Can be used to ensure that the parameters received are valid
 
+#### life cycle hooks
 
 
+### Landing Page
 
+```JavaScript
+import React, { Component } from "react";
+import { Link } from "react-router-dom";
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
+
+class Landing extends Component {
+  componentDidMount() {
+    if (this.props.security.validToken) {
+      this.props.history.push("/dashboard");
+    }
+  }
+
+  render() {
+    return (
+      <div className="landing">
+        <div className="light-overlay landing-inner text-dark">
+          <div className="container">
+            <div className="row">
+              <div className="col-md-12 text-center">
+                <h1 className="display-3 mb-4">
+                  Personal Project Management Tool
+                </h1>
+                <p className="lead">
+                  Create your account to join active projects or start your own
+                </p>
+                <hr />
+                <Link className="btn btn-lg btn-primary mr-2" to="/register">
+                  Sign Up
+                </Link>
+                <Link className="btn btn-lg btn-secondary mr-2" to="/login">
+                  Login
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+Landing.propTypes = {
+  security: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  security: state.security,
+});
+
+export default connect(mapStateToProps)(Landing);
+```
+### Set Public and Private Routes in App.js
+```JavaScript
+import React, { Component } from "react";
+import "./App.css";
+import Dashboard from "./components/Dashboard";
+import Header from "./components/Layout/Header";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import AddProject from "./components/Project/AddProject";
+import { Provider } from "react-redux";
+import store from "./store";
+import UpdateProject from "./components/Project/UpdateProject";
+import ProjectBoard from "./components/ProjectBoard/ProjectBoard";
+import AddProjectTask from "./components/ProjectBoard/ProjectTasks/AddProjectTask";
+import UpdateProjectTask from "./components/ProjectBoard/ProjectTasks/UpdateProjectTask";
+import Landing from "./components/Layout/Landing";
+import Register from "./components/UserManagement/Register";
+import Login from "./components/UserManagement/Login";
+import jwt_decode from "jwt-decode";
+import setJWTToken from "./securityUtils/setJWTToken";
+import { SET_CURRENT_USER } from "./actions/types";
+import { logout } from "./actions/securityActions";
+import SecuredRoute from "./securityUtils/SecureRoute";
+
+const jwtToken = localStorage.jwtToken;
+
+if (jwtToken) {
+  setJWTToken(jwtToken);
+  const decoded_jwtToken = jwt_decode(jwtToken);
+  store.dispatch({
+    type: SET_CURRENT_USER,
+    payload: decoded_jwtToken,
+  });
+
+  const currentTime = Date.now() / 1000;
+  if (decoded_jwtToken.exp < currentTime) {
+    //handle logout
+    store.dispatch(logout());
+    window.location.href = "/";
+  }
+}
+
+class App extends Component {
+  render() {
+    return (
+      <Provider store={store}>
+        <Router>
+          <div className="App">
+            <Header />
+            {
+              //Public Routes
+            }
+
+            <Route exact path="/" component={Landing} />
+            <Route exact path="/register" component={Register} />
+            <Route exact path="/login" component={Login} />
+
+            {
+              //Private Routes
+            }
+            <Switch>
+              <SecuredRoute exact path="/dashboard" component={Dashboard} />
+              <SecuredRoute exact path="/addProject" component={AddProject} />
+              <SecuredRoute
+                exact
+                path="/updateProject/:id"
+                component={UpdateProject}
+              />
+              <SecuredRoute
+                exact
+                path="/projectBoard/:id"
+                component={ProjectBoard}
+              />
+              <SecuredRoute
+                exact
+                path="/addProjectTask/:id"
+                component={AddProjectTask}
+              />
+              <SecuredRoute
+                exact
+                path="/updateProjectTask/:backlog_id/:pt_id"
+                component={UpdateProjectTask}
+              />
+            </Switch>
+          </div>
+        </Router>
+      </Provider>
+    );
+  }
+}
+
+export default App;
+```
+### Register Part
+#### Types of Action
+Create a action type called `SET_CURRENT_USER`.
+```JavaScript
+export const GET_ERRORS = "GET_ERRORS";
+export const GET_PROJECTS = "GET_PROJECTS";
+export const GET_PROJECT = "GET_PROJECT";
+export const DELETE_PROJECT = "DELETE_PROJECT";
+//Types for BACKLOG ACTIONS
+
+export const GET_BACKLOG = "GET_BACKLOG";
+export const GET_PROJECT_TASK = "GET_PROJECT_TASK";
+export const DELETE_PROJECT_TASK = "DELETE_PROJECT_TASK";
+
+export const SET_CURRENT_USER = "SET_CURRENT_USER";
+```
+
+#### Register Component
+Create a component called `Register`, it can support users to register themselves, it is a class based component and contains some HTML(We have a form in it, so that users can input their username, password and confirm password). We need to do follow things:
+1. set name on input fields
+2. create a constructor, set initial state and error
+3. set value on input fields
+4. create onChange function, set it on each input field, bind on constructor
+5. create onSubmit function, set it on the form, bind on constructor
+
+```JavaScript
+import React, { Component } from "react";
+import { createNewUser } from "../../actions/securityActions";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import classnames from "classnames";
+
+class Register extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      username: "",
+      fullName: "",
+      password: "",
+      confirmPassword: "",
+      errors: {},
+    };
+    this.onChange = this.onChange.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
+  }
+
+  componentDidMount() {
+    if (this.props.security.validToken) {
+      this.props.history.push("/dashboard");
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.errors) {
+      this.setState({ errors: nextProps.errors });
+    }
+  }
+
+  onSubmit(e) {
+    e.preventDefault();
+    const newUser = {
+      username: this.state.username,
+      fullName: this.state.fullName,
+      password: this.state.password,
+      confirmPassword: this.state.confirmPassword,
+    };
+
+    this.props.createNewUser(newUser, this.props.history);
+  }
+
+  onChange(e) {
+    this.setState({ [e.target.name]: e.target.value });
+  }
+
+  render() {
+    const { errors } = this.state;
+    return (
+      <div className="register">
+        <div className="container">
+          <div className="row">
+            <div className="col-md-8 m-auto">
+              <h1 className="display-4 text-center">Sign Up</h1>
+              <p className="lead text-center">Create your Account</p>
+              <form onSubmit={this.onSubmit}>
+                <div className="form-group">
+                  <input
+                    type="text"
+                    className={classnames("form-control form-control-lg", {
+                      "is-invalid": errors.fullName,
+                    })}
+                    placeholder="Full Name"
+                    name="fullName"
+                    value={this.state.fullName}
+                    onChange={this.onChange}
+                  />
+                  {errors.fullName && (
+                    <div className="invalid-feedback">{errors.fullName}</div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <input
+                    type="text"
+                    className={classnames("form-control form-control-lg", {
+                      "is-invalid": errors.username,
+                    })}
+                    placeholder="Email Address (Username)"
+                    name="username"
+                    value={this.state.username}
+                    onChange={this.onChange}
+                  />
+                  {errors.username && (
+                    <div className="invalid-feedback">{errors.username}</div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <input
+                    type="password"
+                    className={classnames("form-control form-control-lg", {
+                      "is-invalid": errors.password,
+                    })}
+                    placeholder="Password"
+                    name="password"
+                    value={this.state.password}
+                    onChange={this.onChange}
+                  />
+                  {errors.password && (
+                    <div className="invalid-feedback">{errors.password}</div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <input
+                    type="password"
+                    className={classnames("form-control form-control-lg", {
+                      "is-invalid": errors.confirmPassword,
+                    })}
+                    placeholder="Confirm Password"
+                    name="confirmPassword"
+                    value={this.state.confirmPassword}
+                    onChange={this.onChange}
+                  />
+                  {errors.confirmPassword && (
+                    <div className="invalid-feedback">
+                      {errors.confirmPassword}
+                    </div>
+                  )}
+                </div>
+                <input type="submit" className="btn btn-info btn-block mt-4" />
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+```
+
+#### Connect a React component to a Redux store
+```JavaScript
+Register.propTypes = {
+  createNewUser: PropTypes.func.isRequired,
+  errors: PropTypes.object.isRequired,
+  security: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  errors: state.errors,
+  security: state.security,
+});
+
+export default connect(mapStateToProps, { createNewUser })(Register);
+```
+##### connect() method
+The connect() function connects a React component to a Redux store.
+
+It provides its connected component with the pieces of the data it needs from the store, and the functions it can use to dispatch actions to the store.
+
+It does not modify the component class passed to it; instead, it returns a new, connected component class that wraps the component you passed in.
+
+```JavaScript
+function connect(mapStateToProps?, mapDispatchToProps?, mergeProps?, options?)
+```
+The mapStateToProps and mapDispatchToProps deals with your Redux store’s state and dispatch, respectively. state and dispatch will be supplied to your mapStateToProps or mapDispatchToProps functions as the first argument.
+
+##### `mapStateToProps`
+
+#### `mapDispatchToProps`
+Create an action called `securityAction`.
+
+Use `Axios` to interact with backend. `Axios` is a promise-based HTTP client for JavaScript that can be used in front-end applications and Node.js backends. A POST request can be made using Axios to “post” data to an endpoint. This endpoint may then use this POST request to perform a certain task or trigger an event. The HTTP post request is performed by calling axios.post(). This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
+
+In the `createNewUser` action, if it is a happy path and we get our user object, then we go to the login page; otherwise, we catch an error and dispatch it.
+```JavaScript
+import axios from "axios";
+import { GET_ERRORS, SET_CURRENT_USER } from "./types";
+import setJWTToken from "../securityUtils/setJWTToken";
+import jwt_decode from "jwt-decode";
+
+export const createNewUser = (newUser, history) => async (dispatch) => {
+  try {
+    await axios.post("/api/users/register", newUser);
+    history.push("/login");
+    dispatch({
+      type: GET_ERRORS,
+      payload: {},
+    });
+  } catch (err) {
+    dispatch({
+      type: GET_ERRORS,
+      payload: err.response.data,
+    });
+  }
+};
+```
+
+##### `propTypes` method
+Can be used to ensure that the parameters received are valid
+
+##### life cycle hooks
+
+
+### Login Part
 
 
