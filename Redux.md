@@ -395,7 +395,7 @@ The mapStateToProps and mapDispatchToProps deals with your Redux store’s state
 ##### `mapStateToProps`
 
 ##### `mapDispatchToProps`
-Create an action called `securityAction`.
+Create an action called `createNewUser` in `securityAction`.
 
 Use `Axios` to interact with backend. `Axios` is a promise-based HTTP client for JavaScript that can be used in front-end applications and Node.js backends. A POST request can be made using Axios to “post” data to an endpoint. This endpoint may then use this POST request to perform a certain task or trigger an event. The HTTP post request is performed by calling axios.post(). This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
 
@@ -475,6 +475,7 @@ componentWillReceiveProps(nextProps) {
 
 ### Login Part
 #### `mapDispatchToProps`
+Add an action called `login` in `securityAction`.
 ```JavaScript
 import axios from "axios";
 import { GET_ERRORS, SET_CURRENT_USER } from "./types";
@@ -505,21 +506,13 @@ export const login = (LoginRequest) => async (dispatch) => {
     });
   }
 };
-
-export const logout = () => (dispatch) => {
-  localStorage.removeItem("jwtToken");
-  setJWTToken(false);
-  dispatch({
-    type: SET_CURRENT_USER,
-    payload: {},
-  });
-};
-
 ```
 1. post Login request to backend by `Axios`
 2. after backend give the token back, we need to extract token
 3. store this token in the localStorage
 4. set our token in header by `setJWTToken` method
+5. decode token by `jwt-decode`(a library)
+6. dispatch action `SET_CURRENT_USER`
 
 ##### `setJWTToken` method
 ```JavaScript
