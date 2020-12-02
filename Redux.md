@@ -446,7 +446,7 @@ export const SET_CURRENT_USER = "SET_CURRENT_USER";
 ```
 
 ##### errorReducer
-Create a `Reducer` to handle error, add this `errorReducer` into the main `Reducer`(`combineReducers`)
+Create a `Reducer` called `errorReducer` to handle error and add it into the main `Reducer`(`combineReducers`)
 ```JavaScript
 import { GET_ERRORS } from "../actions/types";
 
@@ -513,6 +513,7 @@ export const login = (LoginRequest) => async (dispatch) => {
 4. set our token in header by `setJWTToken` method
 5. decode token by `jwt-decode`(a library)
 6. dispatch action `SET_CURRENT_USER`
+7. use a try...catch to catch errors
 
 ##### `setJWTToken` method
 ```JavaScript
@@ -528,5 +529,36 @@ const setJWTToken = (token) => {
 
 export default setJWTToken;
 ```
+#### securityReducer
+Create a `Reducer` called `securityReducer` and add it into the main `Reducer`(`combineReducers`)
+```JavaScript
+import { SET_CURRENT_USER } from "../actions/types";
 
+const initialState = {
+  validToken: false,
+  user: {},
+};
+
+const booleanActionPayload = (payload) => {
+  if (payload) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+export default function (state = initialState, action) {
+  switch (action.type) {
+    case SET_CURRENT_USER:
+      return {
+        ...state,
+        validToken: booleanActionPayload(action.payload),
+        user: action.payload,
+      };
+
+    default:
+      return state;
+  }
+}
+```
 
