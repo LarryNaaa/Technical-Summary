@@ -7,6 +7,48 @@
 
 [Redux 入门教程（三）：React-Redux 的用法](http://www.ruanyifeng.com/blog/2016/09/redux_tutorial_part_three_react-redux.html)
 
+## Glossary
+### State
+```JavaScript
+type State = any
+```
+State (also called the state tree) is a broad term, but in the Redux API it usually refers to **the single state value that is managed by the store** and returned by getState(). It represents the entire state of a Redux application, which is often a deeply nested object.
+
+By convention, the top-level state is an object or some other key-value collection like a Map, but technically it can be any type. Still, you should do your best to keep the state serializable. Don't put anything inside it that you can't easily turn into JSON.
+
+### Action
+```JavaScript
+type Action = Object
+```
+An action is a plain object that represents **an intention to change the state**. **Actions are the only way to get data into the store.** Any data, whether from UI events, network callbacks, or other sources such as WebSockets needs to eventually be dispatched as actions.
+
+Actions must have a type field that indicates the type of action being performed. Types can be defined as constants and imported from another module. It's better to use strings for type than Symbols because strings are serializable.
+
+### Reducer
+```JavaScript
+type Reducer<S, A> = (state: S, action: A) => S
+```
+**A reducer (also called a reducing function) is a function that accepts an accumulation and a value and returns a new accumulation.** They are used to reduce a collection of values down to a single value.
+
+Reducers are not unique to Redux—they are a fundamental concept in functional programming. Even most non-functional languages, like JavaScript, have a built-in API for reducing. In JavaScript, it's Array.prototype.reduce().
+
+In Redux, the accumulated value is the state object, and the values being accumulated are actions. Reducers calculate a new state given the previous state and an action. They must be pure functions—functions that return the exact same output for given inputs. They should also be free of side-effects. This is what enables exciting features like hot reloading and time travel.
+
+Do not put API calls into reducers.
+
+### Dispatching Function
+```JavaScript
+type BaseDispatch = (a: Action) => Action
+type Dispatch = (a: Action | AsyncAction) => any
+```
+A dispatching function (or simply dispatch function) is a function that accepts an action or an async action; it then may or may not dispatch one or more actions to the store.
+
+We must distinguish between dispatching functions in general and the base dispatch function provided by the store instance without any middleware.
+
+The base dispatch function always synchronously sends an action to the store's reducer, along with the previous state returned by the store, to calculate a new state. It expects actions to be plain objects ready to be consumed by the reducer.
+
+Middleware wraps the base dispatch function. It allows the dispatch function to handle async actions in addition to actions. Middleware may transform, delay, ignore, or otherwise interpret actions or async actions before passing them to the next middleware. 
+
 ## Process of Implementing Redux
 ![Redux_2](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_2.png)
 
@@ -66,99 +108,64 @@ const mapStateToProps = (state) => ({
 
 export default connect(mapStateToProps)(Landing);
 ```
-### Set Public and Private Routes in App.js
+#### Router
+[Router](https://www.educative.io/edpresso/what-is-a-react-router)
+
+### Store
 ```JavaScript
-import React, { Component } from "react";
-import "./App.css";
-import Dashboard from "./components/Dashboard";
-import Header from "./components/Layout/Header";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import AddProject from "./components/Project/AddProject";
-import { Provider } from "react-redux";
-import store from "./store";
-import UpdateProject from "./components/Project/UpdateProject";
-import ProjectBoard from "./components/ProjectBoard/ProjectBoard";
-import AddProjectTask from "./components/ProjectBoard/ProjectTasks/AddProjectTask";
-import UpdateProjectTask from "./components/ProjectBoard/ProjectTasks/UpdateProjectTask";
-import Landing from "./components/Layout/Landing";
-import Register from "./components/UserManagement/Register";
-import Login from "./components/UserManagement/Login";
-import jwt_decode from "jwt-decode";
-import setJWTToken from "./securityUtils/setJWTToken";
-import { SET_CURRENT_USER } from "./actions/types";
-import { logout } from "./actions/securityActions";
-import SecuredRoute from "./securityUtils/SecureRoute";
+import { createStore, applyMiddleware, compose } from "redux";
+import thunk from "redux-thunk";
+import rootReducer from "./reducers";
 
-const jwtToken = localStorage.jwtToken;
+const initalState = {};
+const middleware = [thunk];
 
-if (jwtToken) {
-  setJWTToken(jwtToken);
-  const decoded_jwtToken = jwt_decode(jwtToken);
-  store.dispatch({
-    type: SET_CURRENT_USER,
-    payload: decoded_jwtToken,
-  });
+let store;
 
-  const currentTime = Date.now() / 1000;
-  if (decoded_jwtToken.exp < currentTime) {
-    //handle logout
-    store.dispatch(logout());
-    window.location.href = "/";
-  }
+const ReactReduxDevTools =
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__();
+
+if (window.navigator.userAgent.includes("Chrome") && ReactReduxDevTools) {
+
+  store = createStore(
+    rootReducer,
+    initalState,
+    compose(applyMiddleware(...middleware), ReactReduxDevTools)
+  );
+} else {
+  store = createStore(
+    rootReducer,
+    initalState,
+    compose(applyMiddleware(...middleware))
+  );
 }
 
-class App extends Component {
-  render() {
-    return (
-      <Provider store={store}>
-        <Router>
-          <div className="App">
-            <Header />
-            {
-              //Public Routes
-            }
-
-            <Route exact path="/" component={Landing} />
-            <Route exact path="/register" component={Register} />
-            <Route exact path="/login" component={Login} />
-
-            {
-              //Private Routes
-            }
-            <Switch>
-              <SecuredRoute exact path="/dashboard" component={Dashboard} />
-              <SecuredRoute exact path="/addProject" component={AddProject} />
-              <SecuredRoute
-                exact
-                path="/updateProject/:id"
-                component={UpdateProject}
-              />
-              <SecuredRoute
-                exact
-                path="/projectBoard/:id"
-                component={ProjectBoard}
-              />
-              <SecuredRoute
-                exact
-                path="/addProjectTask/:id"
-                component={AddProjectTask}
-              />
-              <SecuredRoute
-                exact
-                path="/updateProjectTask/:backlog_id/:pt_id"
-                component={UpdateProjectTask}
-              />
-            </Switch>
-          </div>
-        </Router>
-      </Provider>
-    );
-  }
-}
-
-export default App;
+export default store;
 ```
+Creates a Redux store that holds the complete state tree of our app. There should only be a single store in our app.
+
+We need to configure this `Store` with three things:
+1. the `Reducer` is a `combineReducer` which can return the next state tree depending on the current state tree and actions.
+2. the `preloadedState` is a empty object.
+3. the `enhancer` is `middleware`.
+
+#### `combineReducers`
+Create a main `Reducer` called `combineReducers`, add other small `Reducer`(which manage independent parts of the state) in it.
+```JavaScript
+import { combineReducers } from "redux";
+import errorReducer from "./errorReducer";
+import projectReducer from "./projectReducer";
+import backlogReducer from "./backlogReducer";
+import securityReducer from "./securityReducer";
+
+export default combineReducers({
+  errors: errorReducer,
+  project: projectReducer,
+  backlog: backlogReducer,
+  security: securityReducer,
+});
+```
+
 ### Register Part
 #### Store
 ##### combineReducers
@@ -181,42 +188,7 @@ export default combineReducers({
 });
 ```
 
-Create a `Store` to manage states with `combineReducers`.
-```JavaScript
-import { createStore, applyMiddleware, compose } from "redux";
-import thunk from "redux-thunk";
-import rootReducer from "./reducers";
 
-const initalState = {};
-const middleware = [thunk];
-
-// Store 就是保存数据的地方，可以把它看成一个容器。整个应用只能有一个 Store。
-let store;
-
-const ReactReduxDevTools =
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__();
-
-if (window.navigator.userAgent.includes("Chrome") && ReactReduxDevTools) {
-  // 实际应用中，Reducer 函数不用像上面这样手动调用，
-  // store.dispatch方法会触发 Reducer 的自动执行。
-  // 为此，Store 需要知道 Reducer 函数，做法就是在生成 Store 的时候，
-  // 将 Reducer 传入createStore方法。
-
-  store = createStore(
-    rootReducer,
-    initalState,
-    compose(applyMiddleware(...middleware), ReactReduxDevTools)
-  );
-} else {
-  store = createStore(
-    rootReducer,
-    initalState,
-    compose(applyMiddleware(...middleware))
-  );
-}
-
-export default store;
-```
 ##### Provider
 The <Provider /> makes the Redux store available to any nested components that have been wrapped in the connect() function.
 
@@ -739,7 +711,104 @@ const mapStateToProps = (state) => ({
 
 export default connect(mapStateToProps)(SecuredRoute);
 ```
+```JavaScript
+import React, { Component } from "react";
+import "./App.css";
+import Dashboard from "./components/Dashboard";
+import Header from "./components/Layout/Header";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import AddProject from "./components/Project/AddProject";
+import { Provider } from "react-redux";
+import store from "./store";
+import UpdateProject from "./components/Project/UpdateProject";
+import ProjectBoard from "./components/ProjectBoard/ProjectBoard";
+import AddProjectTask from "./components/ProjectBoard/ProjectTasks/AddProjectTask";
+import UpdateProjectTask from "./components/ProjectBoard/ProjectTasks/UpdateProjectTask";
+import Landing from "./components/Layout/Landing";
+import Register from "./components/UserManagement/Register";
+import Login from "./components/UserManagement/Login";
+import jwt_decode from "jwt-decode";
+import setJWTToken from "./securityUtils/setJWTToken";
+import { SET_CURRENT_USER } from "./actions/types";
+import { logout } from "./actions/securityActions";
+import SecuredRoute from "./securityUtils/SecureRoute";
 
+const jwtToken = localStorage.jwtToken;
+
+if (jwtToken) {
+  setJWTToken(jwtToken);
+  const decoded_jwtToken = jwt_decode(jwtToken);
+  store.dispatch({
+    type: SET_CURRENT_USER,
+    payload: decoded_jwtToken,
+  });
+
+  const currentTime = Date.now() / 1000;
+  if (decoded_jwtToken.exp < currentTime) {
+    //handle logout
+    store.dispatch(logout());
+    window.location.href = "/";
+  }
+}
+
+// React-Redux 提供Provider组件，可以让容器组件拿到state。
+// 使用React-Router的项目，与其他项目没有不同之处，
+// 也是使用Provider在Router外面包一层，
+// 毕竟Provider的唯一功能就是传入store对象。
+
+class App extends Component {
+  render() {
+    return (
+      <Provider store={store}>
+        <Router>
+          <div className="App">
+            <Header />
+            {
+              //Public Routes
+            }
+
+            <Route exact path="/" component={Landing} />
+            <Route exact path="/register" component={Register} />
+            <Route exact path="/login" component={Login} />
+
+            {
+              //Private Routes
+            }
+            <Switch>
+              <SecuredRoute exact path="/dashboard" component={Dashboard} />
+              <SecuredRoute exact path="/addProject" component={AddProject} />
+              <SecuredRoute
+                exact
+                path="/updateProject/:id"
+                component={UpdateProject}
+              />
+              <SecuredRoute
+                exact
+                path="/projectBoard/:id"
+                component={ProjectBoard}
+              />
+              <SecuredRoute
+                exact
+                path="/addProjectTask/:id"
+                component={AddProjectTask}
+              />
+              <SecuredRoute
+                exact
+                path="/updateProjectTask/:backlog_id/:pt_id"
+                component={UpdateProjectTask}
+              />
+            </Switch>
+          </div>
+        </Router>
+      </Provider>
+    );
+  }
+}
+
+export default App;
+
+```
 
 
 
