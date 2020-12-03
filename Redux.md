@@ -49,6 +49,19 @@ The base dispatch function always synchronously sends an action to the store's r
 
 Middleware wraps the base dispatch function. It allows the dispatch function to handle async actions in addition to actions. Middleware may transform, delay, ignore, or otherwise interpret actions or async actions before passing them to the next middleware. 
 
+### Other Glossary
+[Glossary](https://redux.js.org/understanding/thinking-in-redux/glossary)
+
+### Router
+[Router](https://www.educative.io/edpresso/what-is-a-react-router)
+
+### Provider
+The <Provider /> makes the Redux store available to any nested components that have been wrapped in the connect() function.
+
+Since any React component in a React Redux app can be connected, most applications will render a <Provider> at the top level, with the entire app’s component tree inside of it.
+
+Normally, you can’t use a connected component unless it is nested inside of a <Provider>.
+
 ## Process of Implementing Redux
 ![Redux_2](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_2.png)
 
@@ -111,17 +124,7 @@ export default combineReducers({
 #### `applyMiddleware(...middleware)`
 Middleware can help us to extend Redux and support asynchronous actions. We use `redux-thunk` here. It lets the action creators invert control by dispatching functions. They would receive dispatch as an argument and may call it asynchronously.
 
-#### Router
-[Router](https://www.educative.io/edpresso/what-is-a-react-router)
-
 ### Register Part
-##### Provider
-The <Provider /> makes the Redux store available to any nested components that have been wrapped in the connect() function.
-
-Since any React component in a React Redux app can be connected, most applications will render a <Provider> at the top level, with the entire app’s component tree inside of it.
-
-Normally, you can’t use a connected component unless it is nested inside of a <Provider>.
-
 #### Register Component(View)
 Create a component called `Register`, it can support users to register themselves, it is a class based component and contains some HTML(We have a form in it, so that users can input their username, password and confirm password). We need to do follow things:
 1. set name on input fields
