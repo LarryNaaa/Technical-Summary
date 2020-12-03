@@ -54,63 +54,6 @@ Middleware wraps the base dispatch function. It allows the dispatch function to 
 
 ![Redux_1](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_1.png)
 
-### Landing Page
-
-```JavaScript
-import React, { Component } from "react";
-import { Link } from "react-router-dom";
-import { connect } from "react-redux";
-import PropTypes from "prop-types";
-
-class Landing extends Component {
-  componentDidMount() {
-    if (this.props.security.validToken) {
-      this.props.history.push("/dashboard");
-    }
-  }
-
-  render() {
-    return (
-      <div className="landing">
-        <div className="light-overlay landing-inner text-dark">
-          <div className="container">
-            <div className="row">
-              <div className="col-md-12 text-center">
-                <h1 className="display-3 mb-4">
-                  Personal Project Management Tool
-                </h1>
-                <p className="lead">
-                  Create your account to join active projects or start your own
-                </p>
-                <hr />
-                <Link className="btn btn-lg btn-primary mr-2" to="/register">
-                  Sign Up
-                </Link>
-                <Link className="btn btn-lg btn-secondary mr-2" to="/login">
-                  Login
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-}
-
-Landing.propTypes = {
-  security: PropTypes.object.isRequired,
-};
-
-const mapStateToProps = (state) => ({
-  security: state.security,
-});
-
-export default connect(mapStateToProps)(Landing);
-```
-#### Router
-[Router](https://www.educative.io/edpresso/what-is-a-react-router)
-
 ### Store
 ```JavaScript
 import { createStore, applyMiddleware, compose } from "redux";
@@ -147,7 +90,7 @@ Creates a Redux store that holds the complete state tree of our app. There shoul
 We need to configure this `Store` with three things:
 1. the `Reducer` is a `combineReducer` which can return the next state tree depending on the current state tree and actions.
 2. the `preloadedState` is a empty object.
-3. the `enhancer` is `middleware`.
+3. the `enhancer` function is `applyMiddleware(...middleware)`.
 
 #### `combineReducers`
 Create a main `Reducer` called `combineReducers`, add other small `Reducer`(which manage independent parts of the state) in it.
@@ -165,30 +108,13 @@ export default combineReducers({
   security: securityReducer,
 });
 ```
+#### `applyMiddleware(...middleware)`
+Middleware can help us to extend Redux and support asynchronous actions. We use `redux-thunk` here. It lets the action creators invert control by dispatching functions. They would receive dispatch as an argument and may call it asynchronously.
+
+#### Router
+[Router](https://www.educative.io/edpresso/what-is-a-react-router)
 
 ### Register Part
-#### Store
-##### combineReducers
-Create a main `Reducer` called `combineReducers` and add `errorReducer` into the main `Reducer`(`combineReducers`).
-```JavaScript
-import { combineReducers } from "redux";
-import errorReducer from "./errorReducer";
-import projectReducer from "./projectReducer";
-import backlogReducer from "./backlogReducer";
-import securityReducer from "./securityReducer";
-
-// Redux 提供了一个combineReducers方法，用于 Reducer 的拆分。
-// 只要定义各个子 Reducer 函数，然后用这个方法，将它们合成一个大的 Reducer。
-
-export default combineReducers({
-  errors: errorReducer,
-  project: projectReducer,
-  backlog: backlogReducer,
-  security: securityReducer,
-});
-```
-
-
 ##### Provider
 The <Provider /> makes the Redux store available to any nested components that have been wrapped in the connect() function.
 
