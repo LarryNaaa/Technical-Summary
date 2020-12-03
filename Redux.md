@@ -286,21 +286,21 @@ The connect() function connects a React component to a Redux store.
 
 It provides its connected component with the pieces of the data it needs from the store, and the functions it can use to dispatch actions to the store.
 
-It does not modify the component class passed to it; instead, it returns a new, connected component class that wraps the component you passed in.
+It returns a new, connected component class that wraps the component we passed in.
 
-```JavaScript
-function connect(mapStateToProps?, mapDispatchToProps?, mergeProps?, options?)
-```
-The mapStateToProps and mapDispatchToProps deals with your Redux store’s state and dispatch, respectively. state and dispatch will be supplied to your mapStateToProps or mapDispatchToProps functions as the first argument.
+The first argument is `mapStateToProps`, the second argument is `mapDispatchToProps`.
 
 ##### `mapStateToProps`
+`mapStateToProps` is used for selecting the part of the data from the store that the connected component needs. Each field in the object will become a prop for your actual component. It is called every time the store state changes. It receives the entire store state, and should return an object of data this component needs.
 
 ##### `mapDispatchToProps`
-Create an action called `createNewUser` in `securityAction`.
+`mapDispatchToProps` is used for dispatching actions to the store and we can specify which actions our component might need to dispatch.
 
-Use `Axios` to interact with backend. `Axios` is a promise-based HTTP client for JavaScript that can be used in front-end applications and Node.js backends. A POST request can be made using Axios to “post” data to an endpoint. This endpoint may then use this POST request to perform a certain task or trigger an event. The HTTP post request is performed by calling axios.post(). This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
+Create an action called `securityAction` and add a function called`createNewUser` in it.
 
-In the `createNewUser` action, if it is a happy path and we get our user object, then we go to the login page; otherwise, we catch an error and dispatch it.
+Use `axios.post()` to interact with backend and post data to an endpoint. This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
+
+In the `createNewUser` function, if it is a happy path and we get our user object, then we go to the login page; otherwise, we catch an error and dispatch it.
 ```JavaScript
 import axios from "axios";
 import { GET_ERRORS, SET_CURRENT_USER } from "./types";
