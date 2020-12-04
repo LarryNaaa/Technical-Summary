@@ -264,10 +264,7 @@ class Register extends Component {
     );
   }
 }
-```
 
-#### Connect Register Component to Store
-```JavaScript
 Register.propTypes = {
   createNewUser: PropTypes.func.isRequired,
   errors: PropTypes.object.isRequired,
@@ -278,11 +275,12 @@ const mapStateToProps = (state) => ({
   errors: state.errors,
   security: state.security,
 });
-
 export default connect(mapStateToProps, { createNewUser })(Register);
 ```
-##### connect() method
-The connect() function connects a React component to a Redux store.
+
+#### Connect Register Component to Store
+##### `connect()` Method
+The `connect()` function connects a React component to a Redux store.
 
 It provides its connected component with the pieces of the data it needs from the store, and the functions it can use to dispatch actions to the store.
 
@@ -290,10 +288,16 @@ It returns a new, connected component class that wraps the component we passed i
 
 The first argument is `mapStateToProps`, the second argument is `mapDispatchToProps`.
 
-##### `mapStateToProps`
+###### `mapStateToProps` Method
 `mapStateToProps` is used for selecting the part of the data from the store that the connected component needs. Each field in the object will become a prop for your actual component. It is called every time the store state changes. It receives the entire store state, and should return an object of data this component needs.
-
-##### `mapDispatchToProps`
+```JavaScript
+const mapStateToProps = (state) => ({
+  errors: state.errors,
+  security: state.security,
+});
+```
+ 
+###### `mapDispatchToProps` Method
 `mapDispatchToProps` is used for dispatching actions to the store and we can specify which actions our component might need to dispatch.
 
 Create an action called `securityAction` and add a function called`createNewUser` in it.
@@ -324,8 +328,15 @@ export const createNewUser = (newUser, history) => async (dispatch) => {
 };
 ```
 
-##### `propTypes` method
-Can be used to ensure that the parameters received are valid
+##### `propTypes` Method
+It can be used to ensure that the parameters received are valid.
+```JavaScript
+Register.propTypes = {
+  createNewUser: PropTypes.func.isRequired,
+  errors: PropTypes.object.isRequired,
+  security: PropTypes.object.isRequired,
+};
+```
 
 #### Validation
 We need to display some message on this page when users are fail for registration(like register with empty password or their password and confirm password are not matched).
