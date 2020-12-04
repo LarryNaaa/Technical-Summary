@@ -67,7 +67,7 @@ Normally, you can’t use a connected component unless it is nested inside of a 
 
 ![Redux_1](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_1.png)
 
-### Store
+### `Store`
 ```JavaScript
 import { createStore, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
@@ -102,7 +102,7 @@ Creates a Redux store that holds the complete state tree of our app. There shoul
 
 We need to configure this `Store` with three things:
 1. the `Reducer` is a `combineReducer` which can return the next state tree depending on the current state tree and actions.
-2. the `preloadedState` is a empty object.
+2. the `preloadedState` is an empty object.
 3. the `enhancer` function is `applyMiddleware(...middleware)`.
 
 #### `combineReducers`
@@ -125,7 +125,7 @@ export default combineReducers({
 Middleware can help us to extend Redux and support asynchronous actions. We use `redux-thunk` here. It lets the action creators invert control by dispatching functions. They would receive dispatch as an argument and may call it asynchronously.
 
 ### Register Part
-#### Register Component(View)
+#### Create Register Component(View)
 Create a component called `Register`, it can support users to register themselves, it is a class based component and contains some HTML(We have a form in it, so that users can input their username, password and confirm password). We need to do follow things:
 1. set name on input fields
 2. create a constructor, set initial state and error
@@ -279,7 +279,7 @@ export default connect(mapStateToProps, { createNewUser })(Register);
 ```
 
 #### Connect Register Component to Store
-##### `connect()` Method
+##### `connect()` function
 The `connect()` function connects a React component to a Redux store.
 
 It provides its connected component with the pieces of the data it needs from the store, and the functions it can use to dispatch actions to the store.
@@ -288,23 +288,8 @@ It returns a new, connected component class that wraps the component we passed i
 
 The first argument is `mapStateToProps`, the second argument is `mapDispatchToProps`.
 
-###### `mapStateToProps` Method
-`mapStateToProps` is used for selecting the part of the data from the store that the connected component needs. Each field in the object will become a prop for your actual component. It is called every time the store state changes. It receives the entire store state, and should return an object of data this component needs.
-```JavaScript
-const mapStateToProps = (state) => ({
-  errors: state.errors,
-  security: state.security,
-});
-```
- 
-###### `mapDispatchToProps` Method
+###### `mapDispatchToProps` function
 `mapDispatchToProps` is used for dispatching actions to the store and we can specify which actions our component might need to dispatch.
-
-Create an action called `securityAction` and add a function called`createNewUser` in it.
-
-Use `axios.post()` to interact with backend and post data to an endpoint. This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
-
-In the `createNewUser` function, if it is a happy path and we get our user object, then we go to the login page; otherwise, we catch an error and dispatch it.
 ```JavaScript
 import axios from "axios";
 import { GET_ERRORS, SET_CURRENT_USER } from "./types";
@@ -327,38 +312,16 @@ export const createNewUser = (newUser, history) => async (dispatch) => {
   }
 };
 ```
+We create a new function called `createNewUser`, when UI events trigger(OnSubmit, OnChange...), this function will be called.
 
-##### `propTypes` Method
-It can be used to ensure that the parameters received are valid.
-```JavaScript
-Register.propTypes = {
-  createNewUser: PropTypes.func.isRequired,
-  errors: PropTypes.object.isRequired,
-  security: PropTypes.object.isRequired,
-};
-```
+###### Use `axios.post()` to interact with backend and post data to an endpoint
+This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
 
-#### Validation
-We need to display some message on this page when users are fail for registration(like register with empty password or their password and confirm password are not matched).
+###### Catch errors and dispatch action
+Users may be fail for registration(like they register with blank username or their password and confirm password are not matched), we want to display some message on the web page. In this `createNewUser` function, if it is a happy path and we get our new user object from back-end, then users will be redirected to the login page; otherwise, we get errors and dispatch an action(the type of this action called `GET_ERRORS`, the payload of it is errors).
 
-##### Types of Action
-Create a action type called `GET_ERRORS`.
-```JavaScript
-export const GET_ERRORS = "GET_ERRORS";
-export const GET_PROJECTS = "GET_PROJECTS";
-export const GET_PROJECT = "GET_PROJECT";
-export const DELETE_PROJECT = "DELETE_PROJECT";
-//Types for BACKLOG ACTIONS
-
-export const GET_BACKLOG = "GET_BACKLOG";
-export const GET_PROJECT_TASK = "GET_PROJECT_TASK";
-export const DELETE_PROJECT_TASK = "DELETE_PROJECT_TASK";
-
-export const SET_CURRENT_USER = "SET_CURRENT_USER";
-```
-
-##### errorReducer
-Create a `Reducer` called `errorReducer` to handle error and add it into the main `Reducer`(`combineReducers`)
+###### errorReducer
+Once an action is dispatched, it is received by a reducer. We create a `Reducer` called `errorReducer` to return the changed state into `Store`.
 ```JavaScript
 import { GET_ERRORS } from "../actions/types";
 
@@ -373,6 +336,25 @@ export default function (state = initialState, action) {
       return state;
   }
 }
+```
+
+###### `mapStateToProps` function
+The changed state is used to show the updated component. This function is used for selecting the part of the data from the store that the connected component needs. It is called every time the store state changes. It receives the entire store state, and should return an object of data this component needs.
+```JavaScript
+const mapStateToProps = (state) => ({
+  errors: state.errors,
+  security: state.security,
+});
+```
+
+##### `propTypes` Method
+It can be used to ensure that the parameters received are valid.
+```JavaScript
+Register.propTypes = {
+  createNewUser: PropTypes.func.isRequired,
+  errors: PropTypes.object.isRequired,
+  security: PropTypes.object.isRequired,
+};
 ```
 
 ##### life cycle hooks
