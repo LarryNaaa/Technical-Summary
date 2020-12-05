@@ -70,6 +70,8 @@ Normally, you can’t use a connected component unless it is nested inside of a 
 
 ![Redux_1](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_1.png)
 
+![Redux_3](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_3.jpg)
+
 1. When UI Event triggers (OnClick, OnChange, etc) in `Component`, `Action` will be called based on the event.
 2. `Action` will fetch data from back end and be dispatched based on its type.
 3. The corresponding `Reducer` will receive `Action` and return new State into `Store`.
