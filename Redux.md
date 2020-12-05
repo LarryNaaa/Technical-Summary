@@ -517,13 +517,12 @@ export const login = (LoginRequest) => async (dispatch) => {
   }
 };
 ```
-1. post Login request to backend by `axios.post` function
-2. after backend give the token back, we need to extract token
-3. store this token in the `localStorage`
-4. set our token in header by `setJWTToken` method
-5. decode token by `jwt-decode`(a library)
-6. dispatch action `SET_CURRENT_USER`
-7. use a try...catch to catch errors
+1. post Login request to backend by `axios.post` function and get user's token
+2. store this token in the `localStorage`
+3. set our token in the header of request with a key called "Authorization" by `setJWTToken` method
+4. decode token by `jwt-decode`(a library)
+5. dispatch action `SET_CURRENT_USER`
+6. use a try...catch to catch errors
 
 ##### `setJWTToken` method
 ```JavaScript
@@ -540,7 +539,7 @@ const setJWTToken = (token) => {
 export default setJWTToken;
 ```
 #### securityReducer
-Create a `Reducer` called `securityReducer` and add it into the main `Reducer`(`combineReducers`). This `Reducer` will return states into `Store`, include a boolean variable called `validToken` and user object.
+Create a `Reducer` called `securityReducer` and add it into the main `Reducer`(`combineReducers`). This `Reducer` will return new states into `Store`, include a boolean variable called `validToken` and user object.
 ```JavaScript
 import { SET_CURRENT_USER } from "../actions/types";
 
