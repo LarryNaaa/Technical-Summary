@@ -62,6 +62,9 @@ Since any React component in a React Redux app can be connected, most applicatio
 
 Normally, you can’t use a connected component unless it is nested inside of a <Provider>.
 
+### Lifecycle function
+[Lifecycle function](https://www.cnblogs.com/gdsblog/p/7348375.html)
+
 ## Process of Implementing Redux
 ![Redux_2](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_2.png)
 
