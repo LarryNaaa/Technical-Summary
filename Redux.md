@@ -70,6 +70,11 @@ Normally, you can’t use a connected component unless it is nested inside of a 
 
 ![Redux_1](https://github.com/LarryNaaa/Technical-Summary/blob/master/Image/Redux_1.png)
 
+1. When UI Event triggers (OnClick, OnChange, etc) in `Component`, `Action` will be called based on the event.
+2. `Action` will fetch data from back end and be dispatched based on its type.
+3. The corresponding `Reducer` will receive `Action` and return new State into `Store`.
+4. Connect the `Component` to the `Store`, so when `State` was changed in `Store`, the `Component` can get `State` and display it.
+
 ### `Store`
 ```JavaScript
 import { createStore, applyMiddleware, compose } from "redux";
@@ -584,7 +589,7 @@ componentWillReceiveProps(nextProps) {
     }
   }
 ```
-This function will be called when props are changed in the component. We call `MapStateToProps`  function to map two states(error and security) to props before, so props are changed and this function will be called by component. In this function, we need to do two things:
+This function will be called when props are changed in the component. We call `MapStateToProps`  function to map two states(error and security) to props before, so props are changed and this function will be called by component. In this function, we have two 'if' conditions here:
 1. if the boolean variable `validToken` is true, which means the token of user is valid and user has already login, then users will be redirected to dashboard page.
 2. if we get errors from backend, show them on the web page.
 
