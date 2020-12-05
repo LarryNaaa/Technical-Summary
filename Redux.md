@@ -537,7 +537,7 @@ const setJWTToken = (token) => {
 export default setJWTToken;
 ```
 #### securityReducer
-Create a `Reducer` called `securityReducer` and add it into the main `Reducer`(`combineReducers`)
+Create a `Reducer` called `securityReducer` and add it into the main `Reducer`(`combineReducers`). This `Reducer` will return states into `Store`, include a boolean variable called `validToken` and user object.
 ```JavaScript
 import { SET_CURRENT_USER } from "../actions/types";
 
@@ -568,6 +568,33 @@ export default function (state = initialState, action) {
   }
 }
 ```
+
+#### Lifecycle function
+##### `componentWillReceiveProps` function
+```JavaScript
+componentWillReceiveProps(nextProps) {
+    if (nextProps.security.validToken) {
+      this.props.history.push("/dashboard");
+    }
+
+    if (nextProps.errors) {
+      this.setState({ errors: nextProps.errors });
+    }
+  }
+```
+This function will be called when props are changed in the component. We call `MapStateToProps`  function to map two states(error and security) to props before, so props are changed and this function will be called by component. In this function, we need to do two things:
+1. if the boolean variable `validToken` is true, which means the token of user is valid and user has already login, then users will be redirected to dashboard page.
+2. if we get errors from backend, show them on the web page.
+
+##### `componentDidMount` function
+```JavaScript
+componentDidMount() {
+    if (this.props.security.validToken) {
+      this.props.history.push("/dashboard");
+    }
+  }
+```
+This function will be called after the initial render, if the boolean variable `validToken` is true, which means the token of user is valid and user has already login, then users will be redirected to dashboard page. And users will not be allowed to login or register again unless they log out.
 
 #### Keep the token in the state of the apllication before it is expired
 When we refresh or reload the web pages, token goes away. In the meeting place of all the component(which is the App.js), if we can get a valid token from `localStorage`, keep it in the state of the apllication before it is expired.
