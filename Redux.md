@@ -315,13 +315,13 @@ export const createNewUser = (newUser, history) => async (dispatch) => {
 We create a new function called `createNewUser`, when UI events trigger(OnSubmit, OnChange...), this function will be called.
 
 ###### Use `axios.post()` to interact with backend and post data to an endpoint
-This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it.
+This method requires two parameters. First, it needs the URI of the service endpoint. Second, an object which contains the properties that we want to send to our server should be passed to it. If it is a happy path and we get our new user object from back-end, then users will be redirected to the login page.
 
 ###### Catch errors and dispatch action
-Users may be fail for registration(like they register with blank username or their password and confirm password are not matched), we want to display some message on the web page. In this `createNewUser` function, if it is a happy path and we get our new user object from back-end, then users will be redirected to the login page; otherwise, we get errors and dispatch an action(the type of this action called `GET_ERRORS`, the payload of it is errors).
+Users may be fail for registration(like they register with blank username or their password and confirm password are not matched), we want to display some message on the web page. So if we get errors from back-end, we need to dispatch an action(the type of this action called `GET_ERRORS`, the payload of it is errors).
 
 ###### errorReducer
-Once an action is dispatched, it is received by a reducer. We create a `Reducer` called `errorReducer` to return the changed state into `Store`.
+When we get errors from back-end and `GET_ERRORS` action will be dispatched, and then it will be received by a reducer. We create a `Reducer` called `errorReducer` to return the changed state(errors) into `Store`.
 ```JavaScript
 import { GET_ERRORS } from "../actions/types";
 
@@ -347,8 +347,8 @@ const mapStateToProps = (state) => ({
 });
 ```
 
-##### `propTypes` Method
-It can be used to ensure that the parameters received are valid.
+##### `propTypes` function
+It can be used to ensure that the parameters received by this component are valid.
 ```JavaScript
 Register.propTypes = {
   createNewUser: PropTypes.func.isRequired,
@@ -357,7 +357,7 @@ Register.propTypes = {
 };
 ```
 
-##### life cycle hooks
+##### lifecycle method
 ```JavaScript
 componentWillReceiveProps(nextProps) {
     if (nextProps.errors) {
@@ -366,9 +366,9 @@ componentWillReceiveProps(nextProps) {
   }
 ```
 
-
 ### Login Part
 #### Login Component
+We have a form which supports users to input their username and password, so we need to complete some HTMLs. We need to set name and value on these input fileds, create a constructor and set initial state and errors, create some event functions like OnChange and OnSubmit. 
 ```JavaScript
 import React, { Component } from "react";
 import PropTypes from "prop-types";
@@ -514,7 +514,7 @@ export const login = (LoginRequest) => async (dispatch) => {
   }
 };
 ```
-1. post Login request to backend by `Axios`
+1. post Login request to backend by `axios.post` function
 2. after backend give the token back, we need to extract token
 3. store this token in the `localStorage`
 4. set our token in header by `setJWTToken` method
