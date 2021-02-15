@@ -12,15 +12,11 @@ Abstract class: is a restricted class that cannot be used to create objects (to 
 2. An abstract class may or may not have all abstract methods. Some of them can be concrete methods.
 3. Any class that contains one or more abstract methods must also be declared with abstract keyword.
 4. There can be no object of an abstract class.That is, an abstract class can not be directly instantiated with the new operator.
-5. An abstract class can have parametrized constructors and 
-default constructor is always present in an abstract class, 
-but they cannot be declared abstract methods.
+5. An abstract class can have parametrized constructors and default constructor is always present in an abstract class, but they cannot be declared abstract methods.
 6. A subclass of an abstract class must give a concrete implementation of an abstract method in an abstract class unless the subclass is also an abstract class.
 
 
-For example: we  have a abstract class Animal, and we have a subclass Pig
-which inherit from Animal, so we can create a Pig 
-object to access the abstract class Animal.
+For example: we  have a abstract class Animal, and we have a subclass Pig which inherit from Animal, so we can create a Pig object to access the abstract class Animal.
 
 An abstract class can have both abstract and regular methods:
 ```java
@@ -142,12 +138,12 @@ class MyMainClass {
 ### How to choose abstract class or interface?
 1. Use an abstract class if we have some functionality that we want it's
  subclasses to have. For instance, if we have a set of functions that we
-  want all of the base abstract class's subclasses to have.
+    want all of the base abstract class's subclasses to have.
 2. Use an interface if we just want a general contract on 
 behavior/functionality. If we have a function or object that we
  want to take in a set of different objects, use an interface. Then we
-  can change out the object that is passed in, without changing 
-  the method or object that is taking it.
+    can change out the object that is passed in, without changing 
+    the method or object that is taking it.
 3. If we want to create a base class without any method definitions or 
 member variables, we should choose an interface.
 4. Abstract classes should be chosen only when method definitions and member variables are required, because one or more methods that are concretely implemented are allowed in an abstract class.
