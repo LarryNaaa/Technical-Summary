@@ -16,7 +16,7 @@
 
    当不添加volatile关键字时示例：
 
-   ```
+   ```java
    package com.jian8.juc;
    
    import java.util.concurrent.TimeUnit;
@@ -92,7 +92,7 @@
 
    验证示例（变量添加volatile关键字，方法不添加synchronized）：
 
-   ```
+   ```java
    package com.jian8.juc;
    
    import java.util.concurrent.TimeUnit;
@@ -183,7 +183,7 @@
 
 3. 禁止指令重排
 
-   有序性：在计算机执行程序时，为了提高性能，编译器和处理器常常会对**==指令做重拍==**，一般分以下三种
+   有序性：在计算机执行程序时，为了提高性能，编译器和处理器常常会对**指令做重排**，一般分以下三种
 
    ```
    graph LR
@@ -279,7 +279,7 @@ JMM（Java Memory Model）本身是一种抽象的概念，并不真实存在，
 
 当普通单例模式在多线程情况下：
 
-```
+```java
 public class SingletonDemo {
     private static SingletonDemo instance = null;
 
@@ -318,7 +318,7 @@ public class SingletonDemo {
 
    DCL （Double Check Lock双端检锁机制）在加锁前和加锁后都进行一次判断
 
-   ```
+   ```java
        public static SingletonDemo getInstance() {
            if (instance == null) {
                synchronized (SingletonDemo.class) {
@@ -373,7 +373,7 @@ AtomicInteger.conpareAndSet(int expect, indt update)
 
 例子：
 
-```
+```java
 package com.jian8.juc.cas;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -608,13 +608,9 @@ Thread 4	当前最新实际值：100
 
 ### 四、我们知道ArrayList是线程不安全的，请编写一个不安全的案例并给出解决方案
 
-HashSet与ArrayList一致 HashMap
-
-HashSet底层是一个HashMap，存储的值放在HashMap的key里，value存储了一个PRESENT的静态Object对象
-
 #### 1、线程不安全
 
-```
+```java
 package com.jian8.juc.collection;
 
 import java.util.ArrayList;
@@ -654,17 +650,23 @@ Exception in thread "Thread 10" java.util.ConcurrentModificationException
 
 #### 2、导致原因
 
-并发正常修改导致
+并发争抢修改导致
 
 一个人正在写入，另一个同学来抢夺，导致数据不一致，并发修改异常
 
-#### 3、解决方法：**CopyOnWriteArrayList
+#### 3、解决方法：CopyOnWriteArrayList
 
-```
+```java
+List:
 List<String> list = new Vector<>();//Vector线程安全
 List<String> list = Collections.synchronizedList(new ArrayList<>());//使用辅助类
 List<String> list = new CopyOnWriteArrayList<>();//写时复制，读写分离
 
+Set:
+Set<String> set = Collections.synchronizedSet(new HashSet<>());//使用辅助类
+Set<String> set = new CopyOnWriteArraySet<>();//写时复制，读写分离
+
+Map:
 Map<String, String> map = new ConcurrentHashMap<>();
 Map<String, String> map = Collections.synchronizedMap(new HashMap<>());
 ```
@@ -673,7 +675,7 @@ CopyOnWriteArrayList.add方法：
 
 CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直接往当前容器Object[]添加，而是先将当前容器Object[]进行copy，复制出一个新的容器Object[] newElements，让后新的容器添加元素，添加完元素之后，再将原容器的引用指向新的容器setArray(newElements),这样做可以对CopyOnWrite容器进行并发的读，而不需要加锁，因为当前容器不会添加任何元素，所以CopyOnWrite容器也是一种读写分离的思想，读和写不同的容器
 
-```
+```java
 	public boolean add(E e) {
         final ReentrantLock lock = this.lock;
         lock.lock();
@@ -690,6 +692,20 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
     }
 ```
 
+### 4、HashSet的底层
+
+- HashSet底层是一个HashMap，存储的值放在HashMap的key里，value存储了一个PRESENT的静态Object对象
+
+```java
+// hashmap的add方法：将值放入hashmap的key中，将object常量放入value中
+public boolean add(E e) {
+        return map.put(e, PRESENT)==null;
+    }
+
+// present是个object常量
+private static final Object PRESENT = new Object();
+```
+
 ### 五、公平锁、非公平锁、可重入锁、递归锁、自旋锁？手写自旋锁
 
 #### 1、公平锁、非公平锁
@@ -699,7 +715,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
    公平锁就是先来后到、非公平锁就是允许加塞，`Lock lock = new ReentrantLock(Boolean fair);` 默认非公平。
 
    - **==公平锁==**是指多个线程按照申请锁的顺序来获取锁，类似排队打饭。
-   - **==非公平锁==**是指多个线程获取锁的顺序并不是按照申请锁的顺序，有可能后申请的线程优先获取锁，在高并发的情况下，有可能会造成优先级反转或者节现象。
+   - **==非公平锁==**是指多个线程获取锁的顺序并不是按照申请锁的顺序，有可能后申请的线程优先获取锁，在高并发的情况下，有可能会造成优先级反转或者饥饿现象。
 
 2. **两者区别**
 
@@ -713,11 +729,11 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 3. **other**
 
-   对Java ReentrantLock而言，通过构造函数指定该锁是否公平，磨粉是非公平锁，非公平锁的优点在于吞吐量比公平锁大
+   对Java ReentrantLock而言，通过构造函数指定该锁是否公平，默认是非公平锁，非公平锁的优点在于吞吐量比公平锁大
 
    对Synchronized而言，是一种非公平锁
 
-#### 2、可重入所（递归锁）
+#### 2、可重入锁（递归锁）
 
 1. **递归锁是什么**
 
@@ -729,7 +745,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 4. **代码示例**
 
-   ```
+   ```java
    package com.jian8.juc.lock;
    
    ####
@@ -764,7 +780,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
    }
    ```
 
-   ```
+   ```java
    package com.jian8.juc.lock;
    
    import java.util.concurrent.locks.Lock;
@@ -818,7 +834,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 2. **代码示例**
 
-   ```
+   ```java
    package com.jian8.juc.lock;
    
    import java.util.HashMap;
@@ -905,9 +921,9 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 1. **spinlock**
 
-   是指尝试获取锁的线程不会立即阻塞，而是==采用循环的方式去尝试获取锁==，这样的好处是减少线程上下文切换的消耗，缺点是循环会消耗CPU
+   是指尝试获取锁的线程不会立即阻塞，而是**采用循环的方式去尝试获取锁**，这样的好处是**减少线程上下文切换的消耗，缺点是循环会消耗CPU**
 
-   ```
+   ```java
        public final int getAndAddInt(Object var1, long var2, int var4) {
            int var5;
            do {
@@ -919,7 +935,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
    手写自旋锁：
 
-   ```
+   ```java
    package com.jian8.juc.lock;
    
    import java.util.concurrent.TimeUnit;
@@ -979,13 +995,13 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 #### 1、CountDownLatch（火箭发射倒计时）
 
-1. 它允许一个或多个线程一直等待，知道其他线程的操作执行完后再执行。例如，应用程序的主线程希望在负责启动框架服务的线程已经启动所有的框架服务之后再执行
+1. 它允许一个或多个线程一直等待，直到其他线程的操作执行完后再执行。例如，应用程序的主线程希望在负责启动框架服务的线程已经启动所有的框架服务之后再执行
 
 2. CountDownLatch主要有两个方法，当一个或多个线程调用await()方法时，调用线程会被阻塞。其他线程调用countDown()方法会将计数器减1，当计数器的值变为0时，因调用await()方法被阻塞的线程才会被唤醒，继续执行
 
 3. 代码示例：
 
-   ```
+   ```java
    package com.jian8.juc.conditionThread;
    
    import java.util.concurrent.CountDownLatch;
@@ -1023,15 +1039,17 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
    }
    ```
 
+![Thread_9](/Users/na/IdeaProjects/Technical summary/Image/Thread_9.png)
+
 #### 2、CyclicBarrier（集齐七颗龙珠召唤神龙）
 
-1. CycliBarrier
+1. CyclicBarrier
 
-   可循环（Cyclic）使用的屏障。让一组线程到达一个屏障（也可叫同步点）时被阻塞，知道最后一个线程到达屏障时，屏障才会开门，所有被屏障拦截的线程才会继续干活，线程进入屏障通过CycliBarrier的await()方法
+   可循环（Cyclic）使用的屏障。让一组线程到达一个屏障（也可叫同步点）时被阻塞，直到最后一个线程到达屏障时，屏障才会开门，所有被屏障拦截的线程才会继续干活，线程进入屏障通过CycliBarrier的await()方法
 
 2. 代码示例：
 
-   ```
+   ```java
    package com.jian8.juc.conditionThread;
    
    import java.util.concurrent.BrokenBarrierException;
@@ -1063,7 +1081,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
    }
    ```
 
-#### 3、Semaphore信号量
+#### 3、Semaphore信号量：多个线程抢多个资源的锁
 
 可以代替Synchronize和Lock
 
@@ -1073,7 +1091,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
    **抢车位示例**：
 
-   ```
+   ```java
    package com.jian8.juc.conditionThread;
    
    import java.util.concurrent.Semaphore;
@@ -1130,13 +1148,13 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
    线程1往阻塞队列中添加元素，而线程2从阻塞队列中移除元素
 
-   当阻塞队列是空是，从队列中==获取==元素的操作会被阻塞
+   当阻塞队列是空是，从队列中==获取take==元素的操作会被阻塞
 
-   当阻塞队列是满时，从队列中==添加==元素的操作会被阻塞
+   当阻塞队列是满时，从队列中==添加put==元素的操作会被阻塞
 
-   试图从空的阻塞队列中获取元素的线程将会被阻塞，知道其他的线程网空的队列插入新的元素。
+   试图从空的阻塞队列中获取元素的线程将会被阻塞，直到其他的线程网空的队列插入新的元素。
 
-   试图网已满的阻塞队列中添加新元素的线程同样会被阻塞，知道其他的线程从列中移除一个或者多个元素或者完全清空队列后使队列重新变得空闲起来并后续新增
+   试图往已满的阻塞队列中添加新元素的线程同样会被阻塞，知道其他的线程从列中移除一个或者多个元素或者完全清空队列后使队列重新变得空闲起来并后续新增
 
 #### 2、为什么用？有什么好处？
 
@@ -1159,7 +1177,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 | 方法类型 | status                                                       |
 | -------- | ------------------------------------------------------------ |
 | 抛出异常 | 当阻塞队列满时，再往队列中add会抛`IllegalStateException: Queue full` 当阻塞队列空时，在网队列里remove会抛`NoSuchElementException` |
-| 特殊值   | 插入方法，成功true失败false 移除方法，成功返回出队列的元素，队列里没有就返回null |
+| 特殊值   | 插入方法，成功true失败false，移除方法，成功返回出队列的元素，队列里没有就返回null |
 | 一直阻塞 | 当阻塞队列满时，生产者线程继续往队列里put元素，队列会一直阻塞线程知道put数据或响应中断退出 当阻塞队列空时，消费者线程试图从队列take元素，队列会一直阻塞消费者线程知道队列可用。 |
 | 超时退出 | 当阻塞队列满时，队列会阻塞生产者线程一定时间，超过限时后生产者线程会退出 |
 
@@ -1171,7 +1189,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
    - ==LinkedBlockingQueue==:由链表结构组成的有界（但大小默认值为`Integer.MAX_VALUE`)阻塞队列。
    - PriorityBlockingQueue:支持优先级排序的无界阻塞队列。
    - DelayQueue:使用优先级队列实现的延迟无界阻塞队列。
-   - ==SychronousQueue==:不存储元素的阻塞队列，也即单个元素的队列。
+   - ==SychronousQueue==:不存储元素的阻塞队列，也即单个元素的队列。元素定制阻塞队列
    - LinkedTransferQueue:由链表结构组成的无界阻塞队列。
    - LinkedBlocking**Deque**:由历览表结构组成的双向阻塞队列。
 
@@ -1181,7 +1199,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
    - 代码示例
 
-     ```
+     ```java
      package com.jian8.juc.queue;
      
      import java.util.concurrent.BlockingQueue;
@@ -1191,7 +1209,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
      /**
       * ArrayBlockingQueue是一个基于数组结构的有界阻塞队列，此队列按FIFO原则对元素进行排序
       * LinkedBlockingQueue是一个基于链表结构的阻塞队列，此队列按FIFO排序元素，吞吐量通常要高于ArrayBlockingQueue
-      * SynchronousQueue是一个不存储元素的阻塞队列，灭个插入操作必须等到另一个线程调用移除操作，否则插入操作一直处于阻塞状态，吞吐量通常要高于
+      * SynchronousQueue是一个不存储元素的阻塞队列，一个插入操作必须等到另一个线程调用移除操作，否则插入操作一直处于阻塞状态，吞吐量通常要高于
       * 1.队列
       * 2.阻塞队列
       * 2.1 阻塞队列有没有好的一面
@@ -1232,9 +1250,9 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 1. 生产者消费者模式
 
-   - 传统版
+   - 传统版1.0：synchronized+wait+notify 2.0：lock+await+signal
 
-     ```
+     ```java
      package com.jian8.juc.queue;
      
      import java.util.concurrent.locks.Condition;
@@ -1243,9 +1261,9 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
      
      /**
       * 一个初始值为零的变量，两个线程对其交替操作，一个加1一个减1，来5轮
-      * 1. 线程  操作  资源类
+      * 1. 线程  操作/方法  资源类
       * 2. 判断  干活  通知
-      * 3. 防止虚假唤起机制
+      * 3. 防止虚假唤起机制 判断用while不是if
       */
      public class ProdConsumer_TraditionDemo {
          public static void main(String[] args) {
@@ -1336,9 +1354,9 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
      }
      ```
 
-   - 阻塞队列版
+   - 阻塞队列版：volatile cas atomicInteger BlockQueue
 
-     ```
+     ```java
      package com.jian8.juc.queue;
      
      import java.util.concurrent.ArrayBlockingQueue;
@@ -1433,11 +1451,11 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 1. 原始构成
 
-   - synchronized时关键字属于jvm
+   - synchronized是关键字，属于jvm
 
      **monitorenter**，底层是通过monitor对象来完成，其实wait/notify等方法也依赖于monitor对象只有在同步或方法中才能掉wait/notify等方法
 
-     **monitorexit**
+     **monitorexit**，两次：保证正常退出和异常退出
 
    - Lock是具体类，是api层面的锁（java.util.）
 
@@ -1461,7 +1479,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
    - synchronized没有
    - ReentrantLock用来实现分组唤醒需要要唤醒的线程们，可以精确唤醒，而不是像synchronized要么随机唤醒一个线程要么唤醒全部线程。
 
-   ```
+   ```java
    package com.jian8.juc.lock;
    
    import java.util.concurrent.locks.Condition;
@@ -1577,7 +1595,7 @@ CopyOnWrite容器即写时复制，往一个元素添加容器的时候，不直
 
 #### 1、Callable接口的使用
 
-```
+```java
 package com.jian8.juc.thread;
 
 import java.util.concurrent.Callable;
@@ -1624,6 +1642,13 @@ class MyThread2 implements Callable<Integer> {
     }
 }
 ```
+
+Callable和Runnable的区别：
+
+- 重写方法不同，一个run方法一个call方法
+
+- Callable有返回值
+- call方法会抛出异常
 
 #### 2、为什么使用线程池
 
@@ -1684,7 +1709,9 @@ class MyThread2 implements Callable<Integer> {
 
      newCachedThreadPool将corePoolSize设置为0，将maximumPoolSize设置为Integer.MAX_VALUE,使用的SynchronousQueue,也就是说来了任务就创建线程运行，当县城空闲超过60s，就销毁线程
 
-3. **ThreadPoolExecutor**
+3. 底层是**ThreadPoolExecutor**
+
+![Thread_10](/Users/na/IdeaProjects/Technical summary/Image/Thread_10.png)
 
 #### 4、线程池的几个重要参数介绍
 
@@ -1707,9 +1734,7 @@ public ThreadPoolExecutor(int corePoolSize,
 
 2. **==maximumPoolSize==**：线程池能够容纳同时执行的最大线程数，必须大于等于1
 
-3. ==keepAliveTime==
-
-   ：多余的空闲线程的存活时间
+3. ==keepAliveTime==：多余的空闲线程的存活时间
 
    - 当前线程池数量超过corePoolSize时，档口空闲时间达到keepAliveTime值时，多余空闲线程会被销毁到只剩下corePoolSize个线程为止
 
@@ -1719,25 +1744,13 @@ public ThreadPoolExecutor(int corePoolSize,
 
 6. **==threadFactory==**：表示生成线程池中工作线程的线程工厂，用于创建线程一般用默认的即可
 
-7. **==handler==**：拒绝策略，表示当队列满了并且工作线程大于等于线程池的最大线程数（maximumPoolSize）时如何来拒绝请求执行的runable的策略
+7. **==handler==**：拒绝策略，表示当工作队列workQueue满了并且工作线程大于等于线程池的最大线程数（maximumPoolSize）时如何来拒绝请求执行的runable的策略
+
+![Thread_11](/Users/na/IdeaProjects/Technical summary/Image/Thread_11.png)
 
 #### 5、线程池的底层工作原理
 
-```
-graph LR
-subgraph 使用者
-main(提交任务)
-end
-main-->core{核心线程是否已满}
-subgraph 线程池
-core--是-->queue{队列是否已满}
-queue--是-->pool{线程池是否已满}
-pool--是-->reject["按照拒绝策略处理<br>无法执行的任务"]
-core--否-->id[创建线程执行任务]
-queue--否-->任务入队列等待
-pool--否-->创建线程执行任务
-end
-```
+![Thread_12](/Users/na/IdeaProjects/Technical summary/Image/Thread_12.png)
 
 **==流程==**
 
