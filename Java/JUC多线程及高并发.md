@@ -331,6 +331,8 @@ public class SingletonDemo {
 
 ### 二、CAS你知道吗
 
+![Thread_19](/Users/na/IdeaProjects/Technical summary/Image/Thread_19.png)
+
 #### 1、compareAndSet----比较并交换
 
 AtomicInteger.conpareAndSet(int expect, indt update)
@@ -442,7 +444,7 @@ false	 current data is 2019
 - synchronized保证了一致性，但并发性较弱；CAS不加锁，即保证了一致性又保证了并发性
 - CAS只能保证一个共享变量的原子操作，synchronized能保证多个共享变量的原子操作
 
-### 三、原子类AtomicInteger的ABA问题？原子更新引用？
+### 三、原子类AtomicInteger的ABA问题？时间戳的原子引用
 
 #### 1、ABA如何产生
 
@@ -456,7 +458,7 @@ CAS算法实现一个重要前提需要去除内存中某个时刻的数据并�
 
 示例代码：
 
-```
+```java
 package juc.cas;
 
 import lombok.AllArgsConstructor;
@@ -496,7 +498,7 @@ false	User(userName=李四, age=23)
 
 新增机制，修改版本号
 
-```
+```java
 package com.jian8.juc.cas;
 
 import java.util.concurrent.TimeUnit;
