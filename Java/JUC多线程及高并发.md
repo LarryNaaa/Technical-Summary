@@ -12,7 +12,9 @@
 
 1. 保证可见性
 
-   当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看到修改的值
+   多个线程访问同一个被volatile修饰的变量时，一个线程修改了这个变量的值，其他线程能够立即被通知主内存的值被修改。
+
+   由于JVM运行程序的实体是线程，而每个线程创建时JVM都会为其创建一个工作内存（有的成为栈空间），工作内存是每个线程的私有数据区域，而java内存模型中规定所有变量都存储在**==主内存==**，主内存是贡献内存区域，所有线程都可以访问，**==但线程对变量的操作（读取赋值等）必须在工作内存中进行，首先概要将变量从主内存拷贝到自己的工作内存空间，然后对变量进行操作，操作完成后再将变量写回主内存，==**不能直接操作主内存中的变量，各个线程中的工作内存中存储着主内存的**==变量副本拷贝==**，因此不同的线程件无法访问对方的工作内存，线程间的通信（传值）必须通过主内存来完成。
 
    当不添加volatile关键字时示例：
 
@@ -86,9 +88,13 @@
    //程序没有死循环，结束执行
    ```
 
-2. ==不保证原子性==
+2. 不保证原子性
 
    原子性：不可分割、完整性，即某个线程正在做某个具体业务时，中间不可以被加塞或者被分割，需要整体完整，要么同时成功，要么同时失败
+
+   保证原子性的方法：1. synchronized 2. Atomic
+
+   i++: 读取i，i加一，值写回。这个过程中有些线程被挂起，导致没有接收到volatile值更新的通知，没有获得最新值，导致错误
 
    验证示例（变量添加volatile关键字，方法不添加synchronized）：
 
@@ -181,48 +187,40 @@
    //num并没有达到20000
    ```
 
-3. 禁止指令重排
+3. 保证有序性：禁止指令重排
 
-   有序性：在计算机执行程序时，为了提高性能，编译器和处理器常常会对**指令做重排**，一般分以下三种
+   有序性：在计算机执行程序时，为了提高性能，编译器和处理器常常会对**指令重排(没有数据依赖)**，一般分以下三种
 
-   ```
-   graph LR
-   	源代码 --> id1["编译器优化的重排"]
-   	id1 --> id2[指令并行的重排]
-   	id2 --> id3[内存系统的重排]
-   	id3 --> 最终执行的指令
-   	style id1 fill:#ff8000;
-   	style id2 fill:#fab400;
-   	style id3 fill:#ffd557;
-   ```
-
+   ![Thread_14](/Users/na/IdeaProjects/Technical summary/Image/Thread_14.png)
+   
    单线程环境里面确保程序最终执行结果和代码顺序执行的结果一致。
-
-   处理器在进行重排顺序是必须要考虑指令之间的**==数据依赖性==**
-
-   ==多线程环境中线程交替执行，由于编译器优化重排的存在，两个线程中使用的变量能否保证一致性时无法确定的，结果无法预测==
-
+   
+   处理器在进行重排顺序是必须要考虑指令之间的**数据依赖性**
+   
+   多线程环境中线程交替执行，由于编译器优化重排的存在，两个线程中使用的变量能否保证一致性时无法确定的，结果无法预测
+   
    重排代码实例：
+   
 
-   声明变量：`int a,b,x,y=0`
+声明变量：`int a,b,x,y=0`
 
-   | 线程1  | 线程2     |
-   | ------ | --------- |
-   | x = a; | y = b;    |
-   | b = 1; | a = 2;    |
-   | 结 果  | x = 0 y=0 |
+| 线程1  | 线程2     |
+| ------ | --------- |
+| x = a; | y = b;    |
+| b = 1; | a = 2;    |
+| 结 果  | x = 0 y=0 |
 
-   如果编译器对这段程序代码执行重排优化后，可能出现如下情况：
+如果编译器对这段程序代码执行重排优化后，可能出现如下情况：
 
-   | 线程1  | 线程2     |
-   | ------ | --------- |
-   | b = 1; | a = 2;    |
-   | x= a;  | y = b;    |
-   | 结 果  | x = 2 y=1 |
+| 线程1  | 线程2     |
+| ------ | --------- |
+| b = 1; | a = 2;    |
+| x= a;  | y = b;    |
+| 结 果  | x = 2 y=1 |
 
-   这个结果说明在多线程环境下，由于编译器优化重排的存在，两个线程中使用的变量能否保证一致性是无法确定的
+这个结果说明在多线程环境下，由于编译器优化重排的存在，两个线程中使用的变量能否保证一致性是无法确定的
 
-   volatile实现禁止指令重排，从而避免了多线程环境下程序出现乱序执行的现象
+volatile实现禁止指令重排，从而避免了多线程环境下程序出现乱序执行的现象
 
    **==内存屏障==**（Memory Barrier）又称内存栅栏，是一个CPU指令，他的作用有两个：
 
@@ -231,33 +229,7 @@
 
    由于编译器和处理器都能执行指令重排优化。如果在之零件插入一i奥Memory Barrier则会告诉编译器和CPU，不管什么指令都不能和这条Memory Barrier指令重排顺序，也就是说==通过插入内存屏障禁止在内存屏障前后的指令执行重排序优化==。内存屏障另外一个作用是强制刷出各种CPU的缓存数据，因此任何CPU上的线程都能读取到这些数据的最新版本。
 
-   ```
-   graph TB
-       subgraph 
-       bbbb["对Volatile变量进行读操作时，<br>回在读操作之前加入一条load屏障指令，<br>从内存中读取共享变量"]
-       ids6[Volatile]-->red3[LoadLoad屏障]
-       red3-->id7["禁止下边所有普通读操作<br>和上面的volatile读重排序"]
-       red3-->red4[LoadStore屏障]
-       red4-->id9["禁止下边所有普通写操作<br>和上面的volatile读重排序"]
-       red4-->id8[普通读]
-       id8-->普通写
-       end
-       subgraph 
-       aaaa["对Volatile变量进行写操作时，<br>回在写操作后加入一条store屏障指令，<br>将工作内存中的共享变量值刷新回到主内存"]
-       id1[普通读]-->id2[普通写]
-       id2-->red1[StoreStore屏障]
-       red1-->id3["禁止上面的普通写和<br>下面的volatile写重排序"]
-       red1-->id4["Volatile写"]
-       id4-->red2[StoreLoad屏障]
-       red2-->id5["防止上面的volatile写和<br>下面可能有的volatile读写重排序"]
-       end
-       style red1 fill:#ff0000;
-       style red2 fill:#ff0000;
-       style red4 fill:#ff0000;
-       style red3 fill:#ff0000;
-       style aaaa fill:#ffff00;
-       style bbbb fill:#ffff00;
-   ```
+   ![Thread_15](/Users/na/IdeaProjects/Technical summary/Image/Thread_15.png)
 
 #### 2、JMM（java内存模型）
 
@@ -269,7 +241,7 @@ JMM（Java Memory Model）本身是一种抽象的概念，并不真实存在，
 2. 线程加锁前，必须读取主内存的最新值到自己的工作内存
 3. 加锁解锁时同一把锁
 
-由于JVM运行程序的实体是线程，而每个线程创建时JVM都会为其创建一个工作内存（有的成为栈空间），工作内存是每个线程的私有数据区域，而java内存模型中规定所有变量都存储在**==主内存==**，主内存是贡献内存区域，所有线程都可以访问，**==但线程对变量的操作（读取赋值等）必须在工作内存中进行，首先概要将变量从主内存拷贝到自己的工作内存空间，然后对变量进行操作，操作完成后再将变量写回主内存，==**不能直接操作主内存中的变量，各个线程中的工作内存中存储着主内存的**==变量副本拷贝==**，因此不同的线程件无法访问对方的工作内存，线程间的通信（传值）必须通过主内存来完成，期间要访问过程如下图：[![1559049634(1)](https://github.com/MrJian8/ThreadDemo/raw/master/src/main/resources/images%5C1559049634(1).jpg)](https://github.com/MrJian8/ThreadDemo/blob/master/src/main/resources/images\1559049634(1).jpg)
+由于JVM运行程序的实体是线程，而每个线程创建时JVM都会为其创建一个工作内存（有的成为栈空间），工作内存是每个线程的私有数据区域，而java内存模型中规定所有变量都存储在**==主内存==**，主内存是贡献内存区域，所有线程都可以访问，**==但线程对变量的操作（读取赋值等）必须在工作内存中进行，首先概要将变量从主内存拷贝到自己的工作内存空间，然后对变量进行操作，操作完成后再将变量写回主内存，==**不能直接操作主内存中的变量，各个线程中的工作内存中存储着主内存的**==变量副本拷贝==**，因此不同的线程件无法访问对方的工作内存，线程间的通信（传值）必须通过主内存来完成，期间要访问过程如下图：
 
 1. 可见性
 2. 原子性
@@ -404,11 +376,11 @@ false	 current data is 2019
 
 #### 2、CAS底层原理？对Unsafe的理解
 
-比较当前工作内存中的值和主内存中的值，如果相同则执行规定操作，否则继续比较知道主内存和工作内存中的值一直为止
+比较当前工作内存中的值和主内存中的值，如果相同则执行规定操作，否则继续比较直到主内存和工作内存中的值一直为止
 
 1. atomicInteger.getAndIncrement();
 
-   ```
+   ```java
        public final int getAndIncrement() {
            return unsafe.getAndAddInt(this, valueOffset, 1);
        }
@@ -430,36 +402,32 @@ false	 current data is 2019
 
    他的功能是判断内存某个位置的值是否为预期值，如果是则更改为新的值，这个过程是原子的。
 
-   CAS并发原语体现在JAVA语言中就是sun.misc.Unsafe类中各个方法。调用Unsafe类中的CAS方法，JVM会帮我们实现CAS汇编指令。这是一种完全依赖于硬件的功能，通过他实现了原子操作。由于CAS是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，用于完成某个功能的一个过程，并且原语的执行必须是连续的，在执行过程中不允许被中断，也就是说CAS是一条CPU的原子指令，不会造成数据不一致问题。
+   CAS并发原语体现在JAVA语言中就是sun.misc.Unsafe类中各个方法。调用Unsafe类中的CAS方法，JVM会帮我们实现CAS汇编指令。这是一种完全依赖于硬件的功能，通过他实现了原子操作。由于CAS是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，用于完成某个功能的一个过程，并且原语的执行必须是连续的，在执行过程中不允许被中断，也就是说**CAS是一条CPU的原子指令，不会造成数据不一致问题**。
 
-   ```
-   //unsafe.getAndAddInt
-       public final int getAndAddInt(Object var1, long var2, int var4) {
-           int var5;
-           do {
-               var5 = this.getIntVolatile(var1, var2);
-           } while(!this.compareAndSwapInt(var1, var2, var5, var5 + var4));
-           return var5;
-       }
-   ```
-
+   ![Thread_16](/Users/na/IdeaProjects/Technical summary/Image/Thread_16.png)
+   
    var1 AtomicInteger对象本身
-
+   
    var2 该对象的引用地址
-
+   
    var4 需要变动的数据
-
+   
    var5 通过var1 var2找出的主内存中真实的值
+   
 
-   用该对象前的值与var5比较；
+用该对象前的值与var5比较；
 
-   如果相同，更新var5+var4并且返回true，
+如果相同，更新var5+var4并且返回true，
 
-   如果不同，继续去之然后再比较，直到更新完成
+如果不同，继续去之然后再比较，直到更新完成
+
+![Thread_17](/Users/na/IdeaProjects/Technical summary/Image/Thread_17.png)
+
+![Thread_18](/Users/na/IdeaProjects/Technical summary/Image/Thread_18.png)
 
 #### 3、CAS缺点
 
-1. ** 循环时间长，开销大**
+1. **循环时间长，CPU开销大**
 
    例如getAndAddInt方法执行，有个do while循环，如果CAS失败，一直会进行尝试，如果CAS长时间不成功，可能会给CPU带来很大的开销
 
@@ -468,6 +436,11 @@ false	 current data is 2019
    对多个共享变量操作时，循环CAS就无法保证操作的原子性，这个时候就可以用锁来保证原子性
 
 3. **ABA问题**
+
+#### 4、CAS和synchronized比较
+
+- synchronized保证了一致性，但并发性较弱；CAS不加锁，即保证了一致性又保证了并发性
+- CAS只能保证一个共享变量的原子操作，synchronized能保证多个共享变量的原子操作
 
 ### 三、原子类AtomicInteger的ABA问题？原子更新引用？
 
@@ -1754,7 +1727,7 @@ public ThreadPoolExecutor(int corePoolSize,
 
 **==流程==**
 
-1. 在创建了线程池之后，等待提交过来的 人物请求。
+1. 在创建了线程池之后，等待提交过来的任务请求。
 
 2. 当调用execute()方法添加一个请求任务时，线程池会做出如下判断
 
@@ -1808,11 +1781,11 @@ public ThreadPoolExecutor(int corePoolSize,
 
 线程池不允许使用Executors创建，试试通过ThreadPoolExecutor的方式，规避资源耗尽风险
 
-FixedThreadPool和SingleThreadPool允许请求队列长度为Integer.MAX_VALUE，可能会堆积大量请求；；CachedThreadPool和ScheduledThreadPool允许的创建线程数量为Integer.MAX_VALUE，可能会创建大量线程，导致OOM
+FixedThreadPool和SingleThreadPool的阻塞队列workQueue是LinkedBlockingQueue，它的默认长度为Integer.MAX_VALUE，等待队列可能会堆积大量请求；CachedThreadPool和ScheduledThreadPool允许的创建线程数量为Integer.MAX_VALUE，可能会创建大量线程，导致OOM
 
 #### 3、你在工作中时如何使用线程池的，是否自定义过线程池使用
 
-```
+```java
 package com.jian8.juc.thread;
 
 import java.util.concurrent.*;
@@ -1882,18 +1855,8 @@ public class MyThreadPoolDemo {
 
    死锁是指两个或两个以上的进程在执行过程中，因争夺资源而造成的一种互相等待的现象，若无外力干涉那他们都将无法推进下去，如果系统资源充足，进程的资源请求都能够得到满足，死锁出现的可能性就很低，否则就会因争夺有限的资源而陷入死锁。
 
-   ```
-   graph TD
-    threadA(线程A)
-    threadB(线程B)
-    lockA((锁A))
-    lockB((锁B))
-    threadA--持有-->lockA
-    threadB--试图获取-->lockA
-    threadB--持有-->lockB
-    threadA--试图获取-->lockB
-   ```
-
+   ![Thread_13](/Users/na/IdeaProjects/Technical summary/Image/Thread_13.png)
+   
 2. 产生死锁的主要原因
 
    - 系统资源不足
@@ -1902,7 +1865,7 @@ public class MyThreadPoolDemo {
 
 3. 死锁示例
 
-   ```
+   ```java
    package com.jian8.juc.thread;
    
    import java.util.concurrent.TimeUnit;
