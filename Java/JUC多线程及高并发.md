@@ -1945,6 +1945,21 @@ public class MyThreadPoolDemo {
 - 每个线程中可以持有很多个ThreadLocal对象，这些对象通过hash后存储在Thread的ThreadLocalMap中，其中的Key为ThreadLocal对象，value为该对象在本线程中的一个副本
 - 每个Thread含有的ThreadLocalMap中的Key为ThreadLocal变量的弱引用，如果一个ThreadLocal变量没有外部强引用来引用它，那么它在JVM下一次GC的时候会被垃圾回收掉，这时候，Map中就存在了key为NULL的value，这个value无法被访问。
 - 在Thread中使用完ThreadLocal对象后，一定要记得调用ThreadLocal的remove方法，进行手动清除。
+- key是当前ThreadLocal对象，value是set方法传入的参数
+
+```java
+ public void set(T value) {
+    Thread t = Thread.currentThread();//1.首先获取当前线程对象
+        ThreadLocalMap map = getMap(t);//2.获取该线程对象的ThreadLocalMap
+        if (map != null)
+            map.set(this, value);//如果map不为空，执行set操作，
+                                 //以当前threadLocal对象为key，实际存储对象为value进行set操作
+        else
+            createMap(t, value);//如果map为空，则为该线程创建ThreadLocalMap
+    }
+```
+
+
 
 ![CAS_11](/Users/na/IdeaProjects/Technical summary/Image/CAS_11.png)
 
