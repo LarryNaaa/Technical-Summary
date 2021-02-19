@@ -337,7 +337,7 @@ public class SingletonDemo {
 
 AtomicInteger.conpareAndSet(int expect, indt update)
 
-```
+```java
     public final boolean compareAndSet(int expect, int update) {
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
     }
@@ -1618,7 +1618,14 @@ class MyThread2 implements Callable<Integer> {
 }
 ```
 
-Callable和Runnable的区别：
+#### 1.1 线程的创建方式
+
+- 继承Thread类，重写Run方法
+- 实现Runnable接口，重写Run方法
+- 实现Callable接口，重写Call方法
+- 线程池Executors工具类创建或者自定义线程池new ThreadPoolExecutor()
+
+#### 1.2 Callable和Runnable的区别：
 
 - 重写方法不同，一个run方法一个call方法
 
@@ -1680,9 +1687,9 @@ Callable和Runnable的区别：
 
      **执行很多短期异步的小程序或负载较轻的服务器**
 
-     创建一个可缓存线程池，如果线程池长度超过处理需要，可灵活回收空闲县城，若无可回收，则新建线程。
+     创建一个可缓存线程池，如果线程池长度超过处理需要，可灵活回收空闲线程，若无可回收，则新建线程。
 
-     newCachedThreadPool将corePoolSize设置为0，将maximumPoolSize设置为Integer.MAX_VALUE,使用的SynchronousQueue,也就是说来了任务就创建线程运行，当县城空闲超过60s，就销毁线程
+     newCachedThreadPool将corePoolSize设置为0，将maximumPoolSize设置为Integer.MAX_VALUE,使用的SynchronousQueue,也就是说来了任务就创建线程运行，当线程空闲超过60s，就销毁线程
 
 3. 底层是**ThreadPoolExecutor**
 
@@ -1783,7 +1790,7 @@ public ThreadPoolExecutor(int corePoolSize,
 
 线程池不允许使用Executors创建，试试通过ThreadPoolExecutor的方式，规避资源耗尽风险
 
-FixedThreadPool和SingleThreadPool的阻塞队列workQueue是LinkedBlockingQueue，它的默认长度为Integer.MAX_VALUE，等待队列可能会堆积大量请求；CachedThreadPool和ScheduledThreadPool允许的创建线程数量为Integer.MAX_VALUE，可能会创建大量线程，导致OOM
+FixedThreadPool和SingleThreadPool的阻塞队列workQueue是LinkedBlockingQueue，它的默认长度为Integer.MAX_VALUE，等待队列可能会堆积大量请求；CachedThreadPool和ScheduledThreadPool允许的创建线程数量maximumPoolSize为Integer.MAX_VALUE，可能会创建大量线程，导致OOM
 
 #### 3、你在工作中时如何使用线程池的，是否自定义过线程池使用
 
@@ -1915,3 +1922,33 @@ public class MyThreadPoolDemo {
 
    1. 使用`jps -l`定位进程号
    2. `jstack 进程号`找到死锁查看
+
+## 十一
+
+### 1. 线程的状态
+
+![States of a Thread](https://pic2.zhimg.com/v2-54ad049834f12e2f839f14c51fab3299_b.jpg)
+
+![Thread_1](/Users/na/IdeaProjects/Technical summary/Image/Thread_1.png)
+
+### 2. 锁的级别：存储在对象的内存中的对象头的markword中
+
+![CAS_2](/Users/na/IdeaProjects/Technical summary/Image/CAS_2.png)
+
+- 一个线程访问：偏向锁(对象记录当前线程的指针)
+- 线程少，消耗操作时间短：自旋锁、轻量级锁(未获得锁的线程进行自旋)
+- 自旋10次后、线程多，消耗操作时间长：重量级锁(线程进入等待队列，不占用CPU)
+
+### 3. ThreadLocal
+
+- ThreadLocal的作用是提供线程内的局部变量，这种变量在多线程环境下访问时能够保证各个线程里变量的独立性。
+- 每个线程中可以持有很多个ThreadLocal对象，这些对象通过hash后存储在Thread的ThreadLocalMap中，其中的Key为ThreadLocal对象，value为该对象在本线程中的一个副本
+- 每个Thread含有的ThreadLocalMap中的Key为ThreadLocal变量的弱引用，如果一个ThreadLocal变量没有外部强引用来引用它，那么它在JVM下一次GC的时候会被垃圾回收掉，这时候，Map中就存在了key为NULL的value，这个value无法被访问。
+- 在Thread中使用完ThreadLocal对象后，一定要记得调用ThreadLocal的remove方法，进行手动清除。
+
+![CAS_11](/Users/na/IdeaProjects/Technical summary/Image/CAS_11.png)
+
+![CAS_12](/Users/na/IdeaProjects/Technical summary/Image/CAS_12.png)
+
+
+
