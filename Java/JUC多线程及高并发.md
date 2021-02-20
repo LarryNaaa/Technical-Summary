@@ -642,8 +642,9 @@ Set<String> set = Collections.synchronizedSet(new HashSet<>());//使用辅助类
 Set<String> set = new CopyOnWriteArraySet<>();//写时复制，读写分离
 
 Map:
+HashTable
 Map<String, String> map = new ConcurrentHashMap<>();
-Map<String, String> map = Collections.synchronizedMap(new HashMap<>());
+Map<String, String> map = Collections.synchronizedMap(new HashMap<>());// synchronized对mutex对象上锁
 ```
 
 CopyOnWriteArrayList.add方法：

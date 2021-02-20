@@ -138,15 +138,58 @@
   - 强引用可以直接访问目标对象。
   - 强引用所指向的对象在任何时候都不会被系统回收，虚拟机宁愿抛出OOM异常，也不会回收强引用所指向对象。
   - 强引用可能导致内存泄漏。
+  
 - 软引用（Soft Reference） ：在系统将要发生内存溢出之前，将会把这些对象列入回收范围之中进行第二次回收。如果这次回收后还没有足够的内存，才会抛出内存溢出异常。用于缓存。
   - 当内存足够: 不会回收软引用的可达对象
   - 当内存不够时: 会回收软引用的可达对象
+  
 - 弱引用（Weak Reference） ：被弱引用关联的对象只能生存到下一次垃圾收集之前。当垃圾收集器工作时，无论内存空间是否足够，都会回收掉被弱引用关联的对象。
   - 在构造弱引用时，也可以指定一个引用队列，当弱引用对象被回收时，就会加入指定的引用队列，通过这个队列可以跟踪对象的回收情况。
   - 弱引用对象与软引用对象的最大不同就在于，当GC在进行回收时，需要通过算法检查是否回收软引用对象，而对于弱引用对象，GC总是进行回收。弱引用对象更容易、更快被GC回收。 
+  - 
+  
 - 虚引用（Phantom Reference） ：一个对象是否有虛引用的存在，完全不会对其生存时间构成影响，它不能单独使用，也**无法通过虚引用来获取被引用的对象**。为一个对象设置虛引用关联的唯一目的就是能在这个对象被收集器回收时收到一个系统通知(回收跟踪)，**虚引用对象被GC后，将虚引用加入引用队列，进而通知清理堆外内存**。
   - 虚引用必须和引用队列一起使用。虚引用在创建时必须提供一个引用队列作为参数。当垃圾回收器准备回收一个对象时，如果发现它还有虛引用，就会在回收对象后，将这个虚引用加入引用队列，以通知应用程序对象的回收情况。 
   - 由于虚引用可以跟踪对象的回收时间，因此，也可以将一些资源释放操作放置在虛引用中执行和记录。
+  
+- ThreadLocal
+
+  - ThreadLocal的作用是提供线程内的局部变量，这种变量在多线程环境下访问时能够保证各个线程里变量的独立性。
+  - 每个线程中可以持有很多个ThreadLocal对象，这些对象通过hash后存储在Thread的ThreadLocalMap中，其中的Key为ThreadLocal对象，value为该对象在本线程中的一个副本
+  - 每个Thread含有的ThreadLocalMap中的Key为ThreadLocal变量的弱引用，如果一个ThreadLocal变量没有外部强引用来引用它，那么它在JVM下一次GC的时候会被垃圾回收掉，这时候，Map中就存在了key为NULL的value，这个value无法被访问。
+  - 在Thread中使用完ThreadLocal对象后，一定要记得调用ThreadLocal的remove方法，进行手动清除。
+  - key是当前ThreadLocal对象，value是set方法传入的参数
+
+  ```java
+   public void set(T value) {
+      Thread t = Thread.currentThread();//1.首先获取当前线程对象
+          ThreadLocalMap map = getMap(t);//2.获取该线程对象的ThreadLocalMap
+          if (map != null)
+              map.set(this, value);//如果map不为空，执行set操作，
+                                   //以当前threadLocal对象为key，实际存储对象为value进行set操作
+          else
+              createMap(t, value);//如果map为空，则为该线程创建ThreadLocalMap
+      }
+  ```
+
+  
+
+  ![CAS_11](/Users/na/IdeaProjects/Technical summary/Image/CAS_11.png)
+
+  ![CAS_12](/Users/na/IdeaProjects/Technical summary/Image/CAS_12.png)
+
+  
+
+- WeakHashMap
+  
+  - Entry继承了弱引用，会被下次gc回收
+  - 每次访问WeakHashMap的时候，都会调用这个expungeStaleEntries函数移除其内部不用的entry
+  
+  ```java
+  private static class Entry<K,V> extends WeakReference<Object> implements Map.Entry<K,V>
+  ```
+  
+  
 
 ## 13. GC的性能指标
 
