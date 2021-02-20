@@ -123,9 +123,162 @@ public static int highestOneBit(int i) {
 
 ## 9. 怎么处理HashMap在线程安全的场景么？
 
-- **HashTable**：方法使用synchronized上锁，并发效率低
-- **Collections.synchronizedMap()**：synchronized对mutex对象上锁，在synchronized代码块中执行map方法，并发效率低
-- **CurrentHashMap**：
+### 9.1 **HashTable**
+
+- 方法使用synchronized上锁，并发效率低
+
+#### 9.1.1 为啥Hashtable 是不允许键或值为 null 的，HashMap 的键值则都可以为 null？
+
+- 这是因为Hashtable使用的是**安全失败机制（fail-safe）**，这种机制会使此次读到的数据不一定是最新的数据。
+- 如果使用null值，就会使得其无法判断对应的key是不存在还是为空，因为你无法再调用一次contain(key）来对key是否存在进行判断，ConcurrentHashMap同理。
+
+### 9.1.2 说出一些Hashtable 跟HashMap不一样点么？
+
+- Hashtable 是不允许键或值为 null 的，HashMap 的键值则都可以为 null。
+- **实现方式不同**：Hashtable 继承了 Dictionary类，而 HashMap 继承的是 AbstractMap 类。
+- **初始化容量不同**：HashMap 的初始容量为：16，Hashtable 初始容量为：11，两者的负载因子默认都是：0.75。
+- **扩容机制不同**：当现有容量大于总容量 * 负载因子时，HashMap 扩容规则为当前容量翻倍，Hashtable 扩容规则为当前容量翻倍 + 1。
+- **迭代器不同**：HashMap 中的 Iterator 迭代器是 fail-fast 的，而 Hashtable 的 Enumerator 不是 fail-fast 的。所以，当其他线程改变了HashMap 的结构，如：增加、删除元素，将会抛出ConcurrentModificationException 异常，而 Hashtable 则不会。
+
+### 9.1.3 fail-fast
+
+- **快速失败（fail—fast）**是java集合中的一种机制， 在用迭代器遍历一个集合对象时，如果遍历过程中对集合对象的内容进行了修改（增加、删除、修改），则会抛出Concurrent Modification Exception。
+- 工作原理：迭代器在遍历时直接访问集合中的内容，并且在遍历过程中使用一个 modCount 变量。集合在被遍历期间如果内容发生变化，就会改变modCount的值。每当迭代器使用hashNext()/next()遍历下一个元素之前，都会检测modCount变量是否为expectedmodCount值，是的话就返回遍历；否则抛出异常，终止遍历。
+- 应该使用迭代器的remove方法，改方法会在remove元素后更新expectmodcount。
+- 场景：java.util包下的集合类都是快速失败的，不能在多线程下发生并发修改（迭代过程中被修改）算是一种安全机制吧。
+- 非保障的，迭代器的快速失败行为应该仅用于检测程序中的bug
+
+### 9.1.4 fail—safe
+
+- java.util.concurrent包下的容器都是安全失败，可以在多线程下并发使用，并发修改。
+- 采用fail-safe机制来说，就不会抛出异常
+- 当集合的结构被改变的时候，fail-safe机制会在复制原集合的一份数据出来，然后在复制的那份数据遍历。
+- 缺点：
+  1. 复制时需要额外的空间和时间上的开销。
+  2. 不能保证遍历的是最新内容。
+
+### 9.2 **Collections.synchronizedMap()**
+
+- 内部维护了一个普通对象Map，还有排斥锁mutex，将对象排斥锁赋值为this，即调用synchronizedMap的对象，创建出synchronizedMap之后，再操作map的时候，就会对方法上锁
+- 并发效率低
+
+### 9.3 **CurrentHashMap**
+
+#### 9.3.1 JDK 1.7
+
+- 是由 Segment 数组、HashEntry 组成，和 HashMap 一样，仍然是**数组加链表**。
+- HashEntry跟HashMap差不多的，但是不同点是，他使用volatile去修饰了他的数据Value还有下一个节点next。
+- 原理上来说，ConcurrentHashMap 采用了**分段锁**技术，其中 Segment 继承于 ReentrantLock。不会像 HashTable 那样不管是 put 还是 get 操作都需要做同步处理，理论上 ConcurrentHashMap 支持 CurrencyLevel (Segment 数组数量)的线程并发。每当一个线程占用锁访问一个 Segment 时，不会影响到其他的 Segment。就是说如果容量大小是16他的并发度就是16，可以同时允许16个线程操作16个Segment而且还是线程安全的。
+
+```java
+static final class Segment<K,V> extends ReentrantLock implements Serializable {
+
+    private static final long serialVersionUID = 2249069246763182397L;
+
+    // 和 HashMap 中的 HashEntry 作用一样，真正存放数据的桶
+    transient volatile HashEntry<K,V>[] table;
+
+    transient int count;
+        // 记得快速失败（fail—fast）么？
+    transient int modCount;
+        // 大小
+    transient int threshold;
+        // 负载因子
+    final float loadFactor;
+
+}
+```
+
+- 先定位到Segment，然后再进行Segmentd的put操作。
+- 首先第一步的时候会尝试获取锁，如果获取失败肯定就有其他线程存在竞争，则利用 `scanAndLockForPut()` 自旋获取锁。
+  1. 尝试自旋获取锁。
+  2. 如果重试的次数达到了 `MAX_SCAN_RETRIES` 则改为阻塞锁获取，保证能获取成功。
+
+```java
+final V put(K key, int hash, V value, boolean onlyIfAbsent) {
+          // 将当前 Segment 中的 table 通过 key 的 hashcode 定位到 HashEntry
+            HashEntry<K,V> node = tryLock() ? null :
+                scanAndLockForPut(key, hash, value);
+            V oldValue;
+            try {
+                HashEntry<K,V>[] tab = table;
+                int index = (tab.length - 1) & hash;
+                HashEntry<K,V> first = entryAt(tab, index);
+                for (HashEntry<K,V> e = first;;) {
+                    if (e != null) {
+                        K k;
+ // 遍历该 HashEntry，如果不为空则判断传入的 key 和当前遍历的 key 是否相等，相等则覆盖旧的 value。
+                        if ((k = e.key) == key ||
+                            (e.hash == hash && key.equals(k))) {
+                            oldValue = e.value;
+                            if (!onlyIfAbsent) {
+                                e.value = value;
+                                ++modCount;
+                            }
+                            break;
+                        }
+                        e = e.next;
+                    }
+                    else {
+                 // 不为空则需要新建一个 HashEntry 并加入到 Segment 中，同时会先判断是否需要扩容。
+                        if (node != null)
+                            node.setNext(first);
+                        else
+                            node = new HashEntry<K,V>(hash, key, value, first);
+                        int c = count + 1;
+                        if (c > threshold && tab.length < MAXIMUM_CAPACITY)
+                            rehash(node);
+                        else
+                            setEntryAt(tab, index, node);
+                        ++modCount;
+                        count = c;
+                        oldValue = null;
+                        break;
+                    }
+                }
+            } finally {
+               //释放锁
+                unlock();
+            }
+            return oldValue;
+        }
+```
+
+- get 逻辑比较简单，只需要将 Key 通过 Hash 之后定位到具体的 Segment ，再通过一次 Hash 定位到具体的元素上。由于 HashEntry 中的 value 属性是用 volatile 关键词修饰的，保证了内存可见性，所以每次获取时都是最新值。ConcurrentHashMap 的 get 方法是非常高效的，**因为整个过程都不需要加锁**。
+
+- rehash()方法：每个Segment只管它自己的扩容，互相之间并不影响。换句话说，可以出现这个 Segment的长度为2，另一个Segment的长度为4的情况（只要是2的n次幂）。
+
+- 因为基本上还是数组加链表的方式，我们去查询的时候，还得遍历链表，会导致效率很低，这个跟jdk1.7的HashMap是存在的一样问题，所以他在jdk1.8完全优化了。
+
+#### 9.3.2 JDK 1.8
+
+- 其中抛弃了原有的 Segment 分段锁，而采用了 `CAS + synchronized` 来保证并发安全性。
+
+- 跟HashMap很像，也把之前的HashEntry改成了Node，但是作用不变，把值和next采用了volatile去修饰，保证了可见性，并且也引入了红黑树，在链表大于一定值的时候会转换（默认是8）。
+
+- ConcurrentHashMap在进行put操作的还是比较复杂的，大致可以分为以下步骤：
+
+  1. 根据 key 计算出 hashcode 。
+  2. 判断是否需要进行初始化。
+  3. 即为当前 key 定位出的 Node，如果为空表示当前位置可以写入数据，利用 CAS 尝试写入，失败则自旋保证成功。
+  4. 如果当前位置的 `hashcode == MOVED == -1`,则需要进行扩容。
+  5. 如果都不满足，则利用 synchronized 锁写入数据。
+  6. 如果数量大于 `TREEIFY_THRESHOLD` 则要转换为红黑树。
+
+  ![HashMap](/Users/na/IdeaProjects/Technical summary/Image/HashMap.webp)
+
+- get操作：
+
+  - 根据计算出来的 hashcode 寻址，如果就在桶上那么直接返回值。
+  - 如果是红黑树那就按照树的方式获取值。
+  - 就不满足那就按照链表的方式遍历获取值。
+  
+  ![HashMap_1](/Users/na/IdeaProjects/Technical summary/Image/HashMap_1.webp)
+
+#### 9.3.3 区别
+
+- 采用红黑树之后可以保证查询效率（`O(logn)`）
+- 取消了 ReentrantLock 改为了 synchronized
 
 ## 10. jdk1.7中的HashMap扩容造成死循环
 
@@ -156,6 +309,10 @@ void transfer(Entry[] newTable, boolean rehash) {
 - 在多线程环境下，会发生数据覆盖的情况
 - 如果没有hash碰撞则会直接插入元素。如果线程A和线程B同时进行put操作，刚好这两条不同的数据hash值一样，并且该位置数据为null，所以这线程A、B都会进入第6行代码中。假设一种情况，线程A进入后还未进行数据插入时挂起，而线程B正常执行，从而正常插入数据，然后线程A获取CPU时间片，此时线程A不用再进行hash判断了，线程A会把线程B插入的数据给**覆盖**，发生线程不安全。
 
+## 12. Hashmap中的链表大小超过八个时会自动转化为红黑树，当删除小于六时重新变为链表，为啥呢？
+
+- 根据泊松分布，在负载因子默认为0.75的时候，单个hash槽内元素个数为8的概率小于百万分之一，所以将7作为一个分水岭，等于7的时候不转换，大于等于8的时候才进行转换，小于等于6的时候就化为链表。
+
 
 
 HashMap常见面试题：
@@ -170,3 +327,16 @@ HashMap常见面试题：
 - HashMap的主要参数都有哪些？
 - HashMap是怎么处理hash碰撞的？
 - hash的计算规则？
+- 谈谈你理解的 Hashtable，讲讲其中的 get put 过程。ConcurrentHashMap同问。
+- 1.8 做了什么优化？
+- 线程安全怎么做的？
+- 不安全会导致哪些问题？
+- 如何解决？有没有线程安全的并发容器？
+- ConcurrentHashMap 是如何实现的？
+- ConcurrentHashMap并发度为啥好这么多？
+- 1.7、1.8 实现有何不同？为什么这么做？
+- CAS是啥？
+- ABA是啥？场景有哪些，怎么解决？
+- synchronized底层原理是啥？
+- synchronized锁升级策略
+- 快速失败（fail—fast）是啥，应用场景有哪些？安全失败（fail—safe）同问。
