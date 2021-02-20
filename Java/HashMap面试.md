@@ -93,10 +93,11 @@ static int indexFor(int h, int length) {
 ## 7. HashMap的默认初始化长度为什么是2的幂？
 
 - 因为位运算直接对内存数据进行操作，不需要转成十进制，所以位运算要比取模运算的效率更高，所以HashMap在计算元素要存放在数组中的index的时候，使用位运算代替了取模运算。之所以可以做等价代替，前提是要求HashMap的容量一定要是2^n 。
+- 为了**实现哈希算法的均匀分布**，**最大程度减少hash碰撞**，16 - 1 = 15，二进制为 1111，此时index的结果取决于hashcode的后几位的值，因此只要输入的HashCode本身分布均匀，Hash算法的结果就是均匀的。
 
 ### 7.1 为什么默认值是16？
 
-- 为了**实现哈希算法的均匀分布**，16 - 1 = 15，二进制为 0111，此时index的结果取决于hashcode的后几位的值，因此只要输入的HashCode本身分布均匀，Hash算法的结果就是均匀的。
+- 为了**实现哈希算法的均匀分布**，**最大程度减少hash碰撞**，16 - 1 = 15，二进制为 1111，此时index的结果取决于hashcode的后几位的值，因此只要输入的HashCode本身分布均匀，Hash算法的结果就是均匀的。
 
 ### 7.2 如何保证其容量一定可以是2^n 的呢？
 
@@ -130,11 +131,12 @@ public static int highestOneBit(int i) {
 #### 9.1.1 为啥Hashtable 是不允许键或值为 null 的，HashMap 的键值则都可以为 null？
 
 - 这是因为Hashtable使用的是**安全失败机制（fail-safe）**，这种机制会使此次读到的数据不一定是最新的数据。
-- 如果使用null值，就会使得其无法判断对应的key是不存在还是为空，因为你无法再调用一次contain(key）来对key是否存在进行判断，ConcurrentHashMap同理。
+- 当通过get(k)获取对应的value时，如果获取到的是null时，无法判断，它是put（k,v）的时候value为null，还是这个key从来没有做过映射。假如线程1调用m.contains（key）返回true，然后在调用m.get(key)，这时的m可能已经不同了。因为线程2可能在线程1调用m.contains（key）时，删除了key节点，这样就会导致线程1得到的结果不明确，**产生多线程安全问题**，因此，Hashmap和ConcurrentHashMap的key和value不能为null。
 
 ### 9.1.2 说出一些Hashtable 跟HashMap不一样点么？
 
 - Hashtable 是不允许键或值为 null 的，HashMap 的键值则都可以为 null。
+- HashMap 是线程不安全的，HashTable 是线程安全的；
 - **实现方式不同**：Hashtable 继承了 Dictionary类，而 HashMap 继承的是 AbstractMap 类。
 - **初始化容量不同**：HashMap 的初始容量为：16，Hashtable 初始容量为：11，两者的负载因子默认都是：0.75。
 - **扩容机制不同**：当现有容量大于总容量 * 负载因子时，HashMap 扩容规则为当前容量翻倍，Hashtable 扩容规则为当前容量翻倍 + 1。
@@ -162,7 +164,7 @@ public static int highestOneBit(int i) {
 - 内部维护了一个普通对象Map，还有排斥锁mutex，将对象排斥锁赋值为this，即调用synchronizedMap的对象，创建出synchronizedMap之后，再操作map的时候，就会对方法上锁
 - 并发效率低
 
-### 9.3 **CurrentHashMap**
+### 9.3 ConcurrentHashMap
 
 #### 9.3.1 JDK 1.7
 
@@ -313,7 +315,42 @@ void transfer(Entry[] newTable, boolean rehash) {
 
 - 根据泊松分布，在负载因子默认为0.75的时候，单个hash槽内元素个数为8的概率小于百万分之一，所以将7作为一个分水岭，等于7的时候不转换，大于等于8的时候才进行转换，小于等于6的时候就化为链表。
 
+## 13. Hashmap的结构，1.7和1.8有哪些区别
 
+- **JDK1.7用的是头插法，而JDK1.8及之后使用的都是尾插法**
+- **JDK1.7的时候是直接用hash值和需要扩容的二进制数进行&**，**JDK1.8原始位置或原始位置+扩容的大小值**
+- **JDK1.7的时候使用的是数组+ 单链表的数据结构。但是在JDK1.8及之后时，使用的是数组+链表+红黑树的数据结构**
+- JDK1.7用的是Entry，JDK1.8用的是Node
+
+## 14. HashMap
+
+-  put() 方法：
+
+  ①、调用 hash(K) 方法计算 K 的 hash 值，然后结合数组长度，计算得数组下标；
+
+  ②、调整数组大小（当容器中的元素个数大于 capacity * loadfactor 时，容器会进行扩容resize 为 2n）；
+
+  ③、i.如果 K 的 hash 值在 HashMap 中不存在，则执行插入，若存在，则发生碰撞；
+
+  ii.如果 K 的 hash 值在 HashMap 中存在，且它们两者 equals 返回 true，则更新键值对；
+
+  iii. 如果 K 的 hash 值在 HashMap 中存在，且它们两者 equals 返回 false，则插入链表的尾部（尾插法）或者红黑树中（树的添加方式）。
+
+## 15. **红黑树**
+
+- 每个节点非红即黑
+- 根节点总是黑色的
+- 如果节点是红色的，则它的子节点必须是黑色的（反之不一定）
+- 每个叶子节点都是黑色的空节点（NIL节点）
+- 从根节点到叶节点或空子节点的每条路径，必须包含相同数目的黑色节点（即相同的黑色高度）
+
+## 16. LinkedHashMap，TreeMap 有什么区别？使用场景？
+
+- LinkedHashMap 保存了记录的插入顺序，在用 Iterator 遍历时，先取到的记录肯定是先插入的；遍历比 HashMap 慢；在需要按自然顺序或自定义顺序遍历键的情况下；
+
+- TreeMap 实现 SortMap 接口，能够把它保存的记录根据键排序（默认按键值升序排序，也可以指定排序的比较器）；在需要输出的顺序和输入的顺序相同的情况下。
+
+  
 
 HashMap常见面试题：
 
