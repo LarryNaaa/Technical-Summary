@@ -93,7 +93,6 @@ static int indexFor(int h, int length) {
 ## 7. HashMap的默认初始化长度为什么是2的幂？
 
 - 因为位运算直接对内存数据进行操作，不需要转成十进制，所以位运算要比取模运算的效率更高，所以HashMap在计算元素要存放在数组中的index的时候，使用位运算代替了取模运算。之所以可以做等价代替，前提是要求HashMap的容量一定要是2^n 。
-- 为了**实现哈希算法的均匀分布**，**最大程度减少hash碰撞**，16 - 1 = 15，二进制为 1111，此时index的结果取决于hashcode的后几位的值，因此只要输入的HashCode本身分布均匀，Hash算法的结果就是均匀的。
 
 ### 7.1 为什么默认值是16？
 
@@ -326,23 +325,109 @@ void transfer(Entry[] newTable, boolean rehash) {
 
 -  put() 方法：
 
-  ①、调用 hash(K) 方法计算 K 的 hash 值，然后结合数组长度，计算得数组下标；
+  - ①. 判断键值对数组table[i]是否为空或为null，否则执行resize()进行扩容，初始容量是16；
+  - ②. 根据键值key计算hash值得到插入的数组索引i，如果table[i]==null，直接新建节点添加，转向⑥，如果table[i]不为空，转向③；
+  - ③. 判断table[i]的首个元素是否和key一样，如果相同直接覆盖value，否则转向④，这里的相同指的是hashCode以及equals；
+  - ④. 判断table[i] 是否为TreeNode，即table[i] 是否是红黑树，如果是红黑树，遍历发现该key不存在 则直接在树中插入键值对；遍历发现key已经存在直接覆盖value即可；
+  - ⑤. 如果table[i] 不是TreeNode则是链表节点，遍历发现该key不存在，则先添加在链表结尾， 判断链表长度是否大于8，大于8的话把链表转换为红黑树；遍历发现key已经存在直接覆盖value即可；
+  - ⑥. 插入成功后，判断实际存在的键值对数量size是否超多了最大容量threshold，如果超过，进行扩容。
 
-  ②、调整数组大小（当容器中的元素个数大于 capacity * loadfactor 时，容器会进行扩容resize 为 2n）；
+- get步骤总结如下：
 
-  ③、i.如果 K 的 hash 值在 HashMap 中不存在，则执行插入，若存在，则发生碰撞；
+  通过hash定位桶，然后根据该桶的存储结构决定是遍历红黑树还是遍历链表。
 
-  ii.如果 K 的 hash 值在 HashMap 中存在，且它们两者 equals 返回 true，则更新键值对；
+  1 table[i]的首个元素是否和key一样，如果相同则返回该value
 
-  iii. 如果 K 的 hash 值在 HashMap 中存在，且它们两者 equals 返回 false，则插入链表的尾部（尾插法）或者红黑树中（树的添加方式）。
+  2 如果不同，先判断首元素是否是红黑树节点，如果是则去红黑树中查找；反之去链表中查找
 
 ## 15. **红黑树**
 
-- 每个节点非红即黑
-- 根节点总是黑色的
-- 如果节点是红色的，则它的子节点必须是黑色的（反之不一定）
-- 每个叶子节点都是黑色的空节点（NIL节点）
-- 从根节点到叶节点或空子节点的每条路径，必须包含相同数目的黑色节点（即相同的黑色高度）
+- 1.节点是红色或黑色。
+
+  2.根节点是黑色。
+
+  3.每个叶子节点都是黑色的空节点（NIL节点）。
+
+  4 每个红色节点的两个子节点都是黑色。(从每个叶子到根的所有路径上不能有两个连续的红色节点)
+
+  5.从任一节点到其每个叶子的所有路径都包含相同数目的黑色节点。
+
+- 插入：新节点为红色
+
+  - 父节点是黑色，不用调整
+  - 父节点是红色：
+    - 叔叔节点是黑色或是null，旋转+变色
+    - 叔叔节点是红色，父节点+叔叔节点变黑色，祖父节点变红色
+
+```java
+static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,
+                                                    TreeNode<K,V> x) {
+            x.red = true;
+            // x是新插入的节点，xp是父节点，xpp是祖父节点，xppl祖父节点的左儿子，xppr祖父节点的右儿子
+            // 循环递归判断红黑树是否合适
+            for (TreeNode<K,V> xp, xpp, xppl, xppr;;) {
+                // 判断新插入的节点是不是根节点
+                if ((xp = x.parent) == null) {
+                    x.red = false;
+                    return x;
+                }
+                // 父节点为黑色，不同调整
+                else if (!xp.red || (xpp = xp.parent) == null)
+                    return root;
+                // 父节点是红色:
+                // 父节点为祖父节点的左儿子:
+                if (xp == (xppl = xpp.left)) {
+                    // 叔叔节点是红色: 
+                    if ((xppr = xpp.right) != null && xppr.red) {
+                        // 父节点+叔叔节点变黑色，祖父节点变红色
+                        xppr.red = false;
+                        xp.red = false;
+                        xpp.red = true;
+                        // 继续递归
+                        x = xpp;
+                    }
+                    // 叔叔节点是黑色或是null:
+                    else {
+                        // 新插入的节点是父节点的右孩子，先左旋再右旋
+                        if (x == xp.right) {
+                            root = rotateLeft(root, x = xp);
+                            xpp = (xp = x.parent) == null ? null : xp.parent;
+                        }
+                        // 新插入的节点是父节点的左孩子，右旋
+                        if (xp != null) {
+                            xp.red = false;
+                            if (xpp != null) {
+                                xpp.red = true;
+                                root = rotateRight(root, xpp);
+                            }
+                        }
+                    }
+                }
+                // 父节点为祖父节点的右儿子:
+                else {
+                    if (xppl != null && xppl.red) {
+                        xppl.red = false;
+                        xp.red = false;
+                        xpp.red = true;
+                        x = xpp;
+                    }
+                    else {
+                        if (x == xp.left) {
+                            root = rotateRight(root, x = xp);
+                            xpp = (xp = x.parent) == null ? null : xp.parent;
+                        }
+                        if (xp != null) {
+                            xp.red = false;
+                            if (xpp != null) {
+                                xpp.red = true;
+                                root = rotateLeft(root, xpp);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+```
 
 ## 16. LinkedHashMap，TreeMap 有什么区别？使用场景？
 
