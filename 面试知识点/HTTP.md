@@ -299,7 +299,7 @@ HTTP 是超文本传输协议，也就是**H**yperText **T**ransfer **P**rotocol
   - 询问浏览器 `DNS` 缓存
   - 询问本地操作系统 `DNS` 缓存（即查找本地 `host` 文件）
   - 询问 `ISP`（`Internet Service Provider`）互联网服务提供商（例如电信、移动）的 `DNS` 服务器
-  - 询问根服务器，这个过程可以进行递归和迭代两种查找的方式，两者都是先询问顶级域名服务器查找
+  - 询问根服务器，这个过程可以进行递归和迭代两种查找的方式，如果根域名服务器无法告知本地 DNS 服务器下一步需要访问哪个顶级域名服务器，就会使用递归查询；可以告知则使用迭代
 - 建立 `TCP` 连接，即**三次握手过程**，利用 `TCP` 通道进行**数据传输**：
   - 服务端接收到数据包，并发送确认数据包已收到的消息到客户端，不断重复这个过程
   - 客户端在发送一个数据包后，未接收到服务端的确定消息，则重新发送该数据包，即 `TCP` 的重发机制
@@ -325,10 +325,9 @@ HTTP 是超文本传输协议，也就是**H**yperText **T**ransfer **P**rotocol
 
 - **session 认证流程：**
 
-- - 用户第一次请求服务器的时候，服务器根据用户提交的相关信息，创建对应的 Session
-  - 请求返回时将此 Session 的唯一标识信息 SessionID 返回给浏览器
-  - 浏览器接收到服务器返回的 SessionID 信息后，会将此信息存入到 Cookie 中，同时 Cookie 记录此 SessionID 属于哪个域名
-  - 当用户第二次访问服务器的时候，请求会自动判断此域名下是否存在 Cookie 信息，如果存在自动将 Cookie 信息也发送给服务端，服务端会从 Cookie 中获取 SessionID，再根据 SessionID 查找对应的 Session 信息，如果没有找到说明用户没有登录或者登录失效，如果找到 Session 证明用户已经登录可执行后面操作。
+- - 用户第一次请求服务器的时候，服务器根据用户提交的相关信息，创建对应的 Session对象，同时生成一个 sessionId ，并通过响应头的 Set-Cookie：JSESSIONID=XXXXXXX 命令，向客户端发送要求设置 Cookie 的响应；
+  - 客户端收到响应后，在本机客户端设置了一个 JSESSIONID=XXXXXXX 的 Cookie 信息，服务器返回的 SessionID 信息，会将此信息存入到 Cookie 中，同时 Cookie 记录此 SessionID 属于哪个域名，该 Cookie 的过期时间为浏览器会话结束；
+  - 当用户第二次访问服务器的时候，请求会自动判断此域名下是否存在 Cookie 信息，如果存在自动将 Cookie 信息也发送给服务端，服务端会从请求头中的Cookie 中获取 SessionID，再根据 SessionID 查找对应的 Session 信息，如果没有找到说明用户没有登录或者登录失效，如果找到 Session 证明用户已经登录可执行后面操作。
 - 根据以上流程可知，**SessionID 是连接 Cookie 和 Session 的一道桥梁**，大部分系统也是根据此原理来验证用户登录状态。
 
 ### 17.3 **Cookie 和 Session 的区别**
@@ -463,4 +462,116 @@ HTTP 是超文本传输协议，也就是**H**yperText **T**ransfer **P**rotocol
   - QUIC 有自己的一套机制可以保证传输的可靠性的。当某个流发生丢包时，只会阻塞这个流，**其他流不会受到影响**。
   - TL3 升级成了最新的 `1.3` 版本，头部压缩算法也升级成了 `QPack`。
   - HTTPS 要建立一个连接，要花费 6 次交互，先是建立三次握手，然后是 `TLS/1.3` 的三次握手。QUIC 直接把以往的 TCP 和 `TLS/1.3` 的 6 次交互**合并成了 3 次，减少了交互次数**。
+
+## 19. HTTP报文结构
+
+### 19.1 请求报文
+
+- 请求报文有4部分组成:
+  - 请求行
+  - 请求头
+  - 空行
+  - 请求体
+  
+- 请求行包括：请求方法、请求的URL的地址、HTTP协议版本。
+
+- 请求头部: 报文头包含若干个属性，格式为“属性名:属性值”，服务端据此获取客户端的信息。
+  
+  - Client-IP：提供了运行客户端的机器的IP地址
+  
+    From：提供了客户端用户的E-mail地址
+  
+    **Host**：给出了接收请求的服务器的主机名和端口号
+  
+    Referer：提供了包含当前请求URI的文档的URL
+  
+    UA-Color：提供了与客户端显示器的显示颜色有关的信息
+  
+    UA-CPU：给出了客户端CPU的类型或制造商
+  
+    UA-OS：给出了运行在客户端机器上的操作系统名称及版本
+  
+    User-Agent：将发起请求的应用程序名称告知服务器
+  
+    **Accept**：告诉服务器能够发送哪些媒体类型
+  
+    Accept-Charset：告诉服务器能够发送哪些字符集
+  
+    Accept-Encoding：告诉服务器能够发送哪些编码方式
+  
+    Accept-Language：告诉服务器能够发送哪些语言
+  
+    TE：告诉服务器可以使用那些扩展传输编码
+  
+    Expect：允许客户端列出某请求所要求的服务器行为
+  
+    Range：如果服务器支持范围请求，就请求资源的指定范围
+  
+    **Cookie**：客户端用它向服务器传送数据
+  
+    Cookie2：用来说明请求端支持的cookie版本
+  
+- 请求体: post/put等请求携带的数据，键值对的形式
+
+![HTTP_14](/Users/na/IdeaProjects/Technical summary/Image/HTTP_14.jpg)
+
+### 19.2 响应报文
+
+- 响应报文有4部分组成:
+  - 响应行
+  - 响应头
+  - 空行
+  - 响应体
+- 响应行： 由协议版本，状态码和状态描述组成，例如`HTTP/1.1 200 OK`。
+- 响应头：也是由多个属性组成
+  - Age：(从最初创建开始)响应持续时间
+  - Public：服务器为其资源支持的请求方法列表
+  - Retry-After：如果资源不可用的话，在此日期或时间重试
+  - Server：服务器应用程序软件的名称和版本
+  - Title：对HTML文档来说，就是HTML文档的源端给出的标题
+  - Warning：比原因短语更详细一些的警告报文
+  - Accept-Ranges：对此资源来说，服务器可接受的范围类型
+  - Vary：服务器会根据这些首部的内容挑选出最适合的资源版本发送给客户端
+  - Proxy-Authenticate：来自代理的对客户端的质询列表
+  - **Set-Cookie**：在客户端设置数据，以便服务器对客户端进行标识
+  - Set-Cookie2：与Set-Cookie类似
+  - WWW-Authenticate：来自服务器的对客户端的质询列表
+- 响应体：服务器响应的数据
+
+![HTTP_15](/Users/na/IdeaProjects/Technical summary/Image/HTTP_15.jpg)
+
+### 19.3 实体标头
+
+- 实体标头是描述消息正文内容的 HTTP 标头。实体标头用于 HTTP 请求和响应中。头部`Content-Length`、 `Content-Language`、 `Content-Encoding` 是实体头。
+
+  - Content-Length 实体报头指示实体主体的大小，以字节为单位，发送到接收方。
+  - Content-Language 实体报头描述了客户端或者服务端能够接受的语言。
+  - Content-Encoding 这又是一个比较麻烦的属性，这个实体报头用来压缩媒体类型。Content-Encoding 指示对实体应用了何种编码。常见的内容编码有这几种： **gzip、compress、deflate、identity** ，这个属性可以应用在请求报文和响应报文中
+
+  ![HTTP_16](/Users/na/IdeaProjects/Technical summary/Image/HTTP_16.webp)
+
+### 19.4 请求标头
+
+![HTTP_17](/Users/na/IdeaProjects/Technical summary/Image/HTTP_17.png)
+
+### 19.5 响应标头
+
+![HTTP_18](/Users/na/IdeaProjects/Technical summary/Image/HTTP_18.webp)
+
+## 20. 让我们了解在HTTP/1.1有多少中请求方法
+
+```java
+1.GET为获取资源数据
+get方法用于请求指定的页面信息，并返回请求消息的主体
+
+2.POST为提交资源数据
+post方法用于向指定的资源提交数据
+
+3.PUT为更新资源数据
+4.DELETE为删除资源数据
+5.HEAD为读取资源的元数据
+6.OPTIONS为读取资源多支持的所有请求方法
+7.TRACE为回显服务器收到额请求
+8.CONNECT为保留将来使用
+```
 
