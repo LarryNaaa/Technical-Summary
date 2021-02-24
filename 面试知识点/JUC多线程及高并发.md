@@ -12,9 +12,9 @@
 
 1. 保证可见性
 
-   多个线程访问同一个被volatile修饰的变量时，一个线程修改了这个变量的值，其他线程能够立即被通知主内存的值被修改。
-
-   由于JVM运行程序的实体是线程，而每个线程创建时JVM都会为其创建一个工作内存（有的成为栈空间），工作内存是每个线程的私有数据区域，而java内存模型中规定所有变量都存储在**==主内存==**，主内存是贡献内存区域，所有线程都可以访问，**==但线程对变量的操作（读取赋值等）必须在工作内存中进行，首先概要将变量从主内存拷贝到自己的工作内存空间，然后对变量进行操作，操作完成后再将变量写回主内存，==**不能直接操作主内存中的变量，各个线程中的工作内存中存储着主内存的**==变量副本拷贝==**，因此不同的线程件无法访问对方的工作内存，线程间的通信（传值）必须通过主内存来完成。
+   - 多个线程访问同一个被volatile修饰的变量时，一个线程修改了这个变量的值，其他线程能够立即被通知主内存的值被修改。
+   - Java的内存模型实现总是从**主存**（即共享内存）读取变量，是不需要进行特别的注意的。而在当前的 Java 内存模型下，线程可以把变量保存**本地内存**（比如机器的寄存器）中，而不是直接在主存中进行读写。这就可能造成一个线程在主存中修改了一个变量的值，而另外一个线程还继续使用它在寄存器中的变量值的拷贝，造成**数据的不一致**。
+   - 要解决这个问题，就需要把变量声明为**volatile**，这就指示 JVM，这个变量是不稳定的，每次使用它都到主存中进行读取。
 
    当不添加volatile关键字时示例：
 
@@ -229,7 +229,12 @@ volatile实现禁止指令重排，从而避免了多线程环境下程序出现
 
    由于编译器和处理器都能执行指令重排优化。如果在之零件插入一i奥Memory Barrier则会告诉编译器和CPU，不管什么指令都不能和这条Memory Barrier指令重排顺序，也就是说==通过插入内存屏障禁止在内存屏障前后的指令执行重排序优化==。内存屏障另外一个作用是强制刷出各种CPU的缓存数据，因此任何CPU上的线程都能读取到这些数据的最新版本。
 
-   ![Thread_15](/Users/na/IdeaProjects/Technical summary/Image/Thread_15.png)
+- StoreStore屏障，保证上面的普通写不和volatile写发生重排序
+- StoreLoad屏障，保证volatile写与后面可能的volatile读写不发生重排序
+- LoadLoad屏障，禁止volatile读与后面的普通读重排序
+- LoadStore屏障，禁止volatile读和后面的普通写重排序
+
+![Thread_15](/Users/na/IdeaProjects/Technical summary/Image/Thread_15.png)
 
 #### 2、JMM（java内存模型）
 
@@ -682,7 +687,7 @@ public boolean add(E e) {
 private static final Object PRESENT = new Object();
 ```
 
-### 五、公平锁、非公平锁、可重入锁、递归锁、自旋锁？手写自旋锁
+### 五、公平锁、非公平锁、可重入锁、递归锁、自旋锁？
 
 #### 1、公平锁、非公平锁
 
@@ -695,13 +700,9 @@ private static final Object PRESENT = new Object();
 
 2. **两者区别**
 
-   - **公平锁**：Threads acquire a fair lock in the order in which they requested it
+   - **公平锁**：公平锁，就是很公平，在并发环境中，每个线程在获取锁时，会先查看此锁维护的等待队列，如果为空，或者当前线程就是等待队列的第一个，就占有锁，否则就会加入到等待队列中，以后会按照FIFO的规则从队列中取到自己。
 
-     公平锁，就是很公平，在并发环境中，每个线程在获取锁时，会先查看此锁维护的等待队列，如果为空，或者当前线程就是等待队列的第一个，就占有锁，否则就会加入到等待队列中，以后会按照FIFO的规则从队列中取到自己。
-
-   - **非公平锁**：a nonfair lock permits barging: threads requesting a lock can jump ahead of the queue of waiting threads if the lock happens to be available when it is requested.
-
-     非公平锁比较粗鲁，上来就直接尝试占有额，如果尝试失败，就再采用类似公平锁那种方式。
+   - **非公平锁**：非公平锁比较粗鲁，上来就直接尝试占有额，如果尝试失败，就再采用类似公平锁那种方式。
 
 3. **other**
 
@@ -796,18 +797,108 @@ private static final Object PRESENT = new Object();
    }
    ```
 
-#### 3、独占锁(写锁)/共享锁(读锁)/互斥锁
+#### 3、 独占锁和共享锁
+
+- **独占锁**：指该锁一次只能被一个线程所持有，对ReentrantLock和Synchronized而言都是独占锁
+- **共享锁**：只该锁可被多个线程所持有
+
+#### 4、互斥锁
+
+- 互斥锁是一种「独占锁」，**互斥锁**加锁失败后，线程会**释放 CPU** ，给其他线程；
+- 比如当线程 A 加锁成功后，此时互斥锁已经被线程 A 独占了，只要线程 A 没有释放手中的锁，线程 B 加锁就会失败，于是就会释放 CPU 让给其他线程，**既然线程 B 释放掉了 CPU，自然线程 B 加锁的代码就会被阻塞**。
+- **对于互斥锁加锁失败而阻塞的现象，是由操作系统内核实现的**。当加锁失败时，内核会将线程置为「睡眠」状态，等到锁被释放后，内核会在合适的时机唤醒线程，当这个线程成功获取到锁后，于是就可以继续执行。
+- 互斥锁加锁失败时，会从用户态陷入到内核态，让内核帮我们切换线程，虽然简化了使用锁的难度，但是存在一定的性能开销成本。会有**两次线程上下文切换的成本**：
+  - 当线程加锁失败时，内核会把线程的状态从「运行」状态设置为「睡眠」状态，然后把 CPU 切换给其他线程运行；
+  - 接着，当锁被释放时，之前「睡眠」状态的线程会变为「就绪」状态，然后内核会在合适的时间，把 CPU 切换给该线程运行。
+- 线程的上下文切换的是什么？当两个线程是属于同一个进程，**因为虚拟内存是共享的，所以在切换时，虚拟内存这些资源就保持不动，只需要切换线程的私有数据、寄存器等不共享的数据。**
+- **如果你能确定被锁住的代码执行时间很短，就不应该用互斥锁，而应该选用自旋锁，否则使用互斥锁。**
+
+![Thread_21](/Users/na/IdeaProjects/Technical summary/Image/Thread_21.png)
+
+#### 5、自旋锁
+
+- 自旋锁是通过 CPU 提供的 `CAS` 函数（*Compare And Swap*），在「用户态」完成加锁和解锁操作，不会主动产生线程上下文切换，所以相比互斥锁来说，会快一些，开销也小一些。
+
+- 一般加锁的过程，包含两个步骤：
+
+  - 第一步，查看锁的状态，如果锁是空闲的，则执行第二步；
+  - 第二步，将锁设置为当前线程持有；
+
+- CAS 函数就把这两个步骤合并成一条硬件级指令，形成**原子指令**，这样就保证了这两个步骤是不可分割的，要么一次性执行完两个步骤，要么两个步骤都不执行。
+
+- 使用自旋锁的时候，当发生多线程竞争锁的情况，加锁失败的线程会「忙等待」，直到它拿到锁。这里的「忙等待」可以用 `while` 循环等待实现，不过最好是使用 CPU 提供的 `PAUSE` 指令来实现「忙等待」，因为可以减少循环等待时的耗电量。
+
+- **需要注意，在单核 CPU 上，需要抢占式的调度器（即不断通过时钟中断一个线程，运行其他线程）。否则，自旋锁在单 CPU 上无法使用，因为一个自旋的线程永远不会放弃 CPU。**
+
+- 手写自旋锁：
+
+  ```java
+  package com.jian8.juc.lock;
+  
+  import java.util.concurrent.TimeUnit;
+  import java.util.concurrent.atomic.AtomicReference;
+  
+  /**
+   * 实现自旋锁
+   * 自旋锁好处，循环比较获取知道成功位置，没有类似wait的阻塞
+   *
+   * 通过CAS操作完成自旋锁，A线程先进来调用mylock方法自己持有锁5秒钟，B随后进来发现当前有线程持有锁，不是null，所以只能通过自旋等待，知道A释放锁后B随后抢到
+   */
+  public class SpinLockDemo {
+      public static void main(String[] args) {
+          SpinLockDemo spinLockDemo = new SpinLockDemo();
+          new Thread(() -> {
+              spinLockDemo.mylock();
+              try {
+                  TimeUnit.SECONDS.sleep(3);
+              }catch (Exception e){
+                  e.printStackTrace();
+              }
+              spinLockDemo.myUnlock();
+          }, "Thread 1").start();
+  
+          try {
+              TimeUnit.SECONDS.sleep(3);
+          }catch (Exception e){
+              e.printStackTrace();
+          }
+  
+          new Thread(() -> {
+              spinLockDemo.mylock();
+              spinLockDemo.myUnlock();
+          }, "Thread 2").start();
+      }
+  
+      //原子引用线程
+      AtomicReference<Thread> atomicReference = new AtomicReference<>();
+  
+      public void mylock() {
+          Thread thread = Thread.currentThread();
+          System.out.println(Thread.currentThread().getName() + "\t come in");
+          while (!atomicReference.compareAndSet(null, thread)) {
+  
+          }
+      }
+  
+      public void myUnlock() {
+          Thread thread = Thread.currentThread();
+          atomicReference.compareAndSet(thread, null);
+          System.out.println(Thread.currentThread().getName()+"\t invoked myunlock()");
+      }
+  }
+  ```
+
+#### 6、读写锁
 
 1. **概念**
 
-   - **独占锁**：指该锁一次只能被一个线程所持有，对ReentrantLock和Synchronized而言都是独占锁
-
-   - **共享锁**：只该锁可被多个线程所持有
-
-     **ReentrantReadWriteLock**其读锁是共享锁，写锁是独占锁
-
-   - **互斥锁**：读锁的共享锁可以保证并发读是非常高效的，读写、写读、写写的过程是互斥的
-
+   - **ReentrantReadWriteLock**其读锁是共享锁，写锁是独占锁
+- 读写锁的工作原理是：
+     - 当「写锁」没有被线程持有时，多个线程能够并发地持有读锁，这大大提高了共享资源的访问效率，因为「读锁」是用于读取共享资源的场景，所以多个线程同时持有读锁也不会破坏共享资源的数据。
+  - 但是，一旦「写锁」被线程持有后，读线程的获取读锁的操作会被阻塞，而且其他写线程的获取写锁的操作也会被阻塞。
+   - 读写锁可以分为「读优先锁」和「写优先锁」。
+- **公平读写锁比较简单的一种方式是：用队列把获取锁的线程排队，不管是写线程还是读线程都按照先进先出的原则加锁即可，这样读线程仍然可以并发，也不会出现「饥饿」的现象。**
+   
 2. **代码示例**
 
    ```java
@@ -893,79 +984,10 @@ private static final Object PRESENT = new Object();
    }
    ```
 
-#### 4、自旋锁
+#### 7、悲观锁和乐观锁
 
-1. **spinlock**
-
-   是指尝试获取锁的线程不会立即阻塞，而是**采用循环的方式去尝试获取锁**，这样的好处是**减少线程上下文切换的消耗，缺点是循环会消耗CPU**
-
-   ```java
-       public final int getAndAddInt(Object var1, long var2, int var4) {
-           int var5;
-           do {
-               var5 = this.getIntVolatile(var1, var2);
-           } while(!this.compareAndSwapInt(var1, var2, var5, var5 + var4));
-           return var5;
-       }
-   ```
-
-   手写自旋锁：
-
-   ```java
-   package com.jian8.juc.lock;
-   
-   import java.util.concurrent.TimeUnit;
-   import java.util.concurrent.atomic.AtomicReference;
-   
-   /**
-    * 实现自旋锁
-    * 自旋锁好处，循环比较获取知道成功位置，没有类似wait的阻塞
-    *
-    * 通过CAS操作完成自旋锁，A线程先进来调用mylock方法自己持有锁5秒钟，B随后进来发现当前有线程持有锁，不是null，所以只能通过自旋等待，知道A释放锁后B随后抢到
-    */
-   public class SpinLockDemo {
-       public static void main(String[] args) {
-           SpinLockDemo spinLockDemo = new SpinLockDemo();
-           new Thread(() -> {
-               spinLockDemo.mylock();
-               try {
-                   TimeUnit.SECONDS.sleep(3);
-               }catch (Exception e){
-                   e.printStackTrace();
-               }
-               spinLockDemo.myUnlock();
-           }, "Thread 1").start();
-   
-           try {
-               TimeUnit.SECONDS.sleep(3);
-           }catch (Exception e){
-               e.printStackTrace();
-           }
-   
-           new Thread(() -> {
-               spinLockDemo.mylock();
-               spinLockDemo.myUnlock();
-           }, "Thread 2").start();
-       }
-   
-       //原子引用线程
-       AtomicReference<Thread> atomicReference = new AtomicReference<>();
-   
-       public void mylock() {
-           Thread thread = Thread.currentThread();
-           System.out.println(Thread.currentThread().getName() + "\t come in");
-           while (!atomicReference.compareAndSet(null, thread)) {
-   
-           }
-       }
-   
-       public void myUnlock() {
-           Thread thread = Thread.currentThread();
-           atomicReference.compareAndSet(thread, null);
-           System.out.println(Thread.currentThread().getName()+"\t invoked myunlock()");
-       }
-   }
-   ```
+- 悲观锁做事比较悲观，它认为**多线程同时修改共享资源的概率比较高，于是很容易出现冲突，所以访问共享资源前，先要上锁**。前面提到的互斥锁、自旋锁、读写锁，都是属于悲观锁。
+- 乐观锁做事比较乐观，它假定冲突的概率很低，它的工作方式是：**先修改完共享资源，再验证这段时间内有没有发生冲突，如果没有其他线程在修改资源，那么操作完成，如果发现有其他线程已经修改过这个资源，就放弃本次操作**。**乐观锁全程并没有加锁，所以它也叫无锁编程**。
 
 ### 六、CountDownLatch/CyclicBarrier/Semaphore使用过吗
 
@@ -1061,7 +1083,7 @@ private static final Object PRESENT = new Object();
 
 可以代替Synchronize和Lock
 
-1. **信号量主要用于两个目的，一个是用于多个共享资源的互斥作用，另一个用于并发线程数的控制**
+1. **信号量主要用于两个目的，一个是用于多个共享资源的互斥作用，另一个用于并发线程数的控制**；用来控制同一时间，资源可被访问的线程数量，一般可用于流量的控制。
 
 2. 代码示例：
 
@@ -1791,38 +1813,38 @@ public ThreadPoolExecutor(int corePoolSize,
 
 线程池不允许使用Executors创建，试试通过ThreadPoolExecutor的方式，规避资源耗尽风险
 
-FixedThreadPool和SingleThreadPool的阻塞队列workQueue是LinkedBlockingQueue，它的默认长度为Integer.MAX_VALUE，等待队列可能会堆积大量请求；CachedThreadPool和ScheduledThreadPool允许的创建线程数量maximumPoolSize为Integer.MAX_VALUE，可能会创建大量线程，导致OOM
+- **FixedThreadPool 和 SingleThreadExecutor** ：允许请求的队列长度为 Integer.MAX_VALUE ，可能堆积大量的请求，从而导致OOM。
+- **CachedThreadPool 和 ScheduledThreadPool** ：允许创建的线程数量为 Integer.MAX_VALUE ，可能会创建大量线程，从而导致OOM。
 
 #### 3、你在工作中时如何使用线程池的，是否自定义过线程池使用
 
 ```java
-package com.jian8.juc.thread;
-
-import java.util.concurrent.*;
-
-/**
- * 第四种获得java多线程的方式--线程池
- */
 public class MyThreadPoolDemo {
     public static void main(String[] args) {
-        ExecutorService threadPool = new ThreadPoolExecutor(3, 5, 1L,
-                							TimeUnit.SECONDS,
-                							new LinkedBlockingDeque<>(3),
-                                            Executors.defaultThreadFactory(), 
-                                            new ThreadPoolExecutor.DiscardPolicy());
-//new ThreadPoolExecutor.AbortPolicy();
-//new ThreadPoolExecutor.CallerRunsPolicy();
-//new ThreadPoolExecutor.DiscardOldestPolicy();
-//new ThreadPoolExecutor.DiscardPolicy();
-        try {
-            for (int i = 1; i <= 10; i++) {
+//        ExecutorService threadPool1 = Executors.newFixedThreadPool(5);
+//        ExecutorService threadPool2 = Executors.newSingleThreadExecutor();
+//        ExecutorService threadPool3 = Executors.newCachedThreadPool();
+
+        ExecutorService threadPool = new ThreadPoolExecutor(
+                3,
+                5,
+                1L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.DiscardPolicy()
+                );
+
+
+        try{
+            for (int i = 1; i <= 15; i++){
                 threadPool.execute(() -> {
-                    System.out.println(Thread.currentThread().getName() + "\t办理业务");
+                    System.out.println(Thread.currentThread().getName());
                 });
             }
-        } catch (Exception e) {
+        }catch (Exception e){
             e.printStackTrace();
-        } finally {
+        }finally {
             threadPool.shutdown();
         }
     }
@@ -1936,16 +1958,18 @@ public class MyThreadPoolDemo {
 
 ![CAS_2](/Users/na/IdeaProjects/Technical summary/Image/CAS_2.png)
 
-- 一个线程访问：偏向锁(对象记录当前线程的指针)
-- 线程少，消耗操作时间短：自旋锁、轻量级锁(未获得锁的线程进行自旋)
-- 自旋10次后、线程多，消耗操作时间长：重量级锁(线程进入等待队列，不占用CPU)
+- **偏向锁**：当线程访问同步块获取锁时，会在对象头和栈帧中的锁记录里存储偏向锁的线程ID，之后这个线程再次进入同步块时都不需要CAS来加锁和解锁了，偏向锁会永远偏向第一个获得锁的线程，如果后续没有其他线程获得过这个锁，持有锁的线程就永远不需要进行同步，反之，当有其他线程竞争偏向锁时，持有偏向锁的线程就会释放偏向锁。可以用过设置-XX:+UseBiasedLocking开启偏向锁。
+- **轻量级锁**：JVM的对象的对象头中包含有一些锁的标志位，代码进入同步块的时候，JVM将会使用CAS方式来尝试获取锁，如果更新成功则会把对象头中的状态位标记为轻量级锁，如果更新失败，当前线程就尝试自旋来获得锁。
+- **重量级锁**：除了拥有锁的线程其他全部阻塞。
 
 ### 3. ThreadLocal
 
-- ThreadLocal的作用是提供线程内的局部变量，这种变量在多线程环境下访问时能够保证各个线程里变量的独立性。
-- 每个线程中可以持有很多个ThreadLocal对象，这些对象通过hash后存储在Thread的ThreadLocalMap中，其中的Key为ThreadLocal对象，value为该对象在本线程中的一个副本
-- 每个Thread含有的ThreadLocalMap中的Key为ThreadLocal变量的弱引用，如果一个ThreadLocal变量没有外部强引用来引用它，那么它在JVM下一次GC的时候会被垃圾回收掉，这时候，Map中就存在了key为NULL的value，这个value无法被访问。
-- 在Thread中使用完ThreadLocal对象后，一定要记得调用ThreadLocal的remove方法，进行手动清除。
+- ThreadLocal可以理解为线程本地变量，它的作用是提供线程内的局部变量，这种变量在多线程环境下访问时能够保证各个线程里变量的独立性。
+- ThreadLocal有一个静态内部类ThreadLocalMap，ThreadLocalMap又包含了一个Entry数组，Entry本身是一个弱引用，他的key是指向ThreadLocal的弱引用，Entry具备了保存key value键值对的能力。
+- 每个线程中可以持有很多个ThreadLocal对象，这些对象通过hash后存储在Thread的ThreadLocalMap中
+- 弱引用的目的是为了防止内存泄露，如果是强引用那么ThreadLocal对象除非线程结束否则始终无法被回收，弱引用则会在下一次GC的时候被回收。
+- 但是这样还是会存在内存泄露的问题，假如key和ThreadLocal对象被回收之后，entry中就存在key为null，但是value有值的entry对象，但是永远没办法被访问到，同样除非线程结束运行。
+- 但是只要ThreadLocal使用恰当，在使用完之后调用remove方法删除Entry对象，实际上是不会出现这个问题的。在Thread中使用完ThreadLocal对象后，一定要记得调用ThreadLocal的remove方法，进行手动清除。
 - key是当前ThreadLocal对象，value是set方法传入的参数
 
 ```java
@@ -1995,3 +2019,21 @@ public class MyThreadPoolDemo {
   -  如果线程调用了对象的 wait()方法，那么线程便会处于该对象的**等待池**中，等待池中的线程**不会去竞争该对象的锁**。
   - 当有线程调用了对象的 **notifyAll**()方法（唤醒所有 wait 线程）或 **notify**()方法（只随机唤醒一个 wait 线程），被唤醒的的线程便会进入该对象的锁池中，锁池中的线程会去竞争该对象锁。也就是说，调用了notify后只要一个线程会由等待池进入锁池，而notifyAll会将该对象等待池内的所有线程移动到锁池中，等待锁竞争
   - 优先级高的线程竞争到对象锁的概率大，假若某线程没有竞争到该对象锁，它**还会留在锁池中**，唯有线程再次调用 wait()方法，它才会重新回到等待池中。而竞争到对象锁的线程则继续往下执行，直到执行完了 synchronized 代码块，它会释放掉该对象锁，这时锁池中的线程会继续竞争该对象锁。
+
+### 6. 说说 synchronized 关键字和 volatile 关键字的区别
+
+- **volatile关键字**是线程同步的**轻量级实现**，所以**volatile性能肯定比synchronized关键字要好**。但是**volatile关键字只能用于变量而synchronized关键字可以修饰方法以及代码块**。synchronized关键字在JavaSE1.6之后进行了主要包括为了减少获得锁和释放锁带来的性能消耗而引入的偏向锁和轻量级锁以及其它各种优化之后执行效率有了显著提升，**实际开发中使用 synchronized 关键字的场景还是更多一些**。
+- **多线程访问volatile关键字不会发生阻塞，而synchronized关键字可能会发生阻塞**
+- **volatile关键字能保证数据的可见性，但不能保证数据的原子性。synchronized关键字两者都能保证。**
+- **volatile关键字主要用于解决变量在多个线程之间的可见性，而 synchronized关键字解决的是多个线程之间访问资源的同步性。**
+
+## 十二、AQS(AbstractQueuedSynchronizer)
+
+- `AQS`即是抽象的队列式的同步器，内部定义了很多锁相关的方法，我们熟知的`ReentrantLock`、`ReentrantReadWriteLock`、`CountDownLatch`、`Semaphore`等都是基于`AQS`来实现的。
+- `AQS`中 维护了一个`volatile int state`（代表共享资源）和一个`FIFO`线程等待队列（多线程争用资源被阻塞时会进入此队列）。这里`volatile`能够保证多线程下的可见性，当`state=1`则代表当前对象锁已经被占有，其他线程来加锁时则会失败，加锁失败的线程会被放入一个`FIFO`的等待队列中，比列会被`UNSAFE.park()`操作挂起，等待其他获取锁的线程释放锁才能够被唤醒。另外`state`的操作都是通过`CAS`来保证其并发修改的安全性。
+- AQS内部维护一个state状态位，尝试加锁的时候通过CAS(CompareAndSwap)修改值，如果成功设置为1，并且把当前线程ID赋值，则代表加锁成功，一旦获取到锁，其他的线程将会被阻塞进入阻塞队列自旋，获得锁的线程释放锁的时候将会唤醒阻塞队列中的线程，释放锁的时候则会把state重新置为0，同时当前线程ID置为空。
+
+![Thread_22](/Users/na/IdeaProjects/Technical summary/Image/Thread_22.webp)
+
+- `Condition`是在`java 1.5`中才出现的，它用来替代传统的`Object`的`wait()`、`notify()`实现线程间的协作，相比使用`Object`的`wait()`、`notify()`，使用`Condition`中的`await()`、`signal()`这种方式实现线程间协作更加安全和高效。因此通常来说比较推荐使用`Condition`
+
