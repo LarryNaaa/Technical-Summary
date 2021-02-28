@@ -898,7 +898,7 @@ private static final Object PRESENT = new Object();
   - 但是，一旦「写锁」被线程持有后，读线程的获取读锁的操作会被阻塞，而且其他写线程的获取写锁的操作也会被阻塞。
    - 读写锁可以分为「读优先锁」和「写优先锁」。
 - **公平读写锁比较简单的一种方式是：用队列把获取锁的线程排队，不管是写线程还是读线程都按照先进先出的原则加锁即可，这样读线程仍然可以并发，也不会出现「饥饿」的现象。**
-   
+  
 2. **代码示例**
 
    ```java
@@ -1954,80 +1954,7 @@ public class MyThreadPoolDemo {
 
 ![Thread_1](/Users/na/IdeaProjects/Technical summary/Image/Thread_1.png)
 
-### 2. 锁的级别：存储在对象的内存中的对象头的markword中
-
-![CAS_2](/Users/na/IdeaProjects/Technical summary/Image/CAS_2.png)
-
-- **偏向锁**：当线程访问同步块获取锁时，会在对象头和栈帧中的锁记录里存储偏向锁的线程ID，之后这个线程再次进入同步块时都不需要CAS来加锁和解锁了，偏向锁会永远偏向第一个获得锁的线程，如果后续没有其他线程获得过这个锁，持有锁的线程就永远不需要进行同步，反之，当有其他线程竞争偏向锁时，持有偏向锁的线程就会释放偏向锁。可以用过设置-XX:+UseBiasedLocking开启偏向锁。
-- **轻量级锁**：JVM的对象的对象头中包含有一些锁的标志位，代码进入同步块的时候，JVM将会使用CAS方式来尝试获取锁，如果更新成功则会把对象头中的状态位标记为轻量级锁，如果更新失败，当前线程就尝试自旋来获得锁。
-- **重量级锁**：除了拥有锁的线程其他全部阻塞。
-
-### 3. ThreadLocal
-
-- ThreadLocal可以理解为线程本地变量，它的作用是提供线程内的局部变量，这种变量在多线程环境下访问时能够保证各个线程里变量的独立性。
-- ThreadLocal有一个静态内部类ThreadLocalMap，ThreadLocalMap又包含了一个Entry数组，Entry本身是一个弱引用，他的key是指向ThreadLocal的弱引用，Entry具备了保存key value键值对的能力。
-- 每个线程中可以持有很多个ThreadLocal对象，这些对象通过hash后存储在Thread的ThreadLocalMap中
-- 弱引用的目的是为了防止内存泄露，如果是强引用那么ThreadLocal对象除非线程结束否则始终无法被回收，弱引用则会在下一次GC的时候被回收。
-- 但是这样还是会存在内存泄露的问题，假如key和ThreadLocal对象被回收之后，entry中就存在key为null，但是value有值的entry对象，但是永远没办法被访问到，同样除非线程结束运行。
-- 但是只要ThreadLocal使用恰当，在使用完之后调用remove方法删除Entry对象，实际上是不会出现这个问题的。在Thread中使用完ThreadLocal对象后，一定要记得调用ThreadLocal的remove方法，进行手动清除。
-- key是当前ThreadLocal对象，value是set方法传入的参数
-
-```java
- public void set(T value) {
-    Thread t = Thread.currentThread();//1.首先获取当前线程对象
-        ThreadLocalMap map = getMap(t);//2.获取该线程对象的ThreadLocalMap
-        if (map != null)
-            map.set(this, value);//如果map不为空，执行set操作，
-                                 //以当前threadLocal对象为key，实际存储对象为value进行set操作
-        else
-            createMap(t, value);//如果map为空，则为该线程创建ThreadLocalMap
-    }
-```
-
-
-
-![CAS_11](/Users/na/IdeaProjects/Technical summary/Image/CAS_11.png)
-
-![CAS_12](/Users/na/IdeaProjects/Technical summary/Image/CAS_12.png)
-
-### 4. 说说进程和线程的区别？
-
-- 进程是资源分配的基本单位；线程是程序执行的基本单位。
-- 一个进程可以包含若干个线程。
-- 进程拥有自己的资源空间，没启动一个进程，系统就会为它分配地址空间；而线程与CPU资源分配无关，多个线程共享同一进程内的资源，使用相同的地址空间。
-
-### 5. 知道synchronized原理吗？
-
-- 使用synchronized之后，会在编译之后在同步的代码块前后加上monitorenter和monitorexit字节码指令，他依赖操作系统底层互斥锁实现。
-
-- 执行monitorenter指令时会尝试获取对象锁，如果对象没有被锁定或者已经获得了锁，锁的计数器+1。此时其他竞争锁的线程则会进入等待队列中。
-
-- 执行monitorexit指令时则会把计数器-1，当计数器值为0时，则锁释放，处于等待队列中的线程再继续竞争锁。
-
-- 从内存语义来说，加锁的过程会清除工作内存中的共享变量，再从主内存读取，而释放锁的过程则是将工作内存中的共享变量写回主内存。
-
-- 如果再深入到源码来说，synchronized实际上有两个队列waitSet和entryList。
-
-  1. 当多个线程进入同步代码块时，首先进入entryList
-  2. 有一个线程获取到monitor锁后，就赋值给当前线程，并且计数器+1
-  3. 如果线程调用wait方法，将释放锁，当前线程置为null，计数器-1，同时进入waitSet等待被唤醒，调用notify或者notifyAll之后又会进入entryList竞争锁
-  4. 如果线程执行完毕，同样释放锁，计数器-1，当前线程置为null
-
-  ![Thread_20](/Users/na/IdeaProjects/Technical summary/Image/Thread_20.webp)
-
-- notify和notifyAll的区别
-  -  如果线程调用了对象的 wait()方法，那么线程便会处于该对象的**等待池**中，等待池中的线程**不会去竞争该对象的锁**。
-  - 当有线程调用了对象的 **notifyAll**()方法（唤醒所有 wait 线程）或 **notify**()方法（只随机唤醒一个 wait 线程），被唤醒的的线程便会进入该对象的锁池中，锁池中的线程会去竞争该对象锁。也就是说，调用了notify后只要一个线程会由等待池进入锁池，而notifyAll会将该对象等待池内的所有线程移动到锁池中，等待锁竞争
-  - 优先级高的线程竞争到对象锁的概率大，假若某线程没有竞争到该对象锁，它**还会留在锁池中**，唯有线程再次调用 wait()方法，它才会重新回到等待池中。而竞争到对象锁的线程则继续往下执行，直到执行完了 synchronized 代码块，它会释放掉该对象锁，这时锁池中的线程会继续竞争该对象锁。
-
-### 6. 说说 synchronized 关键字和 volatile 关键字的区别
-
-- **volatile关键字**是线程同步的**轻量级实现**，所以**volatile性能肯定比synchronized关键字要好**。但是**volatile关键字只能用于变量而synchronized关键字可以修饰方法以及代码块**。synchronized关键字在JavaSE1.6之后进行了主要包括为了减少获得锁和释放锁带来的性能消耗而引入的偏向锁和轻量级锁以及其它各种优化之后执行效率有了显著提升，**实际开发中使用 synchronized 关键字的场景还是更多一些**。
-- **多线程访问volatile关键字不会发生阻塞，而synchronized关键字可能会发生阻塞**
-- **volatile关键字能保证数据的可见性，但不能保证数据的原子性。synchronized关键字两者都能保证。**
-- **volatile关键字主要用于解决变量在多个线程之间的可见性，而 synchronized关键字解决的是多个线程之间访问资源的同步性。**
-
-## 十二、AQS(AbstractQueuedSynchronizer)
+## 十二、AQS(AbstractQueuedSynchronizer)：乐观锁
 
 - `AQS`即是抽象的队列式的同步器，内部定义了很多锁相关的方法，我们熟知的`ReentrantLock`、`ReentrantReadWriteLock`、`CountDownLatch`、`Semaphore`等都是基于`AQS`来实现的。
 - `AQS`中 维护了一个`volatile int state`（代表共享资源）和一个`FIFO`线程等待队列（多线程争用资源被阻塞时会进入此队列）。这里`volatile`能够保证多线程下的可见性，当`state=1`则代表当前对象锁已经被占有，其他线程来加锁时则会失败，加锁失败的线程会被放入一个`FIFO`的等待队列中，比列会被`UNSAFE.park()`操作挂起，等待其他获取锁的线程释放锁才能够被唤醒。另外`state`的操作都是通过`CAS`来保证其并发修改的安全性。
@@ -2036,4 +1963,112 @@ public class MyThreadPoolDemo {
 ![Thread_22](/Users/na/IdeaProjects/Technical summary/Image/Thread_22.webp)
 
 - `Condition`是在`java 1.5`中才出现的，它用来替代传统的`Object`的`wait()`、`notify()`实现线程间的协作，相比使用`Object`的`wait()`、`notify()`，使用`Condition`中的`await()`、`signal()`这种方式实现线程间协作更加安全和高效。因此通常来说比较推荐使用`Condition`
+
+## 十三、**synchronized**：悲观锁
+
+### 1. 应用方式
+
+- synchronized有三种方式来加锁，分别是：方法锁，对象锁synchronized(this)，类锁synchronized(Demo.Class)。其中在方法锁层面可以有如下3种方式：
+
+  1. 修饰实例方法，作用于当前实例加锁，进入同步代码前要获得当前实例的锁
+
+  2. 静态方法，作用于当前类对象加锁，进入同步代码前要获得当前类对象的锁
+
+  3. 修饰代码块，指定加锁对象，对给定对象加锁，进入同步代码库前要获得给定对象的锁。
+
+### 2. **Monitor**
+
+- 什么是Monitor？我们可以把它理解为一个同步工具，也可以描述为一种同步机制。所有的Java对象是天生的Monitor，每个object的对象里 markOop->monitor() 里可以保存ObjectMonitor的对象。
+- 对于同步块的实现使用了monitorenter和monitorexit指令：他们隐式的执行了Lock和UnLock操作，用于提供原子性保证。monitorenter指令插入到同步代码块开始的位置、monitorexit指令插入到同步代码块结束位置，jvm需要保证每个monitorenter都有一个monitorexit对应。这两个指令，本质上都是对一个对象的监视器(monitor)进行获取，这个过程是排他的，也就是说同一时刻只能有一个线程获取到由synchronized所保护对象的监视器线程执行到monitorenter指令时，会尝试获取对象所对应的monitor所有权，也就是尝试获取对象的锁；而执行monitorexit，就是释放monitor的所有权。
+
+### 3. **Java对象**内存布局
+
+- 在Hotspot虚拟机中，对象在内存中的布局分为三块区域：对象头、实例数据和对齐填充；Java对象头是实现synchronized的锁对象的基础，一般而言，synchronized使用的锁对象是存储在Java对象头里。它是轻量级锁和偏向锁的关键
+- 对象的内存布局：
+
+  - 对象头（Header）包含两部分
+
+    - 运行时元数据
+      - 哈希值（ HashCode ）
+      - GC分代年龄
+      - 锁状态标志
+      - 线程持有的锁
+      - 偏向线程ID
+      - 偏向时间戳
+    - 类型指针：指向类元数据的InstanceKlass，确定该对象所属的类型
+    - 说明：如果是数组，还需记录数组的长度
+  - 实例数据（Instance Data）：它是对象真正存储的有效信息，包括程序代码中定义的各种类型的字段（包括从父类继承下来的和本身拥有的字段） 
+  - 对齐填充：仅起占位符作用。虚拟机的内存管理系统要求任何对象的大小必须是 8的倍数，如果没有对齐需要对齐填充补全。
+
+### 4. 锁优化：存储在对象的内存中的对象头的markword中
+
+![CAS_2](/Users/na/IdeaProjects/Technical summary/Image/CAS_2.png)
+
+### 5. 偏向锁
+
+- 当一个线程访问同步块并获取锁时，会在对象头和栈帧中的锁记录里存储锁偏向的线程ID，以后该线程在进入和退出同步块时不需要进行CAS操作来加锁和解锁，只需简单地测试一下对象头的Mark Word里是否存储着指向当前线程的偏向锁。如果测试成功，表示线程已经获得了锁。如果测试失败，则需要再测试一下Mark Word中偏向锁的标识是否设置成01（表示当前是偏向锁）：如果没有设置，则使用CAS竞争锁；如果设置了，则尝试使用CAS将对象头的偏向锁指向当前线程。执行同步块。
+- 这个时候线程2也来访问同步块，也是会检查对象头的Mark Word里是否存储着当前线程2的偏向锁，发现不是，那么他会进入 CAS 替换，但是此时会替换失败，因为此时线程1已经替换了。替换失败则会进入撤销偏向锁，首先会去暂停拥有了偏向锁的线程1，进入无锁状态(01).偏向锁存在竞争的情况下就回去升级成轻量级锁。
+
+### 6. 轻量级锁
+
+- 在代码进入同步块的时候，如果同步对象锁状态为无锁状态（锁标志位为“01”状态），虚拟机首先将在当前线程的栈帧中建立一个名为锁记录（Lock Record）的空间，用于存储锁对象目前的Mark Word的拷贝。这个时候 线程1会尝试使用 CAS 将 mark Word 更新为指向栈帧中的锁记录（Lock Record）的空间指针。并且把锁标志位设置为 00(轻量级锁标志)，与此同时如果有另外一个线程2也来进行 CAS 修改 Mark Word，那么将会失败，因为线程1已经获取到该锁，然后线程2将会进行 CAS操作不断的去尝试获取锁，这个时候将会引起锁膨胀，就会升级为重量级锁，设置标志位为 10.
+
+### 7. 重量级锁
+
+- 重量级锁通过对象内部的监视器（monitor）实现，其中monitor的本质是依赖于底层操作系统的Mutex Lock实现，操作系统实现线程之间的切换需要从用户态到内核态的切换，切换成本非常高。主要是，当系统检查到锁是重量级锁之后，会把等待想要获得锁的线程进行**阻塞**，被阻塞的线程不会消耗cup。但是阻塞或者唤醒一个线程时，都需要操作系统来帮忙，这就需要从**用户态**转换到**内核态**，而转换状态是需要消耗很多时间的，有可能比用户执行代码的时间还要长。这就是说为什么重量级线程开销很大的。
+- synchronized实际上有两个队列waitSet和entryList：
+
+  1. 当多个线程进入同步代码块时，首先进入entryList
+  2. 有一个线程获取到monitor锁后，就赋值给当前线程，并且计数器+1
+  3. 如果线程调用wait方法，将释放锁，当前线程置为null，计数器-1，同时进入waitSet等待被唤醒，调用notify或者notifyAll之后又会进入entryList竞争锁
+  4. 如果线程执行完毕，同样释放锁，计数器-1，当前线程置为null
+
+![Thread_20](/Users/na/IdeaProjects/Technical summary/Image/Thread_20.webp)
+
+- notify和notifyAll的区别
+  -  如果线程调用了对象的 wait()方法，那么线程便会处于该对象的**等待池**中，等待池中的线程**不会去竞争该对象的锁**。
+  -  当有线程调用了对象的 **notifyAll**()方法（唤醒所有 wait 线程）或 **notify**()方法（只随机唤醒一个 wait 线程），被唤醒的的线程便会进入该对象的锁池中，锁池中的线程会去竞争该对象锁。也就是说，调用了notify后只要一个线程会由等待池进入锁池，而notifyAll会将该对象等待池内的所有线程移动到锁池中，等待锁竞争
+  -  优先级高的线程竞争到对象锁的概率大，假若某线程没有竞争到该对象锁，它**还会留在锁池中**，唯有线程再次调用 wait()方法，它才会重新回到等待池中。而竞争到对象锁的线程则继续往下执行，直到执行完了 synchronized 代码块，它会释放掉该对象锁，这时锁池中的线程会继续竞争该对象锁。
+- **wait和notify为什么需要在synchronized里面:**
+  - wait方法的语义有两个，一个是释放当前的对象锁、另一个是使得当前线程进入阻塞队列， 而这些操作都和监视器是相关的，所以wait必须要获得一个监视器锁。
+  - 而对于notify来说也是一样，它是唤醒一个线程，既然要去唤醒，首先得知道它在哪里？所以就必须要找到这个对象获取到这个对象的锁，然后到这个对象的等待队列中去唤醒一个线程。
+
+### 8. 说说 synchronized 关键字和 volatile 关键字的区别
+
+- **volatile关键字**是线程同步的**轻量级实现**，所以**volatile性能肯定比synchronized关键字要好**。但是**volatile关键字只能用于变量而synchronized关键字可以修饰方法以及代码块**。synchronized关键字在JavaSE1.6之后进行了主要包括为了减少获得锁和释放锁带来的性能消耗而引入的偏向锁和轻量级锁以及其它各种优化之后执行效率有了显著提升，**实际开发中使用 synchronized 关键字的场景还是更多一些**。
+- **多线程访问volatile关键字不会发生阻塞，而synchronized关键字可能会发生阻塞**
+- **volatile关键字能保证数据的可见性，但不能保证数据的原子性。synchronized关键字两者都能保证。**
+- **volatile关键字主要用于解决变量在多个线程之间的可见性，而 synchronized关键字解决的是多个线程之间访问资源的同步性。**
+
+### 9、synchronized和lock有什么区别？
+
+1. 原始构成
+
+   - synchronized是关键字，属于jvm
+
+     **monitorenter**，底层是通过monitor对象来完成，其实wait/notify等方法也依赖于monitor对象只有在同步或方法中才能掉wait/notify等方法
+
+     **monitorexit**，两次：保证正常退出和异常退出
+
+   - Lock是具体类，是api层面的锁（java.util.）
+
+2. 使用方法
+
+   - sychronized不需要用户取手动释放锁，当synchronized代码执行完后系统会自动让线程释放对锁的占用
+   - ReentrantLock则需要用户去手动释放锁若没有主动释放锁，就有可能导致出现死锁现象，需要lock()和unlock()方法配合try/finally语句块来完成
+
+3. 等待是否可中断
+
+   - synchronized不可中断，除非抛出异常或者正常运行完成
+   - ReentrantLock可中断，设置超时方法tryLock(long timeout, TimeUnit unit)，或者lockInterruptibly()放代码块中，调用interrupt()方法可中断。
+
+4. 加锁是否公平
+
+   - synchronized非公平锁
+   - ReentrantLock两者都可以，默认公平锁，构造方法可以传入boolean值，true为公平锁，false为非公平锁
+
+5. 锁绑定多个条件Condition
+
+   - synchronized没有
+   - ReentrantLock用来实现分组唤醒需要要唤醒的线程们，可以精确唤醒，而不是像synchronized要么随机唤醒一个线程要么唤醒全部线程。
 

@@ -284,12 +284,12 @@
     - 更稳定的查询效率：B树的查询时间复杂度在1到树高之间(分别对应记录在根节点和叶节点)，而B+树的查询复杂度则稳定为树高，因为所有数据都在叶节点。由于非叶子结点并不是最终指向文件内容的结点，而只是叶子结点中关键字的索引。所以任何关键字的查找必须走一条从根结点到叶子结点的路。所有关键字查询的路径长度相同，导致每一个数据的查询效率相当。
     
   - B+树也存在劣势：由于键会重复出现，因此会占用更多的空间。
-## 10. LBCC
+## 9. LBCC
 
 - **LBCC，基于锁的并发控制，Lock Based Concurrency Control。**
 - 使用锁的机制，在当前事务需要对数据修改时，将当前事务加上锁，同一个时间只允许一条事务修改当前数据，其他事务必须等待锁释放之后才可以操作。
 
-## 9. MVCC
+## 10. MVCC
 
 - 多版本并发控制（Multi-Version Concurrency Control, MVCC）是 MySQL 的 InnoDB 存储引擎实现隔离级别的一种具体方式，用于实现提交读和可重复读这两种隔离级别。而未提交读隔离级别总是读取最新的数据行，无需使用 MVCC。可串行化隔离级别需要对所有读取的行都加锁，单纯使用 MVCC 无法实现。
 - **MVCC使得数据库读不会对数据加锁，普通的SELECT请求不会加锁，提高了数据库的并发处理能力**。借助MVCC，数据库可以实现READ COMMITTED，REPEATABLE READ等隔离级别，用户可以查看当前数据的前一个或者前几个历史版本，保证了ACID中的I特性（隔离性)。
@@ -324,4 +324,41 @@
   - `undo log`主要有两个作用：回滚和多版本控制(MVCC)
   - `undo log`主要存储的也是逻辑日志，比如我们要`insert`一条数据了，那`undo log`会记录的一条对应的`delete`日志。我们要`update`一条记录时，它会记录一条对应**相反**的update记录。
   - 因为`undo log`存储着修改之前的数据，相当于一个**前版本**，MVCC实现的是读写不阻塞，读的时候只要返回前一个版本的数据就行了。
+
+## 11. sql
+
+- select 查询结果    如: [学号,平均成绩：组函数avg(成绩)]
+- from 从哪张表中查找数据   如:[涉及到成绩：成绩表score]
+- where 查询条件    如:[b.课程号='0003' and b.成绩>80]
+- group by 分组    如:[每个学生的平均：按学号分组](oracle,SQL server中出现在select 子句后的非分组函数，必须出现                                                                                        在group by子句后出现),MySQL中可以不用
+
+```sql
+select emp_no, count(salary) as t
+from salaries
+group by emp_no
+having count(salary) > 15
+```
+
+- having 对分组结果指定条件    如:[大于60分]
+- order by 对查询结果排序    如:[增序: 成绩  ASC / 降序: 成绩 DESC];
+- limit   使用limt子句返回topN（对应这个问题返回的成绩前两名）如:[ limit  2 ==>从0索引开始读取2个]
+  limit==>从0索引开始 [0,N-1]
+
+```sql
+select * from employees order by hire_date desc limit 2,1;
+```
+
+- 组函数: 去重 distinct()  统计总数sum()   计算个数count()  平均数avg()  最大值max() 最小数min() 
+
+- 多表连接: 内连接(省略默认inner) join ...on..左连接left join tableName as b on a.key ==b.key右连接right join  连接union(无重复(过滤去重))和union all(有重复[不过滤去重])
+
+  ```sql
+  select s.*, d.dept_no
+  from dept_manager as d
+  left join salaries as s
+  on d.emp_no =  s.emp_no
+  order by s.emp_no asc
+  ```
+
+  
 

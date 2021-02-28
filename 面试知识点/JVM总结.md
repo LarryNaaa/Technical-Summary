@@ -277,3 +277,19 @@
     - ➢如果字符串常量池中有，则并不会放入。返回已有的串池中的对象的地址
     - ➢如果没有，则会把对象的引用地址复制一份，放入字符串常量池，并返回字符串常量池中的引用地址
 
+## 11. 如何释放堆外内存？
+
+- JDK中使用DirectByteBuffer对象来表示堆外内存，每个DirectByteBuffer对象在初始化时，都会创建一个对应的Cleaner对象，这个Cleaner对象会在合适的时候执行unsafe.freeMemory(address)，从而回收这块堆外内存。
+
+![堆_8](/Users/na/IdeaProjects/Technical summary/Image/堆_8.jpg)
+
+- 其中first是Cleaner类的静态变量，Cleaner对象在初始化时会被添加到Clener链表中，和first形成引用关系，Cleaner继承虚引用，ReferenceQueue是用来保存需要回收的Cleaner对象。
+
+- 如果该DirectByteBuffer对象在一次GC中被回收了，此时，只有Cleaner对象唯一保存了堆外内存的数据（开始地址、大小和容量），在下一次FullGC时，把该Cleaner对象放入到ReferenceQueue中，并触发clean方法。
+
+  　　Cleaner对象的clean方法主要有两个作用：
+
+  　　1、把自身从Clener链表删除，从而在下次GC时能够被回收
+
+  　　2、释放堆外内存
+
