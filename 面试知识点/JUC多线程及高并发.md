@@ -718,9 +718,11 @@ private static final Object PRESENT = new Object();
 
 2. **ReentrantLock/Synchronized 就是一个典型的可重入锁**
 
-3. **可重入锁最大的作用是避免死锁**
+3. synchronized如何实现可重入？每个锁关联一个线程持有者和一个计数器。当计数器为0时表示该锁没有被任何线程持有，那么任何线程都都可能获得该锁而调用相应方法。当一个线程请求成功后，JVM会记下持有锁的线程，并将计数器计为1。此时其他线程请求该锁，则必须等待。而该持有锁的线程如果再次请求这个锁，就可以再次拿到这个锁，同时计数器会递增。当线程退出一个synchronized方法/块时，计数器会递减，如果计数器为0则释放该锁。
 
-4. **代码示例**
+4. **可重入锁最大的作用是避免死锁**
+
+5. **代码示例**
 
    ```java
    package com.jian8.juc.lock;
@@ -815,7 +817,7 @@ private static final Object PRESENT = new Object();
 
 ![Thread_21](/Users/na/IdeaProjects/Technical summary/Image/Thread_21.png)
 
-#### 5、自旋锁
+#### 5、自旋锁：非公平锁
 
 - 自旋锁是通过 CPU 提供的 `CAS` 函数（*Compare And Swap*），在「用户态」完成加锁和解锁操作，不会主动产生线程上下文切换，所以相比互斥锁来说，会快一些，开销也小一些。
 
@@ -1957,8 +1959,28 @@ public class MyThreadPoolDemo {
 ## 十二、AQS(AbstractQueuedSynchronizer)：乐观锁
 
 - `AQS`即是抽象的队列式的同步器，内部定义了很多锁相关的方法，我们熟知的`ReentrantLock`、`ReentrantReadWriteLock`、`CountDownLatch`、`Semaphore`等都是基于`AQS`来实现的。
-- `AQS`中 维护了一个`volatile int state`（代表共享资源）和一个`FIFO`线程等待队列（多线程争用资源被阻塞时会进入此队列）。这里`volatile`能够保证多线程下的可见性，当`state=1`则代表当前对象锁已经被占有，其他线程来加锁时则会失败，加锁失败的线程会被放入一个`FIFO`的等待队列中，比列会被`UNSAFE.park()`操作挂起，等待其他获取锁的线程释放锁才能够被唤醒。另外`state`的操作都是通过`CAS`来保证其并发修改的安全性。
+- `AQS`中 维护了一个`volatile int state`（代表共享资源）和一个`FIFO`线程等待队列（多线程争用资源被阻塞时会进入此队列）。
+- state 由于是多线程共享变量，所以必须定义成 volatile，以保证 state 的可见性, 同时虽然 volatile 能保证可见性，但不能保证原子性，所以 AQS 提供了对 state 的原子操作方法，保证了线程安全。
+- 另外 AQS 中实现的 FIFO 队列（CLH 队列）其实是双向链表实现的，由 head, tail 节点表示，head 结点代表当前占用的线程，其他节点由于暂时获取不到锁所以依次排队等待锁释放。
 - AQS内部维护一个state状态位，尝试加锁的时候通过CAS(CompareAndSwap)修改值，如果成功设置为1，并且把当前线程ID赋值，则代表加锁成功，一旦获取到锁，其他的线程将会被阻塞进入阻塞队列自旋，获得锁的线程释放锁的时候将会唤醒阻塞队列中的线程，释放锁的时候则会把state重新置为0，同时当前线程ID置为空。
+
+```java
+public abstract class AbstractQueuedSynchronizer
+  extends AbstractOwnableSynchronizer
+    implements java.io.Serializable {
+    // 以下为双向链表的首尾结点，代表入口等待队列
+    private transient volatile Node head;
+    private transient volatile Node tail;
+    // 共享变量 state
+    private volatile int state;
+    // cas 获取 / 释放 state，保证线程安全地获取锁
+    protected final boolean compareAndSetState(int expect, int update) {
+        // See below for intrinsics setup to support this
+        return unsafe.compareAndSwapInt(this, stateOffset, expect, update);
+    }
+    // ...
+ }
+```
 
 ![Thread_22](/Users/na/IdeaProjects/Technical summary/Image/Thread_22.webp)
 
@@ -2016,6 +2038,7 @@ public class MyThreadPoolDemo {
 ### 7. 重量级锁
 
 - 重量级锁通过对象内部的监视器（monitor）实现，其中monitor的本质是依赖于底层操作系统的Mutex Lock实现，操作系统实现线程之间的切换需要从用户态到内核态的切换，切换成本非常高。主要是，当系统检查到锁是重量级锁之后，会把等待想要获得锁的线程进行**阻塞**，被阻塞的线程不会消耗cup。但是阻塞或者唤醒一个线程时，都需要操作系统来帮忙，这就需要从**用户态**转换到**内核态**，而转换状态是需要消耗很多时间的，有可能比用户执行代码的时间还要长。这就是说为什么重量级线程开销很大的。
+- synchronized如何实现可重入？每个锁关联一个线程持有者和一个计数器。当计数器为0时表示该锁没有被任何线程持有，那么任何线程都都可能获得该锁而调用相应方法。当一个线程请求成功后，JVM会记下持有锁的线程，并将计数器计为1。此时其他线程请求该锁，则必须等待。而该持有锁的线程如果再次请求这个锁，就可以再次拿到这个锁，同时计数器会递增。当线程退出一个synchronized方法/块时，计数器会递减，如果计数器为0则释放该锁。
 - synchronized实际上有两个队列waitSet和entryList：
 
   1. 当多个线程进入同步代码块时，首先进入entryList
