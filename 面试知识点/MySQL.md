@@ -330,7 +330,7 @@
 - select 查询结果    如: [学号,平均成绩：组函数avg(成绩)]
 - from 从哪张表中查找数据   如:[涉及到成绩：成绩表score]
 - where 查询条件    如:[b.课程号='0003' and b.成绩>80]
-- group by 分组    如:[每个学生的平均：按学号分组](oracle,SQL server中出现在select 子句后的非分组函数，必须出现                                                                                        在group by子句后出现),MySQL中可以不用
+- group by 分组    **使用GROUP BY子句时，SELECT子句中只能有聚合键、聚合函数、常数。**
 
 ```sql
 select emp_no, count(salary) as t
@@ -359,6 +359,11 @@ select * from employees order by hire_date desc limit 2,1;
   on d.emp_no =  s.emp_no
   order by s.emp_no asc
   ```
+
+## 12. 页和行的大小
+
+- MySQL表具有65,535字节的最大行大小限制，即使存储引擎能够支持更大的行也是如此。
+- 对于默认的16KB InnoDB页大小，最大行大小略小于8KB 。对于64KB页，最大行大小略小于16KB。如果包含可变长度列(例如：text)的InnoDB 行超过最大行大小，InnoDB选择可变长度列进行页外存储。
 
   
 

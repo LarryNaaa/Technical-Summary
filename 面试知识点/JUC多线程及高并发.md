@@ -1246,7 +1246,7 @@ private static final Object PRESENT = new Object();
      }
      ```
 
-#### 5、用在哪里
+#### 5、生产者消费者模式
 
 1. 生产者消费者模式
 
