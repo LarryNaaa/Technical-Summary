@@ -127,3 +127,19 @@
 - controller层方法前用@RequestMapping
 - @GetMapping/@PostMapping/@DeleteMapping/@PutMapping/@PatchMapping(@RequestMapping(method = RequestMethod.GET))
 
+## 15. 解决spring加载缓慢的问题
+
+- 扫描注解Bean，写比较精确的扫描路径，这样扫描的class会很少。如扫描@Service和@Repository：
+
+  ```java
+  <**context:component-scan base-package="com.sishuok.es.**.repository,com.sishuok.es.**.service,com.sishuok.es.**.extra"**>
+  ```
+
+- 延迟加载bean，常见的方式是在配置文件中在上加：default-lazy-init="true"。在 Spring 中，默认情况下所有定的 bean 及其依赖项目都是在应用启动时创建容器上下文是被初始化的。通过设置全局懒加载，我们可以减少启动时的创建任务从而大幅度的缩减应用的启动时间。但全局懒加载的缺点可以归纳为以下两点：
+
+  - Http 请求处理时间变长。 这里准确的来说是第一次 http 请求处理的时间变长，之后的请求不受影响（说到这里自然而然的会联系到 spring cloud 启动后的第一次调用超时的问题）。
+  - 错误不会在应用启动时抛出。
+
+- 移除调试阶段不相干的bean，有些bean在调试阶段我们并不需要，如我们在测试用户模块时，可能不需要测试权限模块；此时我们可以把不相干的bean移除掉；具体配置请参考最后。
+
+- 项目分模块开发，如果项目模块比较多，可以考虑放弃注解，而使用xml配置方式+约定。因为实际做项目时可能把配置分到多个配置文件，此时我尝试了下合并到一个，几乎没啥速度提升，所以还是分开存好。

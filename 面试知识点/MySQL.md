@@ -360,10 +360,174 @@ select * from employees order by hire_date desc limit 2,1;
   order by s.emp_no asc
   ```
 
+- 内连接INNER JOIN求两个表的**交集**
+
+- 左连接LEFT JOIN的含义就是求两个表A表和B表的**交集外加左表剩下的数据**。
+
+- 右连接RIGHT JOIN就是求两个表**A和B表的交集外加右表B剩下的数据**。
+
+- 外连接FULL OUTER JOIN就是求两个表**A和B集合的并集**。另外MySQL不支持OUTER JOIN，但是我们可以对左连接和右连接的结果做 **UNION** 操作来实现。
+
 ## 12. 页和行的大小
 
 - MySQL表具有65,535字节的最大行大小限制，即使存储引擎能够支持更大的行也是如此。
 - 对于默认的16KB InnoDB页大小，最大行大小略小于8KB 。对于64KB页，最大行大小略小于16KB。如果包含可变长度列(例如：text)的InnoDB 行超过最大行大小，InnoDB选择可变长度列进行页外存储。
 
+## 13. 添加索引
+
+- **1. 新建表中添加索引**
+  ① 普通索引
+
+  | 1234567 | create table t_dept(    no int not null primary key,    name varchar(20) null,    sex varchar(2) null,    info varchar(20) null,    index index_no(no)  ) |
+  | ------- | ------------------------------------------------------------ |
+  |         |                                                              |
+
   
+  ② 唯一索引
+
+  | 1234567 | create table t_dept(       no int not null primary key,       name varchar(20) null,       sex varchar(2) null,       info varchar(20) null,       unique index index_no(no)     ） |
+  | ------- | ------------------------------------------------------------ |
+  |         |                                                              |
+
+  
+  ③ 全文索引
+
+  | 123456 | create table t_dept(       no int not null primary key,       name varchar(20) null,       sex varchar(2) null,       info varchar(20) null,       fulltext index index_no(no) |
+  | ------ | ------------------------------------------------------------ |
+  |        |                                                              |
+
+  
+  ④ 多列索引
+
+  | 1234567 | create table t_dept(       no int not null primary key,       name varchar(20) null,       sex varchar(2) null,       info varchar(20) null,       key index_no_name(no,name)     ) |
+  | ------- | ------------------------------------------------------------ |
+  |         |                                                              |
+
+  
+
+- **2. 在已建表中添加索引**
+    ① 普通索引
+
+  | 12   | create index index_name             on t_dept(name); |
+  | ---- | ---------------------------------------------------- |
+  |      |                                                      |
+
+  
+  ② 唯一索引
+
+  | 12   | create unique index index_name              on t_dept(name); |
+  | ---- | ------------------------------------------------------------ |
+  |      |                                                              |
+
+  
+  ③ 全文索引
+
+  | 12   | create fulltext index index_name              on t_dept(name); |
+  | ---- | ------------------------------------------------------------ |
+  |      |                                                              |
+
+  
+  ④ 多列索引
+
+  | 12   | create index index_name_no               on t_dept(name,no) |
+  | ---- | ----------------------------------------------------------- |
+  |      |                                                             |
+
+- **3. 以修改表的方式添加索引**
+  ① 普通索引
+
+  | 12   | alter table t_dept          add index index_name(name); |
+  | ---- | ------------------------------------------------------- |
+  |      |                                                         |
+
+  
+  ② 唯一索引
+
+  | 12   | alter table t_dept            add unique index index_name(name); |
+  | ---- | ------------------------------------------------------------ |
+  |      |                                                              |
+
+  
+  ③ 全文索引
+
+  | 12   | alter table t_dept           add fulltext index_name(name); |
+  | ---- | ----------------------------------------------------------- |
+  |      |                                                             |
+
+
+ ④ 多列索引
+
+| 12   | alter table t_dept              add index index_name_no(name,no); |
+| ---- | ------------------------------------------------------------ |
+|      |                                                              |
+
+## 14. explain
+
+- explain命令输出的结果有10列：`id、select_type、table、type、possible_keys、key、key_len、ref、rows、Extra`
+- id：包含一组数字，表示查询中执行SELECT子句或操作表的**顺序**。在id列上也会有几种情况：
+  - 如果id相同执行顺序由上至下。
+  - 如果id不相同，id的序号会递增，id值越大优先级越高，越先被执行。(一般有子查询的SQL语句id就会不同)
+- select_type：表示select查询的类型，select_type属性下有好几种类型：
+  - **SIMPLLE**：简单查询，该查询不包含 UNION 或子查询
+  - **PRIMARY**：如果查询包含UNION 或子查询，则**最外层的查询**被标识为PRIMARY
+  - UNION：表示此查询是 UNION 中的第二个或者随后的查询
+  - DEPENDENT：UNION 满足 UNION 中的第二个或者随后的查询，其次取决于外面的查询
+  - UNION RESULT：UNION 的结果
+  - **SUBQUERY**：子查询中的第一个select语句(该子查询不在from子句中)
+  - DEPENDENT SUBQUERY：子查询中的 第一个 select，同时取决于外面的查询
+  - **DERIVED**：包含在from子句中子查询(也称为派生表)
+  - UNCACHEABLE SUBQUERY：满足是子查询中的第一个 select 语句，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
+  - UNCACHEABLE UNION：满足此查询是 UNION 中的第二个或者随后的查询，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
+- table：
+
+## 15. MySQL底层
+
+### 15.1 基础框架
+
+![MySQL_13](/Users/na/IdeaProjects/Technical summary/Image/MySQL_13.png)
+
+- 1、连接器管理： 首先是数据库连接器，主要负责和客户端建立连接、权限获取、管理连接等，由于整个建连的过程比较复杂，所以尽量使用长连接。如果数据库发生异常后为了快速恢复，可重启系统重新建立连接
+- 2、Mysql缓存：mysql请求首先看缓存数据，key为sql语句value为查询的结果，如果存在则直接返回。如果没有则直接往下走。注意：mysql缓存对于一些静态数据比较适合，对于实时性高的数据最好不要使用。
+  3、分析器： 对你执行的sql语句进行解析，首先是词法分析包括一些关键字识别，然后语法分析，查看这条语句是否符合mysql语句
+  4、优化器：通过你的语句分析，发现那些查询命中索引，还有表之间的连接顺序等
+  5、执行器：通过上面一系列的验证，使用引擎提供的接口。经过不断的执行将查询的结果存放在结果集中，通过explain可以看到执行器具体扫描了多少行。
+
+### 15.2 **sql语句的执行流程**
+
+- update tb_area SET area_name = "beijing" WHERE area_id = 1
+      1） 首先执行器通过id查到这条记录（搜索树或者查找数据页） ，并加载到内存中。
+      2）然后对这条记录的area_name调用引擎写入接口，进行修改。
+      3）修改内存中的值，同时更新redolog告知执行器完成写入（状态置为prepare），可以提交事务，执行器将这条操作记录记录在binlog，写入磁盘
+      4）完成上述一系列的操作，执行器调用事务提交接口（redolog状态置为commit），完成更新操作。
+- 注意：Mysql的redolog模块写入拆成2步走，prepare和commit，称为两阶段提交。 整个过程为1、redolog的prepare状态 2、binlog的写入 3、redolog的commit状态，保证Mysql的可靠性。
+  - 如果binlog没有写入并没有提交事务，回滚
+  - 如果binlog写入事务没提交，数据库回复后自动完成commit
+
+### 15.3 MySQL查询过程
+
+![MySQL_14](/Users/na/IdeaProjects/Technical summary/Image/MySQL_14.png)
+
+![MySQL_15](/Users/na/IdeaProjects/Technical summary/Image/MySQL_15.webp)
+
+- 连接器：我们要进行查询，第一步就是先去链接数据库，那这个时候就是连接器跟我们对接。他负责跟客户端建立链接、获取权限、维持和管理连接。链接的时候会经过TCP握手，然后身份验证，然后我们输入用户名密码就好了。
+
+- 查询缓存：MySQL拿到一个查询请求后，会先到查询缓存看看，之前是不是执行过这条语句。查询的时候就会拿着语句先去缓存中查询，如果能够命中就返回缓存的value，如果不命中就执行后面的阶段。
+
+- 分析器：会先做**词法分析**，你的语句有这么多单词、空格，MySQL就需要识别每个字符串所代表的是什么，是关键字，还是表名，还是列名等等。然后就开始**语法分析**，根据词法分析的结果，语法分析会判断你sql的对错，错了会提醒你的，并且会提示你哪里错了。
+
+- 优化器：优化就比较简单了，因为我们建立表可能会建立很多索引，优化有一步就是要确认使用哪个索引，比如使用你的主键索引，联合索引还是什么索引更好。还有就是对执行顺序进行优化，条件那么多，先查哪个表，还是先关联，会出现很多方案，最后由优化器决定选用哪种方案。
+
+- 执行器：在完成解析和优化阶段以后，MySQL会生成对应的执行计划，查询执行引擎根据执行计划给出的指令逐步执行得出结果。整个执行过程的大部分操作均是通过调用存储引擎实现的接口来完成，这些接口被称为handler API。查询过程中的每一张表由一个handler实例表示，实际上，MySQL在查询优化阶段就为每一张表创建了一个handler实例，优化器可以根据这些实例的接口来获取表的相关信息，包括表的所有列名、索引统计信息等。
+
+- 总结下mysql整个查询流程如下: 
+
+  1.客户端向MySQL服务器发送一条查询请求
+
+  2.服务器首先检查查询缓存，如果命中缓存，则立刻返回存储在缓存中的结果。否则进入下一级段
+
+  3.服务器进行SQL解析、预处理、再由优化器生成对应的执行计划
+
+  4.MySQL根据执行计划，调用存储引擎的API来执行查询
+
+  5.将结果返回给客户端，同时缓存查询结果
 
