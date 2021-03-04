@@ -1,4 +1,7 @@
 # JSON Web Token
+
+[TOC]
+
 JSON web token (JWT), pronounced "jot", is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information between parties as a JSON object. Again, JWT is a standard, meaning that all JWTs are tokens, but not all tokens are JWTs.
 
 Because of its relatively small size, a JWT can be sent through a URL, through a POST parameter, or inside an HTTP header, and it is transmitted quickly. A JWT contains all the required information about an entity to avoid querying a database more than once. The recipient of a JWT also does not need to call a server to validate the token.
@@ -483,7 +486,7 @@ public class UserValidator implements Validator {
         }
     }
 }
-``` 
+```
 #### Configure `HttpSecurity`
 The first step is to customize the security framework to our needs, so we create a new class called `SecurityConfig` to extend `WebSecurityConfigurerAdapter`. `WebSecurityConfigurerAdapter` is an abstract class in Spring Security, it provides default security configurations. By extending it, we are allowed to customize those security configurations by overriding some of the methods:
 
@@ -994,7 +997,7 @@ Now, we can get valid token with valid username and password:
     "username": "test1@email.com",
     "password": "123456"
 }
-``` 
+```
 ```JSON
 {
     "success": true,

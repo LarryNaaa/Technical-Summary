@@ -1,5 +1,7 @@
 # GC面试题
 
+[TOC]
+
 ## 1. 什么是垃圾
 
 垃圾是指在运行程序中没有任何指针指向的对象，这个对象就是需要被回收的垃圾。
@@ -180,7 +182,7 @@
 
   
 
-- WeakHashMap
+- WeakHashMap：用于解决缓存问题
   
   - Entry继承了弱引用，会被下次gc回收
   - 每次访问WeakHashMap的时候，都会调用这个expungeStaleEntries函数移除其内部不用的entry

@@ -1,4 +1,7 @@
 # Spring
+
+[TOC]
+
 ## 1. IoC - Inversion of Control
 
 -  **IoC将原本在程序中手动创建对象的控制权，交由Spring框架来管理。** **IoC 容器是 Spring 用来实现 IoC 的载体， IoC 容器实际上就是个Map（bean name，bean object）,Map 中存放的是各种对象。**

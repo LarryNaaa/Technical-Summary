@@ -1956,6 +1956,12 @@ public class MyThreadPoolDemo {
 
 ![Thread_1](/Users/na/IdeaProjects/Technical summary/Image/Thread_1.png)
 
+### 2. 中断
+
+- Java的中断是一种协作机制。也就是说调用线程对象的interrupt方法并不一定就中断了正在运行的线程，它只是要求线程自己在合适的时机中断自己。每个线程都有一个boolean的中断状态（不一定就是对象的属性，事实上，该状态也确实不是Thread的字段），interrupt方法仅仅只是将该状态置为true 。
+- **interrupted()**：测试当前线程是否已经中断。线程的中断状态由该方法清除。换句话说，如果连续两次调用该方法，则第二次调用将返回 false（在第一次调用已清除了其中断状态之后，且第二次调用检验完中断状态前，当前线程再次中断的情况除外）。
+-  **isInterrupted**()：测试线程是否已经中断。线程的中断状态不受该方法的影响。
+
 ## 十二、AQS(AbstractQueuedSynchronizer)：乐观锁
 
 - `AQS`即是抽象的队列式的同步器，内部定义了很多锁相关的方法，我们熟知的`ReentrantLock`、`ReentrantReadWriteLock`、`CountDownLatch`、`Semaphore`等都是基于`AQS`来实现的。
