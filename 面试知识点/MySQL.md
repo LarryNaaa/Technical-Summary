@@ -34,16 +34,9 @@
 
 - 事务是指满足 ACID 特性的一组操作，可以通过 Commit 提交一个事务，也可以使用 Rollback 进行回滚。
 
-- 事务最基本的莫过于 ACID 四个特性了，这四个特性分别是：
+- **原子性**：**事物是一个不可分割的工作单位**，要么全成功，要么全失败。
 
-  - Atomicity：原子性
-  - Consistency：一致性
-  - Isolation：隔离性
-  - Durability：持久性
-
-- **原子性**：事务的最小工作单元，要么全成功，要么全失败。
-
-- **一致性**：事务开始和结束后，数据库的完整性不会被破坏。
+- **一致性**：**数据库事务不能破坏关系数据的完整性以及业务逻辑上的一致性** 。
 
 - **隔离性**：不同事务之间互不影响，四种隔离级别为RU（读未提交）、RC（读已提交）、RR（可重复读）、SERIALIZABLE （串行化）。
 
@@ -57,23 +50,45 @@
 
   ![mysql_1](/Users/na/IdeaProjects/Technical summary/Image/mysql_1.webp)
 
-## 3. 隔离级别
+## 3. 隔离级别：MySQL默认的隔离级别是**可重复读**
 
 - **未提交读（READ UNCOMMITTED）**
 
-  事务中的修改，即使没有提交，对其他事务也是可见的。
+  - 一个事务还没提交时，它做的变更就能被**别的事务看到**
+
+  - 会出现幻读，不可重复读，脏读
+
+  - 更新数据时加上**行级共享锁**，事物结束即释放
 
 - **提交读（READ COMMITTED）**
 
-  一个事务只能读取已经提交的事务所做的修改。换句话说，一个事务所做的修改在提交之前对其他事务是不可见的。
+  - 一个事务提交之后，它做的变更才会被其他事务看到 
+
+  -  会出现幻读，不可重复读，不会出现脏读 
+
+  -  写数据加**行级排他锁**，这样写过程是无法读取的，直到事务处理完毕才释放排他锁，给读的数据加**行级共享锁**，这样读的时候也是无法写的，但是**一旦读完该行就释放共享锁** 
+
+  -  MySQL会在SQL语句开始执行时创建一个视图
 
 - **可重复读（REPEATABLE READ）**
 
-  保证在同一个事务中多次读取同样数据的结果是一样的。
+  - 一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的 
+
+  -  会出现幻读，不会出现不可重复读，脏读 
+
+  -  给写的数据加**行级排他锁**，事务结束释放，给读的数据加行级共享锁，**事务结束后释放** 
+
+  -  MySQL会在事物开始时创建一个一致性视图*(接下面的MVCC)*，事物结束时销毁
 
 - **可串行化（SERIALIZABLE）**
 
-  所有的数据库的读或者写操作都为串行执行，当前隔离级别下只支持单个请求同时执行，所有的操作都需要队列执行。所以种隔离级别下所有的数据是最稳定的，但是性能也是最差的。数据库的锁实现就是这种隔离级别的更小粒度版本。
+  - 当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行
+  
+  - 不会出现幻读，不可重复读，脏读
+  
+  - 事务读数据则加**表级共享锁**，事务写数据则加**表级排他锁**
+  
+  - 不区分快照度与当前读
 
 | 隔离级别 | 脏读 | 不可重复读 | 幻读 |
 | :------: | :--: | :--------: | :--: |
@@ -82,41 +97,22 @@
 | 可重复读 |  ×   |     ×      |  √   |
 | 可串行化 |  ×   |     ×      |  ×   |
 
-## 4. 锁问题
+## 4. 脏读，不可重复读和幻读
 
 - 脏读
   
-  - 指的是一个事务可以读取到另一个事务未提交的数据。这种隔离级别岁最不安全的一种，因为未提交的事务是存在回滚的情况。
-  - 例如：T1 修改一个数据，T2 随后读取这个数据。如果 T1 撤销了这次修改，那么 T2 读取的数据是脏数据。
+  - 一个事务读取了另一个事务**未提交**的数据，而这个数据是有可能回滚的。
   
 - 不可重复读
 
-  - 指的是一个事务因为读取到另一个事务已提交的修改数据，导致在当前事务的不同时间读取同一条数据获取的结果不一致。
-  - 例如：T2 读取一个数据，T1 对该数据做了修改。如果 T2 再次读取这个数据，此时读取的结果和第一次读取的结果不同。
-  
-  | **发生时间** | **SessionA**                         | **SessionB**                                              |
-  | :----------- | :----------------------------------- | :-------------------------------------------------------- |
-  | 1            | begin;                               |                                                           |
-  | 2            | select * from user where id=1;(张三) |                                                           |
-  | 3            |                                      | update user set name='李四' where id=1;(默认隐式提交事务) |
-  | 4            | select * from user where id=1;(李四) |                                                           |
-  | 5            |                                      | update user set name='王二' where id=1;(默认隐式提交事务) |
-  | 6            | select * from user where id=1;(王二) |                                                           |
+  - 在数据库访问中，**一个事务范围**内**两个相同的查询**却返回了**不同**数据。这是由于查询时系统中其他事务修改的提交而引起的。
   
   - **在 InnoDB 存储引擎中，SELECT 操作的不可重复读问题通过 MVCC 得到了解决，而 UPDATE、DELETE 的不可重复读问题是通过 Record Lock 解决的，INSERT 的不可重复读问题是通过 Next-Key Lock（Record Lock + Gap Lock）解决的。**
   
 - 幻读
 
-  - 指在同一事务下，连续执行两次同样的 sql 语句可能返回不同的结果，第二次的 sql 语句可能会返回之前不存在的行。
-  - 幻影读是一种特殊的不可重复读问题。
+  - 当一个事物对**整个table进行修改**之后，第二个事物向表中**插入**了一行数据，此时第一个事物发现了新插入的没有修改的数据行。
   
-- 丢失更新
-
-  - 一个事务的更新操作会被另一个事务的更新操作所覆盖。
-  - 例如：T1 和 T2 两个事务都对一个数据进行修改，T1 先修改，T2 随后修改，T2 的修改覆盖了 T1 的修改。
-  - 这类型问题可以通过给 SELECT 操作加上排他锁来解决，不过这可能会引入性能问题，具体使用要视业务场景而定。
-  
-  ![mysql_4](/Users/na/IdeaProjects/Technical summary/Image/mysql_4.webp)
 
 ## 5. 锁
 
@@ -128,13 +124,14 @@
   - 行锁（Record Locks）：锁定当前数据行，锁的粒度小，加锁慢，发生锁冲突的概率小，并发度高，行锁也是MyISAM和InnoDB的区别之一，InnoDB支持行锁并且支持事务 。
   - 表锁：表锁则锁的粒度大，加锁快，开销小，但是锁冲突的概率大，并发度低。
 
-## 6. 范式
+## 6. 三大范式
 
-- 第一范式： 所有字段值都是不可分解的原子值 。例如有一个列是电话号码一个人可能有一个办公电话一个移动电话。第一范式就需要拆开成两个属性。 
-
--  第二范式：非主属性完全函数依赖于候选键。如PersonID，ProductID，ProductName，PersonName可以看到，OrderID和ProductID是联合主键，但是ProductName是依赖于ProductID的，只依赖了部分主键，没有依赖全部主键。需要拆分成三个表：PersonID, PersonName,ProductID, ProductName和PersonID, ProductID 
-
--  第三范式： 每一列数据都和主键直接相关，而不能间接相关。如OrderID，ProductID，ProductName，OrderID是主键，但是ProductID依赖了OrderID，而ProductName依赖了ProductID，等于说是间接依赖了OrderID，所以需要拆分为两个表：OrderID, ProductID和ProductID, ProductName
+- 第一范式： 所有字段值都是不可分解的原子值 。
+  - 例如有一个列是电话号码一个人可能有一个办公电话一个移动电话。第一范式就需要拆开成两个属性。 
+- 第二范式：非主属性完全函数依赖于候选键。
+  - 如PersonID，ProductID，ProductName，PersonName可以看到，OrderID和ProductID是联合主键，但是ProductName是依赖于ProductID的，只依赖了部分主键，没有依赖全部主键。需要拆分成三个表：PersonID, PersonName,ProductID, ProductName和PersonID, ProductID 
+-  第三范式： 每一列数据都和主键直接相关，而不能间接相关。
+  -  如OrderID，ProductID，ProductName，OrderID是主键，但是ProductID依赖了OrderID，而ProductName依赖了ProductID，等于说是间接依赖了OrderID，所以需要拆分为两个表：OrderID, ProductID和ProductID, ProductName
 
 ## 7. MySQL 索引
 
@@ -203,68 +200,71 @@
 
 #### 7.4.1 主键索引
 
-    - 每个InnoDB表都有一个聚簇索引 ，聚簇索引使用B+树构建，叶子节点存储的数据是整行记录。因为无法把数据行存放在两个不同的地方，所以一个表只能有一个聚簇索引。一般情况下，聚簇索引等同于主键索引，当一个表没有创建主键索引时，InnoDB会自动创建一个ROWID字段来构建聚簇索引。InnoDB创建索引的具体规则如下：
-    
-      > 1. 在表上定义主键PRIMARY KEY，InnoDB将主键索引用作聚簇索引。
-      > 2. 如果表没有定义主键，InnoDB会选择第一个不为NULL的唯一索引列用作聚簇索引。
-      > 3. 如果以上两个都没有，InnoDB 会使用一个6 字节长整型的隐式字段 ROWID字段构建聚簇索引。该ROWID字段会在插入新行时自动递增。
-    
-    ![MySQL_10](/Users/na/IdeaProjects/Technical summary/Image/MySQL_10.png)
+- 每个InnoDB表都有一个聚簇索引 ，聚簇索引使用B+树构建，叶子节点存储的数据是整行记录。因为无法把数据行存放在两个不同的地方，所以一个表只能有一个聚簇索引。一般情况下，聚簇索引等同于主键索引，当一个表没有创建主键索引时，InnoDB会自动创建一个ROWID字段来构建聚簇索引。InnoDB创建索引的具体规则如下：
 
-#### 7.4.2 辅助索引：除聚簇索引之外的所有索引都称为辅助索引，InnoDB的辅助索引只会存储主键的值。因此在使用辅助索引进行查找时，需要先查找到主键值，然后再到主索引中进行查找，这个过程也被称作回表查询。
+  > 1. 在表上定义主键PRIMARY KEY，InnoDB将主键索引用作聚簇索引。
+  > 2. 如果表没有定义主键，InnoDB会选择第一个不为NULL的唯一索引列用作聚簇索引。
+  > 3. 如果以上两个都没有，InnoDB 会使用一个6 字节长整型的隐式字段 ROWID字段构建聚簇索引。该ROWID字段会在插入新行时自动递增。
 
-    - 底层叶子节点的按照（age，id）的顺序排序，先按照age列从小到大排序，age列相同时按照id列从小到大排序。
-    - 使用辅助索引需要检索两遍索引：首先检索辅助索引获得主键，然后使用主键到主索引中检索获得记录。
-    
-    ![MySQL_11](/Users/na/IdeaProjects/Technical summary/Image/MySQL_11.webp)
+![MySQL_10](/Users/na/IdeaProjects/Technical summary/Image/MySQL_10.png)
+
+#### 7.4.2 辅助索引：
+
+- 除聚簇索引之外的所有索引都称为辅助索引，InnoDB的辅助索引只会存储主键的值。因此在使用辅助索引进行查找时，需要先查找到主键值，然后再到主索引中进行查找，这个过程也被称作回表查询。
+
+- 底层叶子节点的按照（age，id）的顺序排序，先按照age列从小到大排序，age列相同时按照id列从小到大排序。
+- 使用辅助索引需要检索两遍索引：首先检索辅助索引获得主键，然后使用主键到主索引中检索获得记录。
+
+![MySQL_11](/Users/na/IdeaProjects/Technical summary/Image/MySQL_11.webp)
 
 #### 7.4.3 组合索引
 
-    - 因为每个select只能选择一个索引，当where条件过多时，考虑建立联合索引，即把多个列作为索引。
-    
-    - **组合索引的最左前缀匹配原则：使用组合索引查询时，mysql会一直向右匹配直至遇到范围查询(>、<、between、like)就停止匹配。**
-    
-    - 对于索引(a,b,c)，引擎会先按照a排序，当a相等时，再按照b排序，当b相等时，再按照c排序
-    
-       对于索引(a,b,c)来说，能命中的where语句有 
-    
-      1.  where a = 1,where a = 1 and b = 1和where a = 1 and b = 1 and c = 1 
-      2.  where a like '1%'，对于这个，可能会引出前缀索引
-    
-    - 在组合索引树中，最底层的叶子节点按照第一列a列从左到右递增排列，但是b列和c列是无序的，b列只有在a列值相等的情况下小范围内递增有序，而c列只能在a，b两列相等的情况下小范围内递增有序。
-    
-    - 就像下面的查询，B+树会先比较a列来确定下一步应该搜索的方向，往左还是往右。如果a列相同再比较b列。但是如果查询条件没有a列，B+树就不知道第一步应该从哪个节点查起。
-    
-    - 可以说创建的idx_abc(a,b,c)索引，相当于创建了(a)、（a,b）（a,b,c）三个索引。
-    
-    ![MySQL_12](/Users/na/IdeaProjects/Technical summary/Image/MySQL_12.webp)
+- 因为每个select只能选择一个索引，当where条件过多时，考虑建立联合索引，即把多个列作为索引。
+
+- **组合索引的最左前缀匹配原则：使用组合索引查询时，mysql会一直向右匹配直至遇到范围查询(>、<、between、like)就停止匹配。**
+
+- 对于索引(a,b,c)，引擎会先按照a排序，当a相等时，再按照b排序，当b相等时，再按照c排序
+
+   对于索引(a,b,c)来说，能命中的where语句有 
+
+  1.  where a = 1,where a = 1 and b = 1和where a = 1 and b = 1 and c = 1 
+  2.  where a like '1%'，对于这个，可能会引出前缀索引
+
+- 在组合索引树中，最底层的叶子节点按照第一列a列从左到右递增排列，但是b列和c列是无序的，b列只有在a列值相等的情况下小范围内递增有序，而c列只能在a，b两列相等的情况下小范围内递增有序。
+
+- 就像下面的查询，B+树会先比较a列来确定下一步应该搜索的方向，往左还是往右。如果a列相同再比较b列。但是如果查询条件没有a列，B+树就不知道第一步应该从哪个节点查起。
+
+- 可以说创建的idx_abc(a,b,c)索引，相当于创建了(a)、（a,b）（a,b,c）三个索引。
+
+![MySQL_12](/Users/na/IdeaProjects/Technical summary/Image/MySQL_12.webp)
+
 #### 7.4.4 前缀索引 
 
 - 因为可能我们索引的字段非常长，这既占内存空间，也不利于维护。所以我们就想，如果只把很长字段的前面的公共部分作为一个索引，就会产生超级加倍的效果。但是，我们需要注意，order by不支持前缀索引 
 
-   流程是： 
+- 流程是： 
 
-   先计算完整列的选择性 
+   1. 先计算完整列的选择性 
 
-  | 1    | select count(distinct col_1)/count(1) from table_1 |
-  | ---- | -------------------------------------------------- |
-  |      |                                                    |
+   ```sql
+select count(distinct col_1)/count(1) from table_1
+  ```
+  
+  2. 再计算不同前缀长度的选择性 
 
-   再计算不同前缀长度的选择性 
+  ```sql
+select count(distinct left(col_1,4))/count(1) from table_1
+  ```
+  
+  3. 找到最优长度之后，创建前缀索引 
 
-  | 1    | select count(distinct left(col_1,4))/count(1) from table_1 |
-  | ---- | ---------------------------------------------------------- |
-  |      |                                                            |
-
-   找到最优长度之后，创建前缀索引 
-
-  | 1    | create index idx_front on table_1 (col_1(4)) |
-  | ---- | -------------------------------------------- |
-  |      |                                              |
+  ```sql
+create index idx_front on table_1 (col_1(4))
+  ```
 
 #### 7.4.5 覆盖索引
 
-    - **如果一个索引包含所有需要查询的字段的值，则称之为覆盖索引。**因为在使用辅助索引的时候，我们只可以拿到主键值，相当于获取数据还需要再根据主键查询主键索引再获取到数据。但是试想下这么一种情况，在上面abc_innodb表中的组合索引查询时，如果我只需要abc字段的，那是不是意味着我们查询到组合索引的叶子节点就可以直接返回了，而不需要回表。这种情况就是**覆盖索引**。
+- **如果一个索引包含所有需要查询的字段的值，则称之为覆盖索引。**因为在使用辅助索引的时候，我们只可以拿到主键值，相当于获取数据还需要再根据主键查询主键索引再获取到数据。但是试想下这么一种情况，在上面abc_innodb表中的组合索引查询时，如果我只需要abc字段的，那是不是意味着我们查询到组合索引的叶子节点就可以直接返回了，而不需要回表。这种情况就是**覆盖索引**。
 
 - 总结
 
@@ -302,9 +302,131 @@
 
 ### 7.7 查询在什么情况下不走索引
 
-- 
+- 在一条单表查询语句真正执行之前，MySQL的查询优化器会找出执行该语句所有可能使用的方案，对比之后找出成本最低的方案。这个成本最低的方案就是所谓的执行计划。 优化过程大致如下： 
 
-## 8. B+树
+  1.  根据搜索条件，找出所有可能使用的索引 
+  2.  计算全表扫描的代价 
+  3.  计算使用不同索引执行查询的代价 
+  4.  对比各种执行方案的代价，找出成本最低的那一个
+
+- 假设索引为(a,b,c) 
+
+  -  ASC和DESC索引混合使用的[排序]()：select * from tab order by a, b desc limit 10; 
+-  违背最左前缀原则：select * from tab where b = '1'; 
+  -  WHERE⼦句中出现非[排序]()使⽤到的索引列：select * from tab d = '1' order by a limit 10; 
+-  [排序]()列包含非同⼀个索引的列：select * from tab order by a, d limit 10; 
+  -  WHERE子句中出现计算：select * from tab where a * 4 = 2; 
+-  WHERE子句中出现null值：select * from tab where a = null; 
+  -  WHERE子句中使用!=或<>操作符：select * from tab where a != 1; 
+
+
+### 7.8 MySQL如何为表字段添加索引
+
+- 在已建表中添加索引
+
+```sql
+CREATE INDEX indexName ON table_name (column_name)
+```
+
+- 修改表结构添加索引
+
+```sql
+添加主键索引:
+ALTER TABLE tbl_name ADD PRIMARY KEY (column_list): 该语句添加一个主键，这意味着索引值必须是唯一的，且不能为NULL。
+
+添加唯一索引:
+ALTER TABLE tbl_name ADD UNIQUE index_name (column_list): 这条语句创建索引的值必须是唯一的（除了NULL外，NULL可能会出现多次）。
+
+添加普通索引:
+ALTER TABLE tbl_name ADD INDEX index_name (column_list): 添加普通索引，索引值可出现多次。
+
+添加全文索引(适用于MyISAM，InnoDB 5.6+):
+ALTER TABLE tbl_name ADD FULLTEXT index_name (column_list):该语句指定了索引为 FULLTEXT ，用于全文索引。
+
+添加联合索引:
+ALTER TABLE `table_name` ADD INDEX index_name ( `column1`, `column2`, `column3` )
+```
+
+- 创建表时直接指定
+
+```sql
+CREATE TABLE mytable(  
+ 
+ID INT NOT NULL,   
+ 
+username VARCHAR(16) NOT NULL,  
+ 
+INDEX [indexName] (username(length))  
+ 
+);  
+```
+
+- 删除索引的语法
+
+```sql
+DROP INDEX [indexName] ON mytable; 
+```
+
+### 7.9 如何选择索引
+
+- 只为⽤于搜索、[排序]()或分组的列创建索引 
+- 考虑列的基数 ，基数越大，创建索引的效果越好 
+- 索引列的类型尽量⼩，这样B+树中每个页存储的数据就会更多 
+- 写多读少尽量不要建立索引 
+- 可以使用倒叙索引或者hash索引 
+- InnoDB的主键尽量用MySQL的自增主键
+
+### 7.10 唯一索引和普通索引选择哪个？
+
+- 唯一索引和普通索引在读取的时候效率基本差不多，普通索引差了一点点。主要是判断和特殊情况下的一次IO 
+- 写入的时候，普通索引可以利用change buffer，适合写多读少，比唯一索引要快 
+- 以业务为前提，如果要求唯一，就要选择唯一索引。如果已经保证列的唯一，我们尽量选择普通索引，然后把change buffer调大
+
+### 7.11 怎么查看MySQL语句有没有用到索引
+
+- 通过explain，如 
+
+  | 1    | EXPLAIN SELECT * FROM employees.titles WHERE emp_no='10001' AND title='Senior Engineer' AND from_date='1986-06-26'; |
+  | ---- | ------------------------------------------------------------ |
+  |      |                                                              |
+
+  | id   | select_type | table  | partitions | type  | possible_keys | key     | key_len | ref               | filtered | rows | Extra |
+  | ---- | ----------- | ------ | ---------- | ----- | ------------- | ------- | ------- | ----------------- | -------- | ---- | ----- |
+  | 1    | SIMPLE      | titles | null       | const | PRIMARY       | PRIMARY | 59      | const,const,const | 10       | 1    |       |
+
+- explain命令输出的结果有10列：`id、select_type、table、type、possible_keys、key、key_len、ref、rows、Extra`
+
+- id：包含一组数字，表示查询中执行SELECT子句或操作表的**顺序**。在id列上也会有几种情况：
+
+  - 如果id相同执行顺序由上至下。
+  - 如果id不相同，id的序号会递增，id值越大优先级越高，越先被执行。(一般有子查询的SQL语句id就会不同)
+
+- select_type：表示select查询的类型，select_type属性下有好几种类型：
+
+  - **SIMPLLE**：简单查询，该查询不包含 UNION 或子查询
+  - **PRIMARY**：如果查询包含UNION 或子查询，则**最外层的查询**被标识为PRIMARY
+  - UNION：表示此查询是 UNION 中的第二个或者随后的查询
+  - DEPENDENT：UNION 满足 UNION 中的第二个或者随后的查询，其次取决于外面的查询
+  - UNION RESULT：UNION 的结果
+  - **SUBQUERY**：子查询中的第一个select语句(该子查询不在from子句中)
+  - DEPENDENT SUBQUERY：子查询中的 第一个 select，同时取决于外面的查询
+  - **DERIVED**：包含在from子句中子查询(也称为派生表)
+  - UNCACHEABLE SUBQUERY：满足是子查询中的第一个 select 语句，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
+  - UNCACHEABLE UNION：满足此查询是 UNION 中的第二个或者随后的查询，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
+
+- table：每个查询对应的表名
+
+- type：执行查询的访问方法，如const(主键索引或者唯一二级索引进行等值匹配的情况下),ref(普通的⼆级索引列与常量进⾏等值匹配),index(扫描全表索引的覆盖索引)
+
+- possible_key：查询中可能用到的索引*(可以把用不到的删掉，降低优化器的优化时间)*
+
+- key：查询中用到的索引
+
+- filtered：查询器预测满足下一次查询条件的百分比
+
+- extra：表示额外信息，如Using where,Start temporary,End temporary,Using temporary等
+
+## 8. B+树索引
 
 - 二叉查找树(BST)：不平衡
   - 二叉查找树(BST，Binary Search Tree)，也叫二叉排序树，在二叉树的基础上需要满足：任意节点的左子树上所有节点值不大于根节点的值，任意节点的右子树上所有节点值不小于根节点的值。
@@ -443,128 +565,6 @@ select * from employees order by hire_date desc limit 2,1;
 
 - MySQL表具有65,535字节的最大行大小限制，即使存储引擎能够支持更大的行也是如此。
 - 对于默认的16KB InnoDB页大小，最大行大小略小于8KB 。对于64KB页，最大行大小略小于16KB。如果包含可变长度列(例如：text)的InnoDB 行超过最大行大小，InnoDB选择可变长度列进行页外存储。
-
-## 13. 添加索引
-
-- **1. 新建表中添加索引**
-  ① 普通索引
-
-  | 1234567 | create table t_dept(    no int not null primary key,    name varchar(20) null,    sex varchar(2) null,    info varchar(20) null,    index index_no(no)  ) |
-  | ------- | ------------------------------------------------------------ |
-  |         |                                                              |
-
-  
-  ② 唯一索引
-
-  | 1234567 | create table t_dept(       no int not null primary key,       name varchar(20) null,       sex varchar(2) null,       info varchar(20) null,       unique index index_no(no)     ） |
-  | ------- | ------------------------------------------------------------ |
-  |         |                                                              |
-
-  
-  ③ 全文索引
-
-  | 123456 | create table t_dept(       no int not null primary key,       name varchar(20) null,       sex varchar(2) null,       info varchar(20) null,       fulltext index index_no(no) |
-  | ------ | ------------------------------------------------------------ |
-  |        |                                                              |
-
-  
-  ④ 多列索引
-
-  | 1234567 | create table t_dept(       no int not null primary key,       name varchar(20) null,       sex varchar(2) null,       info varchar(20) null,       key index_no_name(no,name)     ) |
-  | ------- | ------------------------------------------------------------ |
-  |         |                                                              |
-
-  
-
-- **2. 在已建表中添加索引**
-    ① 普通索引
-
-  | 12   | create index index_name on t_dept(name); |
-  | ---- | ---------------------------------------- |
-  |      |                                          |
-
-  
-  ② 唯一索引
-
-  | 12   | create unique index index_name on t_dept(name); |
-  | ---- | ----------------------------------------------- |
-  |      |                                                 |
-
-  
-  ③ 全文索引
-
-  | 12   | create fulltext index index_name on t_dept(name); |
-  | ---- | ------------------------------------------------- |
-  |      |                                                   |
-
-  
-  ④ 多列索引
-
-  | 12   | create index index_name_no on t_dept(name,no) |
-  | ---- | --------------------------------------------- |
-  |      |                                               |
-
-- **3. 以修改表的方式添加索引**
-  ① 普通索引
-
-  | 12   | alter table t_dept          add index index_name(name); |
-  | ---- | ------------------------------------------------------- |
-  |      |                                                         |
-
-  
-  ② 唯一索引
-
-  | 12   | alter table t_dept            add unique index index_name(name); |
-  | ---- | ------------------------------------------------------------ |
-  |      |                                                              |
-
-  
-  ③ 全文索引
-
-  | 12   | alter table t_dept           add fulltext index_name(name); |
-  | ---- | ----------------------------------------------------------- |
-  |      |                                                             |
-
-
- ④ 多列索引
-
-| 12   | alter table t_dept              add index index_name_no(name,no); |
-| ---- | ------------------------------------------------------------ |
-|      |                                                              |
-
-## 14. 怎么查看MySQL语句有没有用到索引
-
-- 通过explain，如 
-
-  | 1    | EXPLAIN SELECT * FROM employees.titles WHERE emp_no='10001' AND title='Senior Engineer' AND from_date='1986-06-26'; |
-  | ---- | ------------------------------------------------------------ |
-  |      |                                                              |
-
-  | id   | select_type | table  | partitions | type  | possible_keys | key     | key_len | ref               | filtered | rows | Extra |
-  | ---- | ----------- | ------ | ---------- | ----- | ------------- | ------- | ------- | ----------------- | -------- | ---- | ----- |
-  | 1    | SIMPLE      | titles | null       | const | PRIMARY       | PRIMARY | 59      | const,const,const | 10       | 1    |       |
-
-- explain命令输出的结果有10列：`id、select_type、table、type、possible_keys、key、key_len、ref、rows、Extra`
-- id：包含一组数字，表示查询中执行SELECT子句或操作表的**顺序**。在id列上也会有几种情况：
-  - 如果id相同执行顺序由上至下。
-  - 如果id不相同，id的序号会递增，id值越大优先级越高，越先被执行。(一般有子查询的SQL语句id就会不同)
-- select_type：表示select查询的类型，select_type属性下有好几种类型：
-  - **SIMPLLE**：简单查询，该查询不包含 UNION 或子查询
-  - **PRIMARY**：如果查询包含UNION 或子查询，则**最外层的查询**被标识为PRIMARY
-  - UNION：表示此查询是 UNION 中的第二个或者随后的查询
-  - DEPENDENT：UNION 满足 UNION 中的第二个或者随后的查询，其次取决于外面的查询
-  - UNION RESULT：UNION 的结果
-  - **SUBQUERY**：子查询中的第一个select语句(该子查询不在from子句中)
-  - DEPENDENT SUBQUERY：子查询中的 第一个 select，同时取决于外面的查询
-  - **DERIVED**：包含在from子句中子查询(也称为派生表)
-  - UNCACHEABLE SUBQUERY：满足是子查询中的第一个 select 语句，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
-  - UNCACHEABLE UNION：满足此查询是 UNION 中的第二个或者随后的查询，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
-- table：每个查询对应的表名
-- type：执行查询的访问方法，如const(主键索引或者唯一二级索引进行等值匹配的情况下),ref(普通的⼆级索引列与常量进⾏等值匹配),index(扫描全表索引的覆盖索引)
-- possible_key：查询中可能用到的索引*(可以把用不到的删掉，降低优化器的优化时间)*
-- key：查询中用到的索引
-- filtered：查询器预测满足下一次查询条件的百分比
-- extra：表示额外信息，如Using where,Start temporary,End temporary,Using temporary等
 
 ## 15. MySQL底层
 
