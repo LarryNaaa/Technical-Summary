@@ -119,10 +119,53 @@
 - 在数据库的增、删、改、查中，只有增、删、改才会加上排它锁，而只是查询并不会加锁，只能通过在select语句后显式加lock in share mode或者for update来加共享锁或者排它锁。
 - 锁类型: 
   - 共享锁/读锁（Shared Locks）：针对同一份数据，多个读操作可以同时进行，即读加锁，不能写并且可并行读
+  
   - 排他锁/写锁（Exclusive Locks）：针对写操作，假如当前写操作没有完成，那么它会阻断其它的写锁和读锁，即写加锁，其它读写都阻塞 。
+  
   - 间隙锁：`Gap Locks`和`Next-Key Locks`。Gap Locks锁定索引之间的间隙，但是不包含索引本身。Next-Key Locks是Gap Locks+Record Locks形成闭区间锁，不仅锁定一个记录上的索引，也锁定索引之间的间隙。
+  
   - 行锁（Record Locks）：锁定当前数据行，锁的粒度小，加锁慢，发生锁冲突的概率小，并发度高，行锁也是MyISAM和InnoDB的区别之一，InnoDB支持行锁并且支持事务 。
+  
   - 表锁：表锁则锁的粒度大，加锁快，开销小，但是锁冲突的概率大，并发度低。
+  
+  - 悲观锁：
+    - 先获取锁，再进行业务操作。
+    - 通常来讲在数据库上的悲观锁需要数据库本身提供支持，即通过常用的select … for update操作来实现悲观锁。当数据库执行select for update时会获取被select中的数据行的行锁，因此其他并发执行的select for update如果试图选中同一行则会发生排斥（需要等待行锁被释放），因此达到锁的效果。select for update获取的行锁会在当前事务结束时自动释放，因此必须在事务中使用。
+    - MySQL还有个问题是select for update语句执行中所有扫描过的行都会被锁上，这一点很容易造成问题。因此如果在MySQL中用悲观锁务必要确定走了索引，而不是全表扫描。
+    
+  - 乐观锁：
+    
+    - 也叫乐观并发控制，它假设多用户并发的事务在处理时不会彼此互相影响，各事务能够在不产生锁的情况下处理各自影响的那部分数据。在提交数据更新之前，每个事务会先检查在该事务读取数据后，有没有其他事务又修改了该数据。如果其他事务有更新的话，那么当前正在提交的事务会进行回滚。
+    
+    - 乐观锁在数据库上的实现完全是逻辑的，不需要数据库提供特殊的支持。
+    
+    - 一般的做法是**在需要锁的数据上增加一个版本号，或者时间戳**，
+    
+      **实现方式举例如下：**
+    
+      **乐观锁（给表加一个版本号字段）** 这个并不是乐观锁的定义，给表加版本号，是**数据库实现乐观锁的一种方式**。
+    
+      1. SELECT data AS old_data, version AS old_version FROM …;
+      2. 根据获取的数据进行业务操作，得到new_data和new_version
+      3. UPDATE SET data = new_data, version = new_version WHERE version = old_version
+    
+      ```sql
+      if (updated row > 0) {
+      
+      // 乐观锁获取成功，操作完成
+      
+      } else {
+      
+      // 乐观锁获取失败，回滚并重试
+      
+      }
+      ```
+    
+  - 悲观锁和乐观锁使用区别：
+  
+    - **响应速度：** 如果需要非常高的响应速度，建议采用乐观锁方案，成功就执行，不成功就失败，不需要等待其他并发去释放锁。'
+    - **冲突频率：** 如果冲突频率非常高，建议采用悲观锁，保证成功率，如果冲突频率大，乐观锁会需要多次重试才能成功，代价比较大。
+    - **重试代价：** 如果重试代价大，建议采用悲观锁。
 
 ## 6. 三大范式
 
@@ -376,6 +419,8 @@ DROP INDEX [indexName] ON mytable;
 - 可以使用倒叙索引或者hash索引 
 - InnoDB的主键尽量用MySQL的自增主键
 
+![MySQL_16](/Users/na/IdeaProjects/Technical summary/Image/MySQL_16.jpg)
+
 ### 7.10 唯一索引和普通索引选择哪个？
 
 - 唯一索引和普通索引在读取的时候效率基本差不多，普通索引差了一点点。主要是判断和特殊情况下的一次IO 
@@ -401,7 +446,7 @@ DROP INDEX [indexName] ON mytable;
   - 如果id相同执行顺序由上至下。
   - 如果id不相同，id的序号会递增，id值越大优先级越高，越先被执行。(一般有子查询的SQL语句id就会不同)
 
-- select_type：表示select查询的类型，select_type属性下有好几种类型：
+- **select_type**：表示select查询的类型，select_type属性下有好几种类型：
 
   - **SIMPLLE**：简单查询，该查询不包含 UNION 或子查询
   - **PRIMARY**：如果查询包含UNION 或子查询，则**最外层的查询**被标识为PRIMARY
@@ -414,17 +459,51 @@ DROP INDEX [indexName] ON mytable;
   - UNCACHEABLE SUBQUERY：满足是子查询中的第一个 select 语句，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
   - UNCACHEABLE UNION：满足此查询是 UNION 中的第二个或者随后的查询，同时意味着 select 中的某些特性阻止结果被缓存于一个 Item_cache 中
 
-- table：每个查询对应的表名
+- table：table表示查询涉及的表或衍生的表
 
-- type：执行查询的访问方法，如const(主键索引或者唯一二级索引进行等值匹配的情况下),ref(普通的⼆级索引列与常量进⾏等值匹配),index(扫描全表索引的覆盖索引)
+- **type**：通过 type 字段，我们判断此次查询是 全表扫描 还是 索引扫描等。
 
-- possible_key：查询中可能用到的索引*(可以把用不到的删掉，降低优化器的优化时间)*
+  - `system`: 表中只有一条数据， 这个类型是特殊的 const 类型。 const: 针对主键或唯一索引的等值查询扫描，最多只返回一行数据。 const 查询速度非常快， 因为它仅仅读取一次即可。例如下面的这个查询，它使用了主键索引，因此 type 就是 const 类型的：explain select * from user_info where id = 2；
+  - `const`: 针对主键或唯一索引的等值查询扫描, 最多只返回一行数据. const 查询速度非常快, 因为它仅仅读取一次即可.
+  - `eqref`: 此类型通常出现在多表的 join 查询，表示对于前表的每一个结果，都只能匹配到后表的一行结果。并且查询的比较操作通常是 =，查询效率较高。例如：explain select * from userinfo, orderinfo where userinfo.id = orderinfo.userid;
+  - `ref`: 此类型通常出现在多表的 join 查询，针对于非唯一或非主键索引，或者是使用了 最左前缀 规则索引的查询。例如下面这个例子中， 就使用到了 ref 类型的查询：explain select * from userinfo, orderinfo where userinfo.id = orderinfo.userid AND orderinfo.user_id = 5
+  - `range`: 表示使用索引范围查询，通过索引字段范围获取表中部分数据记录。这个类型通常出现在 =, <>, >, >=, <, <=, IS NULL, <=>, BETWEEN, IN() 操作中。例如下面的例子就是一个范围查询：explain select * from user_info where id between 2 and 8；
+  - `index`: 表示全索引扫描(full index scan)，和 ALL 类型类似，只不过 ALL 类型是全表扫描，而 index 类型则仅仅扫描所有的索引， 而不扫描数据。index 类型通常出现在：所要查询的数据直接在索引树中就可以获取到, 而不需要扫描数据。当是这种情况时，Extra 字段 会显示 Using index。
+  - `ALL`: 表示全表扫描，这个类型的查询是性能最差的查询之一。通常来说， 我们的查询不应该出现 ALL 类型的查询，因为这样的查询在数据量大的情况下，对数据库的性能是巨大的灾难。 如一个查询是 ALL 类型查询， 那么一般来说可以对相应的字段添加索引来避免。
+  - 通常来说, 不同的 type 类型的性能关系如下：`ALL < index < range ~ indexmerge < ref < eqref < const < system` ALL 类型因为是全表扫描， 因此在相同的查询条件下，它是速度最慢的。而 index 类型的查询虽然不是全表扫描，但是它扫描了所有的索引，因此比 ALL 类型的稍快.后面的几种类型都是利用了索引来查询数据，因此可以过滤部分或大部分数据，因此查询效率就比较高了。
 
-- key：查询中用到的索引
+- **possible_key**：它表示 mysql 在查询时，可能使用到的索引。 注意，即使有些索引在 possible_keys 中出现，但是并不表示此索引会真正地被 mysql 使用到。 mysql 在查询时具体使用了哪些索引，由 key 字段决定。
 
-- filtered：查询器预测满足下一次查询条件的百分比
+- **key**：在当前查询时所真正使用到的索引
 
-- extra：表示额外信息，如Using where,Start temporary,End temporary,Using temporary等
+- **key_len**：表示查询优化器使用了索引的字节数，这个字段可以评估组合索引是否完全被使用。
+
+  - key_len 的计算规则如下:
+    - 字符串
+      - char(n): n 字节长度
+      - varchar(n): 如果是 utf8 编码, 则是 3 *n + 2字节; 如果是 utf8mb4 编码, 则是 4* n + 2 字节.
+    - 数值类型:
+      - TINYINT: 1字节
+      - SMALLINT: 2字节
+      - MEDIUMINT: 3字节
+      - INT: 4字节
+      - BIGINT: 8字节
+    - 时间类型
+      - DATE: 3字节
+      - TIMESTAMP: 4字节
+      - DATETIME: 8字节
+    - 字段属性: NULL 属性 占用一个字节. 如果一个字段是 NOT NULL 的, 则没有此属性.
+
+- ref：这个表示显示索引的哪一列被使用了，如果可能的话,是一个常量。前文的type属性里也有ref，注意区别。
+
+- **rows**：rows 也是一个重要的字段，mysql 查询优化器根据统计信息，估算 sql 要查找到结果集需要扫描读取的数据行数，这个值非常直观的显示 sql 效率好坏， 原则上 rows 越少越好。
+
+- **extra**：explain 中的很多额外的信息会在 extra 字段显示, 常见的有以下几种内容:
+
+  - `using filesort` ：表示 mysql 需额外的排序操作，不能通过索引顺序达到排序效果。一般有 using filesort都建议优化去掉，因为这样的查询 cpu 资源消耗大。
+  - `using index`：覆盖索引扫描，表示查询在索引树中就可查找所需数据，不用扫描表数据文件，往往说明性能不错。
+  - `using temporary`：查询有使用临时表, 一般出现于排序， 分组和多表 join 的情况， 查询效率不高，建议优化。
+  - `using where` ：表名使用了where过滤。
 
 ## 8. B+树索引
 
@@ -495,11 +574,12 @@ DROP INDEX [indexName] ON mytable;
   - 在 READ COMMITTED 中每次查询都会生成一个实时的 ReadView，做到保证每次提交后的数据是处于当前的可见状态。
   - 而 REPEATABLE READ 中，在当前事务第一次查询时生成当前的 ReadView，并且当前的 ReadView 会一直沿用到当前事务提交，以此来保证可重复读（REPEATABLE READ）。
 - undo log
+  - Undo Log是为了实现事务的原子性，在MySQL数据库InnoDB存储引擎中，还用了Undo Log来实现多版本并发控制(简称：MVCC)。
   - `undo log`主要有两个作用：回滚和多版本控制(MVCC)
   - `undo log`主要存储的也是逻辑日志，比如我们要`insert`一条数据了，那`undo log`会记录的一条对应的`delete`日志。我们要`update`一条记录时，它会记录一条对应**相反**的update记录。
   - 因为`undo log`存储着修改之前的数据，相当于一个**前版本**，MVCC实现的是读写不阻塞，读的时候只要返回前一个版本的数据就行了。
 
-## 11. redo log和binlog
+## 11. **数据库崩溃时事务的恢复机制（REDO日志和UNDO日志）**
 
 ### 11.1 binlog
 
@@ -658,4 +738,26 @@ select * from employees order by hire_date desc limit 2,1;
 - 表关联可能有多条记录，子查询只有一条记录，如果需要唯一的列，最好走子查询
 - 对于数据量多的肯定是用连接查询快些，原因：因为子查询会多次遍历所有的数据（视你的子查询的层次而定），而连接查询只会遍历一次。
 - 执行子查询时，MYSQL需要创建临时表，查询完毕后再删除这些临时表，所以，子查询的速度会受到一定的影响，这里多了一个创建和销毁临时表的过程。
+
+## 17. **count(\*)、count(1)、count(column)的区别**
+
+- count(*)对行的数目进行计算,包含NULL
+
+- count(column)对特定的列的值具有的行数进行计算,不包含NULL值。
+
+- count()还有一种使用方式,count(1)这个用法和count(*)的结果是一样的。
+
+- 1.任何情况下SELECT COUNT(*) FROM tablename是最优选择;
+
+  2.尽量减少SELECT COUNT(*) FROM tablename WHERE COL = ‘value’ 这种查询;
+
+  3.杜绝SELECT COUNT(COL) FROM tablename WHERE COL2 = ‘value’ 的出现。
+
+  - 如果表没有主键,那么count(1)比count(*)快。
+  - 如果有主键,那么count(主键,联合主键)比count(*)快。
+  - 如果表只有一个字段,count(*)最快。
+
+  count(1)跟count(主键)一样,只扫描主键。count(*)跟count(非主键)一样,扫描整个表。明显前者更快一些。
+
+## 18. **主从复制**
 
