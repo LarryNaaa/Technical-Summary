@@ -140,15 +140,41 @@
   - 在进行 MajorGC 前一般都先进行了一次 MinorGC
 - Full GC：回收整个堆，包括年轻代、老年代，如果有永久代的话还包括永久代。
   - 在要进行 young gc 的时候，根据之前统计数据发现年轻代平均晋升大小比现在老年代剩余空间要大，那就会触发 full gc。
-  - 有永久代的话如果永久代满了也会触发 full gc。
+  - 永久代或元空间满了也会触发 full gc。
   - 老年代空间不足，大对象直接在老年代申请分配，如果此时老年代空间不足则会触发 full gc。
-  - 担保失败即 promotion failure，新生代的 to 区放不下从 eden 和 from 拷贝过来对象，或者新生代对象 gc 年龄到达阈值需要晋升这两种情况，老年代如果放不下的话都会触发 full gc。
+  - 空间分配担保：在YGC之前，会先检查老年代最大可用的连续空间是否大于新生代所有对象的总空间。如果小于，说明YGC是不安全的，则会查看参数 HandlePromotionFailure 是否被设置成了允许担保失败，如果不允许则直接触发Full GC；如果允许，那么会进一步检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果小于也会触发 Full GC。
   - 执行 System.gc()、jmap -dump 等命令会触发 full gc。
 - mixed gc：这个是 G1 收集器特有的，指的是收集整个年轻代和部分老年代的 GC。
 - TLAB（Thread Local Allocation Buffer）：JVM为每个线程分配了一个私有缓存区域，它包含在Eden空间内，使用TLAB可以避免一系列的非线程安全问题和对象分配时的竞争。这个区域只允许这一个线程申请分配对象，允许所有线程访问这块内存区域。
 - 堆是分配对象的唯一选择么（不是）
   - 当一个对象在方法中被定义后，对象只在方法内部使用，则认为没有发生逃逸。
   - 当一个对象在方法中被定义后，它被外部方法所引用，则认为发生逃逸。例如作为调用参数传递到其他地方中。
+
+### 5.1 新生代
+
+- **为什么会有新生代？**
+
+  如果不分代，所有对象全部在一个区域，每次GC都需要对全堆进行扫描，存在效率问题。分代后，可分别控制回收频率，并采用不同的回收算法，确保GC性能全局最优。
+
+- **为什么新生代会采用复制算法？**
+
+  新生代的对象朝生夕死，大约90%的新建对象可以被很快回收，复制算法成本低，同时还能保证空间没有碎片。虽然标记整理算法也可以保证没有碎片，但是由于新生代要清理的对象数量很大，将存活的对象整理到待清理对象之前，需要大量的移动操作，时间复杂度比复制算法高。
+
+- **为什么新生代需要两个Survivor区？**
+
+  为了节省空间考虑，如果采用传统的复制算法，只有一个Survivor区，则Survivor区大小需要等于Eden区大小，此时空间消耗是8 * 2，而两块Survivor可以保持新对象始终在Eden区创建，存活对象在Survivor之间转移即可，空间消耗是8+1+1，明显后者的空间利用率更高。
+
+- **新生代的实际可用空间是多少？**
+
+  YGC后，总有一块Survivor区是空闲的，因此新生代的可用内存空间是90%。在YGC的log中或者通过 jmap -heap pid 命令查看新生代的空间时，如果发现capacity只有90%，不要觉得奇怪。
+
+- **Eden区是如何加速内存分配的？**
+
+  HotSpot虚拟机使用了两种技术来加快内存分配。分别是bump-the-pointer和TLAB（Thread Local Allocation Buffers）。
+
+  由于Eden区是连续的，因此bump-the-pointer在对象创建时，只需要检查最后一个对象后面是否有足够的内存即可，从而加快内存分配速度。
+
+  TLAB技术是对于多线程而言的，在Eden中为每个线程分配一块区域，减少内存分配时的锁冲突，加快内存分配速度，提升吞吐量。
 
 ## 6. 方法区(Method Area)：线程共享
 
@@ -322,15 +348,15 @@
     jinfo [option] pid　　
     ```
 
-    3、jmap(Memory Map for java)：java内存映像工具
-
-    用于生成堆转储快照，即dump文件
+    3、**jmap(Memory Map for java)：**java内存映像工具，查看堆内存中的存活对象，并按空间排序。用于生成堆内存快照，即dump文件
 
     ```
-    jmap -dump:format=b,file=eclipse.bin ``3500` `#``3500``是通过jps命令拿到的LVMID　　
+    jmap -dump:live,format=b,file=xxxx.hprof pid // 堆内存快照
+    jmap -histo:live pid // 直接查看堆内存存活的对象。
+    jmap -heap pid // JVM内存的「实际配置」
     ```
 
-    4、jstat（JVM Statistics Monitoring Tool)：虚拟机统计信息监视工具
+    4、jstat（JVM Statistics Monitoring Tool)：虚拟机统计信息监视工具，查看堆内存各区域的使用率以及GC情况
 
     ```
     jstat -gc ``2764` `250` `20` `# -gc监视java堆状况 每``250``毫秒查询一次进程``2764``垃圾收集状态，共查询``20``次``jstat -gcutil ``2754` `#监视java堆内存使用状况　
@@ -371,7 +397,7 @@
 
     JConsole：Java监视与管理控制台
 
-    VisualVM：多合一故障处理工具
+    JVisualVM：通过JVisualVM工具导入dump出来的堆内存文件，同样可以看到各个对象所占空间
 
   ![jvm性能分析工具](/Users/na/IdeaProjects/Technical summary/Image/jvm性能分析工具.png)
 
