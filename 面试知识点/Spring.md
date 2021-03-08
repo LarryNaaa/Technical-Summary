@@ -6,9 +6,26 @@
 
 -  **IoC将原本在程序中手动创建对象的控制权，交由Spring框架来管理。** **IoC 容器是 Spring 用来实现 IoC 的载体， IoC 容器实际上就是个Map（bean name，bean object）,Map 中存放的是各种对象。**
 -  **IOC 容器就像是一个工厂一样，当我们需要创建一个对象的时候，只需要配置好配置文件/注解即可，完全不用考虑对象是如何被创建出来的。**
--  **Spring IoC的初始化过程：**
+- **Spring IoC的初始化过程：**
+
+  - 1. **Resource**定位并加载配置文件
+
+    2. 解析配置文件中的bean节点，一个bean节点对应一个BeanDefinition对象（这个对象会保存我们在Bean节点内配置的所有内容，比如id，全限定类名，依赖值等等）
+
+    3. BeanDefinition集合生成（BeanDefinition对象内包含生成这个对象所需要的所有参数）所有非懒加载的单例对象，其余的会在使用的时候再实例化对应的对象，注册到**BeanFactory**的beanDefinitionMap
 
 ![Spring_1](/Users/na/IdeaProjects/Technical summary/Image/Spring_1.png)
+
+  - IOC其实就是工厂模式+Java的反射机制
+  - spring bean 注入过程：
+    - 1） 在某一时刻Spring调用了Bean工厂的getBean(beanName)方法。beanName可能是simpleController,或者simpleService，simpleDao，顺序没关系（因为后面会有依赖关系的处理）。我们假设simpleController吧
+    - 2）getBean方法首先会调用Bean工厂中定义的getSingleton(beanName)方法，来判断是否存在该名字的bean单例，如果存在则返回，方法调用结束（spring默认是单例，这样可以提高效率）
+    - 3) 否则，Spring会检查是否存在父工厂，如果有则返回，方法调用结束
+    - 4) 否则，Spring会检查bean定义（BeanDefinition实例，用来描述Bean结果，component-scan扫描后，就是将beanDefinition实例放入Bean工厂，此时还没有被实例化）是否有依赖关系，如果有，执行1）步，获取依赖的bean实例
+    - 5） 否则，Spring会尝试创建这个bean实例，创建实例前，Spring会检查调用的构造器，并实例化该Bean，（通过Constructor.newInstance(args)进行实例化）
+    - 6) 实例化完成后，Spring会调用Bean工厂的populateBean方法来填充bean实例的属性，也就是自动装配。populateBean方法便是调用了BeanPostProcessor实例来完成属性元素的自动装配工作
+    - 7）在元素装配过程中，Spring会检查被装配的属性是否存在自动装配的其他属性，然后递归调用getBean方法，知道所有@Autowired的元素都被装配完成。如在装配simpleController中的simpleService属性时，发现SimpleServiceImpl实例中存在@Autowired属性simpleDao,然后调用getBean(simpleDao)方法，同样会执行1）----7）整个过程。所有可以看成一个递归过程。
+    - 8）装配完成后，Bean工厂会将所有的bean实例都添加到工厂中来。
 
 ## 2. Spring AOP
 
@@ -259,7 +276,7 @@ Spring通过三级缓存解决了循环依赖，其中一级缓存为单例池�
 
 - 然后，处理某个请求时某个异常发生了。`DispatcherServlet`会遍历`handlerExceptionResolvers`中每个`HandlerExceptionResolver`对象试图对该异常进行处理。
 
-- 当这类异常交给ExceptionHandlerExceptionResolver解析时，它会首先查看发生异常的控制器方法所在的控制器类中是否有合适的@ExceptionHanlder方法，然后看所有的@ControllerAdvice类中是否有合适的@ExceptionHanlder方法,如果有,ExceptionHandlerExceptionResolver就会使用相应的方法处理该异常。
+- 当这类异常交给ExceptionHandlerExceptionResolver解析时，它会首先查看发生异常的方法所在的controller类中是否有合适的@ExceptionHanlder方法，然后看所有的@ControllerAdvice类中是否有合适的@ExceptionHanlder方法,如果有,ExceptionHandlerExceptionResolver就会使用相应的方法处理该异常。
 
   
 

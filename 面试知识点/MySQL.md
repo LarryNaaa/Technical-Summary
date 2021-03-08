@@ -497,9 +497,12 @@ DROP INDEX [indexName] ON mytable;
 - binlog可以作为恢复数据使用，主从复制搭建，redo log作为异常宕机或者介质故障后的数据恢复使用
 - redo log是循环写的，空间固定会用完；binlog是可以追加写入的。“追加写”是指binlog文件写到一定大小后会切换到下一个，并不会覆盖以前的日志
 - MySQL通过**两阶段提交**来保证`redo log`和`binlog`的数据是一致的。过程：
-  - 阶段1：InnoDB`redo log` 写盘，InnoDB 事务进入 `prepare` 状态
-  - 阶段2：`binlog` 写盘，InooDB 事务进入 `commit` 状态
-  - 每个事务`binlog`的末尾，会记录一个 `XID event`，标志着事务是否提交成功，也就是说，恢复过程中，`binlog` 最后一个 XID event 之后的内容都应该被 purge。
+  - 引擎将新记录更新到内存，并将更新记录写入redo log，redo log处于prepare状态，随时可以提交事务；
+  - 执行器生成bin log写入磁盘；
+  - 执行器调用引擎提交事务接口，把redo log成成commit状态，更新完成。
+  - 注意：Mysql的redolog模块写入拆成2步走，prepare和commit，称为两阶段提交。 整个过程为1、redolog的prepare状态 2、binlog的写入 3、redolog的commit状态，保证Mysql的可靠性。
+    - 对于活跃的事务，直接回滚
+    - 对于redo中是Prepare状态的事务，如果binlog中已记录完成则提交，否则回滚事务
 
 ## 12. sql语法
 

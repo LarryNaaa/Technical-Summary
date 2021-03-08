@@ -223,7 +223,7 @@ final V put(K key, int hash, V value, boolean onlyIfAbsent) {
                         e = e.next;
                     }
                     else {
-                 // 不为空则需要新建一个 HashEntry 并加入到 Segment 中，同时会先判断是否需要扩容。
+                 // 为空则需要新建一个 HashEntry 并加入到 Segment 中，同时会先判断是否需要扩容。
                         if (node != null)
                             node.setNext(first);
                         else
