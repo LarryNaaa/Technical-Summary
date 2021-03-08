@@ -5,19 +5,41 @@
 ## 1. IoC - Inversion of Control
 
 -  **IoC将原本在程序中手动创建对象的控制权，交由Spring框架来管理。** **IoC 容器是 Spring 用来实现 IoC 的载体， IoC 容器实际上就是个Map（bean name，bean object）,Map 中存放的是各种对象。**
-- **IOC 容器就像是一个工厂一样，当我们需要创建一个对象的时候，只需要配置好配置文件/注解即可，完全不用考虑对象是如何被创建出来的。**
-- **Spring IoC的初始化过程：**
+-  **IOC 容器就像是一个工厂一样，当我们需要创建一个对象的时候，只需要配置好配置文件/注解即可，完全不用考虑对象是如何被创建出来的。**
+-  **Spring IoC的初始化过程：**
 
 ![Spring_1](/Users/na/IdeaProjects/Technical summary/Image/Spring_1.png)
 
-## 2. AOP
+## 2. Spring AOP
 
-- 将那些与业务无关，**却为业务模块所共同调用的逻辑或责任（例如事务处理、日志管理、权限控制等）封装起来**，便于**减少系统的重复代码**，**降低模块间的耦合度**，并**有利于未来的可拓展性和可维护性**。
-- **Spring AOP就是基于动态代理的**，如果要代理的对象，实现了某个接口，那么Spring AOP会使用**JDK Proxy**，去创建代理对象，而对于没有实现接口的对象，就无法使用 JDK Proxy 去进行代理了，这时候Spring AOP会使用**Cglib** ，这时候Spring AOP会使用 **Cglib** 生成一个被代理对象的子类来作为代理，底层是通过**继承目标对象产生代理子对象**。（代理子对象中继承了目标对象的方法，并可以对该方法进行增强）
+- 将业务模块所共同调用的非业务逻辑（例如事务处理、日志管理、权限控制等）封装起来**，便于**减少重复代码**，**降低模块间的耦合度**，并**有利于未来的可拓展性和可维护性。
+- **Spring AOP就是基于动态代理的**，如果要代理的对象，实现了某个接口，那么Spring AOP会使用**JDK Proxy**，去创建代理对象，而对于没有实现接口的对象，Spring AOP会使用**Cglib** ，这时候Spring AOP会使用 **Cglib** 通过**继承目标对象产生代理子对象**，代理子对象中继承了目标对象的方法，并可以对该方法进行增强。
+- **Join Point(连接点)**：Java执行流中的每个方法调用可以看成是一个连接点。
+- **切入点(Point Cut)**：**从所有的连接点中挑选需要被切入的切入点。**
+
+![Spring_2](/Users/na/IdeaProjects/Technical summary/Image/Spring_2.jpg)
+
+- Java程序执行流加入了代理模式，使得所有的方法调用都经过了代理对象。Spring AOP负责控制着整个容器内部的代理对象。
+
+- 代理对象给Spring AOP提供类名和方法签名，Spring AOP 根据代理对象提供的类型名和方法签名，搜索对应的切入点，返回处理建议(Advice)，代理对象根据处理建议执行操作。
+
+- AOP中的五大通知：
+
+  前置通知（Before advice）：在目标方法执行之前执行
+
+  后置通知（after）：在目标方执行完成后执行，如果目标方法异常，则后置通知不再执行
+
+  异常通知（After throwing advice）：目标方法抛出异常的时候执行  
+
+  最终通知（After returning advice）：在目标方法返回结果后运行，不管目标方法是否有异常都会执行，相当于try。。catch。。finally中的finally
+
+  环绕通知（round）：可以控制目标方法是否执行
+
+![Spring_3](/Users/na/IdeaProjects/Technical summary/Image/Spring_3.jpg)
 
 ## 3. Spring AOP 和 AspectJ AOP 有什么区别？
 
-- **Spring AOP 属于运行时增强，而 AspectJ 是编译时增强。** Spring AOP 基于代理(Proxying)，而 AspectJ 基于字节码操作(Bytecode Manipulation)。
+- **Spring AOP 属于动态代理，运行时增强，而 AspectJ 是静态代理，编译时增强。** Spring AOP 基于代理(Proxying)，而 AspectJ 基于字节码操作(Bytecode Manipulation)。
 
 ## 4. Spring 中的 bean 的作用域有哪些?
 
@@ -200,3 +222,45 @@ Spring通过三级缓存解决了循环依赖，其中一级缓存为单例池�
 ### 16.4 为什么要使用三级缓存呢？二级缓存能解决循环依赖吗？
 
 如果要使用二级缓存解决循环依赖，意味着所有Bean在实例化后就要完成AOP代理，这样违背了Spring设计的原则，Spring在设计之初就是通过`AnnotationAwareAspectJAutoProxyCreator`这个后置处理器来在Bean生命周期的最后一步来完成AOP代理，而不是在实例化后就立马进行AOP代理。
+
+## 17. @ControllerAdvice全局异常处理
+
+- 在Service层使用try-catch对异常进行捕获并处理的代码，其存在如下缺陷：
+
+  1. 由于Service层是与Dao层进行交互的，我们通常都会把事务配置在Service层，当操作数据库失败时，会抛出异常并由Spring事务管理器帮我们进行回滚，而当我们使用try-catch对异常进行捕获处理时，这时Spring事务管理器并不会帮我们进行回滚，而代码也会继续往下执行，这时我们就有可能读取到脏数据。
+
+  2. 由于我们在Service层对异常进行了捕获处理，在Controller层调用该Service层的相关方法时，并不能把其相关异常信息抛给Controller层，也就无法把异常信息展示给前端页面，而当用户进行相关操作失败时，也就无法得知其操作失败的缘由。
+
+- 在Controller层使用try-catch对异常进行捕获并处理的代码，其存在如下缺陷：
+
+  1. 由于Controller层是与Service层进行交互的，这样一来，在Controller层调用Service层抛出异常的方法时，我们都需要在Controller层的方法体中，写一遍try-catch代码来捕获处理Service层抛出的异常，就会使得代码很难看而且也很难维护。
+
+  2. 对于Service层抛出的不同异常，那么Controller层的方法体中需要catch多个异常分别进行处理。
+
+  3. 这里就会有人说了，我直接在Controller层的方法上使用 throws关键字 把Service层的异常继续往上抛不就行了，还不需要使用try-catch来进行捕获处理，确实是可以，但是这样会把大量的异常信息带到前端页面，对用户来说是非常不友好的
+
+- 使用@ControllerAdvice/@RestControllerAdvice + @ExceptionHandler注解能够实现全局处理Controller层的异常，并能够自定义其返回的信息(前提：Controller层不使用try-catch对异常进行捕获处理)
+
+  优缺点：
+
+  - 优点：将 Controller 层的异常和数据校验的异常进行统一处理，减少模板代码，减少编码量，提升扩展性和可维护性。
+
+  - 缺点：能处理 Controller 层的异常 (未使用try-catch进行捕获) 和 @Validated 校验器注解的异常，但是对于 Interceptor（拦截器）层的异常 和 Spring 框架层的异常，就无能为力了。
+
+- @ExceptionHandler可以捕获到controller中指定的异常并进行处理
+
+  1. 写在普通的controller中：只能识别并处理该controller中的指定异常
+
+  2. 写在@ControllerAdvice注解的controller中：可以识别并处理所有@ControllerAdvice覆盖的controller（默认是覆盖所有）中的指定异常
+
+- 首先，`ExceptionHandlerExceptionResolver`是`Spring MVC`缺省被启用的一个`HandlerExceptionResolver`,它会被作为一个组合模式`HandlerExceptionResolver bean`中的一个元素进入到`bean`容器中。ExceptionHandlerExceptionResolver实现了接口InitializingBean,所以它在实例化时会被初始化。该过程中，它就会搜集所有的@ControllerAdvice注解类中使用@ExceptionHandler定义的异常处理控制器方法以供随后工作时使用。
+
+- 接下来，`DispatcherServlet`初始化时，会搜集所有`HandlerExceptionResolver bean`记录到自己的策略组件属性`List<HandlerExceptionResolver> handlerExceptionResolvers`。
+
+- 然后，处理某个请求时某个异常发生了。`DispatcherServlet`会遍历`handlerExceptionResolvers`中每个`HandlerExceptionResolver`对象试图对该异常进行处理。
+
+- 当这类异常交给ExceptionHandlerExceptionResolver解析时，它会首先查看发生异常的控制器方法所在的控制器类中是否有合适的@ExceptionHanlder方法，然后看所有的@ControllerAdvice类中是否有合适的@ExceptionHanlder方法,如果有,ExceptionHandlerExceptionResolver就会使用相应的方法处理该异常。
+
+  
+
+  
