@@ -118,3 +118,33 @@
   
 - **Integer到int:**
   - Integer A=new Integer(5); int a=A.intValue();
+
+## 12. equals
+
+```java
+ public boolean equals(Object obj){
+        if(obj == null){
+            return false;
+        }else{
+            if(obj instanceof Ball){
+                Ball ball = (Ball)obj;
+                if(this.name == ball.name&&this.weight==ball.weight){
+                    return true;
+                }
+            }
+            
+        }
+        return false;
+    }
+
+ public boolean equals(Object obj){
+            if(obj instanceof Ball){
+                Ball ball = (Ball)obj;
+                return    this.name.equals(obj.name)&&
+                              this.weight.equals(ball.weight);
+            else{
+                        return super.equals(obj);
+          }
+    }
+```
+
