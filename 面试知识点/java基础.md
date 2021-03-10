@@ -121,30 +121,54 @@
 
 ## 12. equals
 
+- 判断两个对象在逻辑上是否相等，如根据类的成员变量来判断两个类的实例是否相等，而继承Object中的equals方法只能判断两个引用变量是否是同一个对象。这样我们往往需要重写equals()方法。
+
+- 1、自反性：对于任何非空引用x，x.equals(x)应该返回true。
+  2、对称性：对于任何引用x和y，如果x.equals(y)返回true，那么y.equals(x)也应该返回true。
+  3、传递性：对于任何引用x、y和z，如果x.equals(y)返回true，y.equals(z)返回true，那么x.equals(z)也应该返回true。
+  4、一致性：如果x和y引用的对象没有发生变化，那么反复调用x.equals(y)应该返回同样的结果。
+  5、非空性：对于任意非空引用x，x.equals(null)应该返回false。
+
+- 重写equals时总是要重写hashCode
+
+  > **A.equals(B) 则必须使得 A.hashCode() == B.hashCode();**
+  >
+  > **如果 A.hashCode() ！= B.hashCode() 则 A.equals(B) 一定为false。**
+
 ```java
- public boolean equals(Object obj){
-        if(obj == null){
+public boolean equals(Object another) {
+ 
+        //先判断是不是自己,提高运行效率
+        if (this == another)
+            return true;
+ 
+        //再判断是不是Person类,提高代码的健壮性
+        if (another instanceof Person2) {
+ 
+            //向下转型,父类无法调用子类的成员和方法
+            Person2 anotherPerson = (Person2) another;
+ 
+            //最后判断类的所有属性是否相等，其中String类型和Object类型可以用相应的equals()来判断
+            if ((this.getName().equals(anotherPerson.getName())) && (this.getAge() == anotherPerson.getAge()))
+                return true;
+        } else {
             return false;
-        }else{
-            if(obj instanceof Ball){
-                Ball ball = (Ball)obj;
-                if(this.name == ball.name&&this.weight==ball.weight){
-                    return true;
-                }
-            }
-            
         }
+ 
         return false;
     }
 
- public boolean equals(Object obj){
-            if(obj instanceof Ball){
-                Ball ball = (Ball)obj;
-                return    this.name.equals(obj.name)&&
-                              this.weight.equals(ball.weight);
-            else{
-                        return super.equals(obj);
-          }
+public int hashCode() {
+        int result = 17;
+        result = 31 * result + mInt;
+        result = 31 * result + (mBoolean ? 1 : 0);
+        result = 31 * result + Float.floatToIntBits(mFloat);
+        result = 31 * result + (int)(mLong ^ (mLong >>> 32));
+        long mDoubleTemp = Double.doubleToLongBits(mDouble);
+        result =31 * result + (int)(mDoubleTemp ^ (mDoubleTemp >>> 32));
+        result = 31 * result + (mString == null ? 0 : mMsgContain.hashCode());
+        result = 31 * result + (mObj == null ? 0 : mObj.hashCode());
+        return result;
     }
 ```
 
