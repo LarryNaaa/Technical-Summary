@@ -865,3 +865,328 @@ public boolean isRectangleOverlap(int[] rec1, int[] rec2) {
     }
 ```
 
+## DFS
+
+### 1. [子集](https://leetcode-cn.com/problems/subsets/)
+
+给你一个整数数组 `nums` ，数组中的元素 **互不相同** 。返回该数组所有可能的子集（幂集）。
+
+解集 **不能** 包含重复的子集。你可以按 **任意顺序** 返回解集
+
+```java
+class Solution {
+    List<List<Integer>> res = new ArrayList();
+    List<Integer> list = new ArrayList();
+    public List<List<Integer>> subsets(int[] nums) {
+        dfs(nums, 0);
+        return res;
+    }
+
+    public void dfs(int[] nums, int index){
+        res.add(new ArrayList(list));
+        for(int i = index; i < nums.length; i++){
+            list.add(nums[i]);
+            dfs(nums, i+1);
+            list.remove(list.size() - 1);
+        }
+    }
+}
+```
+
+### 2. [括号生成](https://leetcode-cn.com/problems/generate-parentheses/)
+
+数字 `n` 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 **有效的** 括号组合。
+
+```java
+class Solution {
+    String[] s = {"(", ")"};
+    List<String> res = new ArrayList<>();
+    public List<String> generateParenthesis(int n) {
+        dfs(n, 0, 0, new StringBuilder());
+        return res;
+    }
+    
+    public void dfs(int n, int l, int r, StringBuilder str){
+        if(r > l || l > n || r > n) return;
+        if(l == n && r == n){
+            res.add(str.toString());
+            return;
+        }
+        for(int i = 0; i < 2; i++){
+            str.append(s[i]);
+            if(i == 0) dfs(n, l+1, r, str);
+            else dfs(n, l, r+1, str);
+            str.deleteCharAt(str.length()-1);
+        }
+    }
+}
+```
+
+
+
+## DP
+
+### 1. [最长递增子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
+
+给你一个整数数组 nums ，找到其中最长严格递增子序列的长度。
+
+子序列是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，[3,6,2,7] 是数组 [0,3,1,6,2,2,7] 的子序列。
+
+```java
+class Solution {
+    public int lengthOfLIS(int[] nums) {
+        if(nums.length < 2) return 1;
+
+        int size = nums.length;
+        int[] dp = new int[size];
+
+        for(int i = 0; i < size; i++){
+            dp[i] = 1;
+        }
+
+        int res = 1;
+        for(int i = 1; i < size; i++){
+            for(int j = 0; j < i; j++){
+                if(nums[j] < nums[i]){
+                    dp[i] = Math.max(dp[i], dp[j]+1);
+                    res = Math.max(dp[i], res);
+                }
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+### 2. [分割等和子集](https://leetcode-cn.com/problems/partition-equal-subset-sum/)
+
+给定一个**只包含正整数**的**非空**数组。是否可以将这个数组分割成两个子集，使得两个子集的元素和相等。
+
+```java
+class Solution {
+    boolean res = false;
+    public boolean canPartition(int[] nums) {
+        int sum = 0;
+        for(int i = 0; i < nums.length; i++){
+            sum += nums[i];
+        }
+        if(sum % 2 != 0) return false;
+        int target = sum / 2;
+        
+        boolean[][] dp = new boolean[nums.length][target+1];
+        for(int i = 0; i < nums.length; i++){
+            dp[i][0] = true;
+        }
+        if(nums[0] <= target) dp[0][nums[0]] = true;
+        for(int i = 1; i < nums.length; i++){
+            for(int j = 1; j <= target; j++){
+                if(j < nums[i]){
+                    dp[i][j] = dp[i-1][j];
+                }else{
+                    dp[i][j] = dp[i-1][j] || dp[i-1][j-nums[i]];
+                }
+            }
+        }
+        return dp[nums.length-1][target];
+    }
+}
+```
+
+
+
+## BFS
+
+### 1. [二叉树的锯齿形层序遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
+
+给定一个二叉树，返回其节点值的锯齿形层序遍历。（即先从左往右，再从右往左进行下一层遍历，以此类推，层与层之间交替进行）。
+
+```java
+class Solution {
+    public List<List<Integer>> zigzagLevelOrder(TreeNode root) {
+        List<List<Integer>> res = new ArrayList<>();
+        if(root == null) return res;
+        
+        Queue<TreeNode> q = new LinkedList<>();
+        q.offer(root);
+        while(!q.isEmpty()){
+            int size = q.size();
+            List<Integer> list = new ArrayList<>();
+            for(int i = 0; i < size; i++){
+                TreeNode curr = q.poll();
+                if((res.size() + 1) % 2 != 0){
+                    list.add(curr.val);
+                }else{
+                    list.add(0, curr.val);
+                }
+                if(curr.left != null) q.offer(curr.left);
+                if(curr.right != null) q.offer(curr.right);
+            }
+            res.add(list);
+        }
+
+        return res;
+    }
+}
+```
+
+## 滑动窗口
+
+### 1. [567. 字符串的排列](https://leetcode-cn.com/problems/permutation-in-string/)
+
+给定两个字符串 **s1** 和 **s2**，写一个函数来判断 **s2** 是否包含 **s1** 的排列。
+
+换句话说，第一个字符串的排列之一是第二个字符串的子串。
+
+```java
+class Solution {
+    public boolean checkInclusion(String s1, String s2) {
+        Map<Character, Integer> map = new HashMap<>();
+        for(int i = 0; i < s1.length(); i++){
+            char c = s1.charAt(i);
+            map.put(c, map.getOrDefault(c, 0) + 1);
+        }
+        int l = 0, r = 0, count = 0;
+        while(r < s2.length()){
+            char rc = s2.charAt(r);
+            if(map.containsKey(rc)){
+                map.put(rc, map.get(rc) - 1);
+                if(map.get(rc) == 0) count++;
+            }
+            r++;
+
+            if(r >= s1.length()){
+                if(count == map.size()) return true;
+                char lc = s2.charAt(l);
+                if(map.containsKey(lc)){
+                    if(map.get(lc) == 0) count--;
+                    map.put(lc, map.get(lc) + 1);
+                }
+                l++;
+            }
+        }
+        return false;
+    }
+}
+```
+
+## 栈
+
+### 1. [ 柱状图中最大的矩形](https://leetcode-cn.com/problems/largest-rectangle-in-histogram/)
+
+给定 *n* 个非负整数，用来表示柱状图中各个柱子的高度。每个柱子彼此相邻，且宽度为 1 。
+
+求在该柱状图中，能够勾勒出来的矩形的最大面积。
+
+暴力：
+
+```java
+class Solution {
+    public int largestRectangleArea(int[] heights) {
+        int max = -1;
+        for(int i = 0; i < heights.length; i++){
+            int l = i, r = i;
+            while(l > 0 && heights[l - 1] >= heights[i]){
+                l--;
+            }
+            while(r < heights.length - 1 && heights[r + 1] >= heights[i]){
+                r++;
+            }
+            max = Math.max(max, (r - l + 1) * heights[i]);
+        }
+        return max;
+    }
+}
+```
+
+栈：
+
+```java
+public class Solution {
+
+    public int largestRectangleArea(int[] heights) {
+        int len = heights.length;
+        if (len == 0) {
+            return 0;
+        }
+        if (len == 1) {
+            return heights[0];
+        }
+
+        int area = 0;
+        int[] newHeights = new int[len + 2];
+        for (int i = 0; i < len; i++) {
+            newHeights[i + 1] = heights[i];
+        }
+        len += 2;
+        heights = newHeights;
+
+        Deque<Integer> stack = new ArrayDeque<>();
+        stack.addLast(0);
+
+        for (int i = 1; i < len; i++) {
+            while (heights[stack.peekLast()] > heights[i]) {
+                int height = heights[stack.removeLast()];
+                int width  = i - stack.peekLast() - 1;
+                area = Math.max(area, width * height);
+            }
+            stack.addLast(i);
+        }
+        return area;
+    }
+}
+```
+
+### 2. [验证栈序列](https://leetcode-cn.com/problems/validate-stack-sequences/)
+
+给定 pushed 和 popped 两个序列，每个序列中的 值都不重复，只有当它们可能是在最初空栈上进行的推入 push 和弹出 pop 操作序列的结果时，返回 true；否则，返回 false 。
+
+```java
+class Solution {
+    public boolean validateStackSequences(int[] pushed, int[] popped) {
+        int a = 0, b = 0;
+        Deque<Integer> stack = new ArrayDeque<>();
+        while(a < pushed.length || b < popped.length){
+            if(stack.isEmpty() || stack.peekLast() != popped[b]){
+                if(a >= pushed.length) break;
+                stack.addLast(pushed[a]);
+                a++;
+            }else{
+                stack.removeLast();
+                b++;
+            }
+        }
+        if(!stack.isEmpty()) return false;
+        return true;
+    }
+}
+```
+
+## 线性查找
+
+### 1. [二维数组中的查找](https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof/)
+
+在一个 n * m 的二维数组中，每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序。请完成一个高效的函数，输入这样的一个二维数组和一个整数，判断数组中是否含有该整数。
+
+```java
+class Solution {
+    // O(m+n)
+    public boolean findNumberIn2DArray(int[][] matrix, int target) {
+        if (matrix == null || matrix.length == 0 || matrix[0].length == 0) {
+            return false;
+        }
+        int i = 0, j = matrix[0].length - 1;
+        while(i < matrix.length && j >= 0){
+            if(matrix[i][j] == target){
+                return true;
+            }else if(matrix[i][j] > target){
+                j--;
+            }else{
+                i++;
+            }
+        }
+        return false;
+    }
+}
+```
+
