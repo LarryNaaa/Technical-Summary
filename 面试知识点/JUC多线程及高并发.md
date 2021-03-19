@@ -1890,11 +1890,11 @@ public class MyThreadPoolDemo {
 
      八核CPU：8/（1-0，9）=80
 
-### 十、死锁编码及定位分析
+### 十、死锁
 
 1. 是什么
 
-   死锁是指两个或两个以上的进程在执行过程中，因争夺资源而造成的一种互相等待的现象，若无外力干涉那他们都将无法推进下去，如果系统资源充足，进程的资源请求都能够得到满足，死锁出现的可能性就很低，否则就会因争夺有限的资源而陷入死锁。
+   死锁是指两个或两个以上的进程在执行过程中，因争夺资源而造成的一种互相等待的现象。一种非常简单的避免死锁的方式就是：**指定获取锁的顺序，并强制线程按照指定的顺序获取锁。**因此，如果所有的线程都是以同样的顺序加锁和释放锁，就不会出现死锁了。
 
    ![Thread_13](/Users/na/IdeaProjects/Technical summary/Image/Thread_13.png)
    
@@ -1963,15 +1963,129 @@ public class MyThreadPoolDemo {
 
 ![Thread_1](/Users/na/IdeaProjects/Technical summary/Image/Thread_1.png)
 
+- 线程wait(),sleep():
+  wait()和sleep()的关键的区别在于，wait()是用于线程间通信的，而sleep()是用于短时间暂停当前线程。更加明显的一个区别在于，当一个线程调用wait()方法的时候，会释放它锁持有的对象的管程和锁，但是调用sleep()方法的时候，不会释放他所持有的管程。
+  1.所属的类不同：
+  sleep方法是定义在Thread上
+  wait方法是定义在Object上
+  2.对于锁资源的处理方式不同
+  sleep不会释放锁
+  wait会释放锁
+  3.使用范围：
+  sleep可以使用在任何代码块
+  wait必须在同步方法或同步代码块执行
+  4.唤醒：
+  void notify()可以唤醒等待（wait）的单个线程，而sleep不能被唤醒
+
+- 线程sleep()，yield():
+
+1. 都会暂缓执行当前线程；
+2. 如果已经持有锁，那么在等待过程中都不会释放锁；
+
+不同点在于：
+1. Thread.sleep()可以精确指定休眠的时间，而Thread.yield()依赖于CPU的时间片划分，在我的电脑上大约为20微秒；
+2. Thread.sleep()会抛出中断异常，且能被中断，而Thread.yield()不可以；
+yield()理解为线程让步
+yeild()只是让当前线程暂停一下，让系统的线程调度器重新调度一次，完全可能的情况是：当某个线程调用了yield()线程暂停之后，线程调度器又将其调度出来重新执行。当某个线程调用了yield()方法暂停之后，只有优先级与当前线程相同，或者优先级比当前线程更高的处于就绪状态的线程才会获得执行机会。
+
+- notify和notifyAll的区别
+  -  如果线程调用了对象的 wait()方法，那么线程便会处于该对象的**等待池**中，等待池中的线程**不会去竞争该对象的锁**。
+  -  当有线程调用了对象的 **notifyAll**()方法（唤醒所有 wait 线程）或 **notify**()方法（只随机唤醒一个 wait 线程），被唤醒的的线程便会进入该对象的锁池中，锁池中的线程会去竞争该对象锁。也就是说，调用了notify后只要一个线程会由等待池进入锁池，而notifyAll会将该对象等待池内的所有线程移动到锁池中，等待锁竞争
+  -  优先级高的线程竞争到对象锁的概率大，假若某线程没有竞争到该对象锁，它**还会留在锁池中**，唯有线程再次调用 wait()方法，它才会重新回到等待池中。而竞争到对象锁的线程则继续往下执行，直到执行完了 synchronized 代码块，它会释放掉该对象锁，这时锁池中的线程会继续竞争该对象锁。
+- **wait和notify为什么需要在synchronized里面:**
+  - wait方法的语义有两个，一个是释放当前的对象锁、另一个是使得当前线程进入阻塞队列， 而这些操作都和监视器是相关的，所以wait必须要获得一个监视器锁。
+  - 而对于notify来说也是一样，它是唤醒一个线程，既然要去唤醒，首先得知道它在哪里？所以就必须要找到这个对象获取到这个对象的锁，然后到这个对象的等待队列中去唤醒一个线程。
+
 ### 2. 进程的状态
 
 ![Thread_23](/Users/na/IdeaProjects/Technical summary/Image/Thread_23.png)
 
 ### 3. 中断
 
-- Java的中断是一种协作机制。也就是说调用线程对象的interrupt方法并不一定就中断了正在运行的线程，它只是要求线程自己在合适的时机中断自己。每个线程都有一个boolean的中断状态（不一定就是对象的属性，事实上，该状态也确实不是Thread的字段），interrupt方法仅仅只是将该状态置为true 。
-- **interrupted()**：测试当前线程是否已经中断。线程的中断状态由该方法清除。换句话说，如果连续两次调用该方法，则第二次调用将返回 false（在第一次调用已清除了其中断状态之后，且第二次调用检验完中断状态前，当前线程再次中断的情况除外）。
--  **isInterrupted**()：测试线程是否已经中断。线程的中断状态不受该方法的影响。
+- 线程中断即线程运行过程中被其他线程给打断了，它与 stop 最大的区别是：stop 是由系统强制终止线程，而线程中断则是给目标线程发送一个中断信号，如果目标线程没有接收线程中断的信号并结束线程，线程则不会终止，具体是否退出或者执行其他逻辑由目标线程决定。
+- 对目标线程调用`interrupt()`方法可以请求中断一个线程，目标线程通过检测`isInterrupted()`标志获取自身是否已中断。如果目标线程处于等待状态，即目标线程调用Object 类的 wait 方法、Thread 类的 sleep 方法、Thread 类的 join 方法，该线程会捕获到`InterruptedException`；
+- 目标线程检测到`isInterrupted()`为`true`或者捕获了`InterruptedException`都应该立刻结束自身线程；
+- interrupt方法其实只是改变了中断状态而已。而sleep、wait和join这些方法的内部会不断的检查中断状态的值，从而自己抛出InterruptEdException。所以，如果在线程进行其他处理时，调用了它的interrupt方法，线程也不会抛出InterruptedException的，只有当线程走到了sleep, wait, join这些方法的时候，才会抛出InterruptedException。若是没有调用sleep, wait, join这些方法，或者没有在线程里自己检查中断状态或自己抛出InterruptedException，那InterruptedException是不会抛出来的。
+
+
+```java
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        Thread t = new MyThread();
+        t.start();
+        Thread.sleep(1000);
+        t.interrupt(); // 中断t线程
+        t.join(); // 等待t线程结束
+        System.out.println("end");
+    }
+}
+
+class MyThread extends Thread {
+    public void run() {
+        Thread hello = new HelloThread();
+        hello.start(); // 启动hello线程
+        try {
+            hello.join(); // 等待hello线程结束
+        } catch (InterruptedException e) {
+            System.out.println("interrupted!");
+        }
+        hello.interrupt();
+    }
+}
+
+class HelloThread extends Thread {
+    public void run() {
+        int n = 0;
+        while (!isInterrupted()) {
+            n++;
+            System.out.println(n + " hello!");
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+}
+```
+
+- 通过标志位判断需要正确使用`volatile`关键字；
+- `volatile`关键字解决了共享变量在线程间的可见性问题。
+
+```java
+public class Main {
+    public static void main(String[] args)  throws InterruptedException {
+        HelloThread t = new HelloThread();
+        t.start();
+        Thread.sleep(1);
+        t.running = false; // 标志位置为false
+    }
+}
+
+class HelloThread extends Thread {
+    public volatile boolean running = true;
+    public void run() {
+        int n = 0;
+        while (running) {
+            n ++;
+            System.out.println(n + " hello!");
+        }
+        System.out.println("end!");
+    }
+}
+```
+
+- **1、java.lang.Thread#interrupt**
+
+  中断目标线程，给目标线程发一个中断信号，线程被打上中断标记。
+
+  **2、java.lang.Thread#isInterrupted()**
+
+  判断目标线程是否被中断，不会清除中断标记。
+
+  **3、java.lang.Thread#interrupted**
+
+  判断目标线程是否被中断，会清除中断标记。
 
 ## 十二、AQS(AbstractQueuedSynchronizer)：乐观锁
 
@@ -2045,15 +2159,18 @@ public abstract class AbstractQueuedSynchronizer
 
 ### 5. 偏向锁
 
+- 偏向锁是指一段同步代码一直被一个线程所访问，那么该线程会自动获取锁。降低获取锁的代价。
 - 当一个线程访问同步块并获取锁时，会在对象头和栈帧中的锁记录里存储锁偏向的线程ID，以后该线程在进入和退出同步块时不需要进行CAS操作来加锁和解锁，只需简单地测试一下对象头的Mark Word里是否存储着指向当前线程的偏向锁。如果测试成功，表示线程已经获得了锁。如果测试失败，则需要再测试一下Mark Word中偏向锁的标识是否设置成01（表示当前是偏向锁）：如果没有设置，则使用CAS竞争锁；如果设置了，则尝试使用CAS将对象头的偏向锁指向当前线程。执行同步块。
 - 这个时候线程2也来访问同步块，也是会检查对象头的Mark Word里是否存储着当前线程2的偏向锁，发现不是，那么他会进入 CAS 替换，但是此时会替换失败，因为此时线程1已经替换了。替换失败则会进入撤销偏向锁，首先会去暂停拥有了偏向锁的线程1，进入无锁状态(01).偏向锁存在竞争的情况下就回去升级成轻量级锁。
 
 ### 6. 轻量级锁
 
+- 轻量级锁是指当锁是偏向锁的时候，被另一个线程所访问，偏向锁就会升级为轻量级锁，其他线程会通过自旋的形式尝试获取锁，不会阻塞，提高性能。
 - 在代码进入同步块的时候，如果同步对象锁状态为无锁状态（锁标志位为“01”状态），虚拟机首先将在当前线程的栈帧中建立一个名为锁记录（Lock Record）的空间，用于存储锁对象目前的Mark Word的拷贝。这个时候 线程1会尝试使用 CAS 将 mark Word 更新为指向栈帧中的锁记录（Lock Record）的空间指针。并且把锁标志位设置为 00(轻量级锁标志)，与此同时如果有另外一个线程2也来进行 CAS 修改 Mark Word，那么将会失败，因为线程1已经获取到该锁，然后线程2将会进行 CAS操作不断的去尝试获取锁，这个时候将会引起锁膨胀，就会升级为重量级锁，设置标志位为 10.
 
 ### 7. 重量级锁
 
+- 重量级锁是指当锁为轻量级锁的时候，另一个线程虽然是自旋，但自旋不会一直持续下去，当自旋一定次数的时候，还没有获取到锁，就会进入阻塞，该锁膨胀为重量级锁。重量级锁会让其他申请的线程进入阻塞，性能降低。
 - 重量级锁通过对象内部的监视器（monitor）实现，其中monitor的本质是依赖于底层操作系统的Mutex Lock实现，操作系统实现线程之间的切换需要从用户态到内核态的切换，切换成本非常高。主要是，当系统检查到锁是重量级锁之后，会把等待想要获得锁的线程进行**阻塞**，被阻塞的线程不会消耗cup。但是阻塞或者唤醒一个线程时，都需要操作系统来帮忙，这就需要从**用户态**转换到**内核态**，而转换状态是需要消耗很多时间的，有可能比用户执行代码的时间还要长。这就是说为什么重量级线程开销很大的。
 - synchronized如何实现可重入？每个锁关联一个线程持有者和一个计数器。当计数器为0时表示该锁没有被任何线程持有，那么任何线程都都可能获得该锁而调用相应方法。当一个线程请求成功后，JVM会记下持有锁的线程，并将计数器计为1。此时其他线程请求该锁，则必须等待。而该持有锁的线程如果再次请求这个锁，就可以再次拿到这个锁，同时计数器会递增。当线程退出一个synchronized方法/块时，计数器会递减，如果计数器为0则释放该锁。
 - synchronized实际上有两个队列waitSet和entryList：
@@ -2064,14 +2181,6 @@ public abstract class AbstractQueuedSynchronizer
   4. 如果线程执行完毕，同样释放锁，计数器-1，当前线程置为null
 
 ![Thread_20](/Users/na/IdeaProjects/Technical summary/Image/Thread_20.webp)
-
-- notify和notifyAll的区别
-  -  如果线程调用了对象的 wait()方法，那么线程便会处于该对象的**等待池**中，等待池中的线程**不会去竞争该对象的锁**。
-  -  当有线程调用了对象的 **notifyAll**()方法（唤醒所有 wait 线程）或 **notify**()方法（只随机唤醒一个 wait 线程），被唤醒的的线程便会进入该对象的锁池中，锁池中的线程会去竞争该对象锁。也就是说，调用了notify后只要一个线程会由等待池进入锁池，而notifyAll会将该对象等待池内的所有线程移动到锁池中，等待锁竞争
-  -  优先级高的线程竞争到对象锁的概率大，假若某线程没有竞争到该对象锁，它**还会留在锁池中**，唯有线程再次调用 wait()方法，它才会重新回到等待池中。而竞争到对象锁的线程则继续往下执行，直到执行完了 synchronized 代码块，它会释放掉该对象锁，这时锁池中的线程会继续竞争该对象锁。
-- **wait和notify为什么需要在synchronized里面:**
-  - wait方法的语义有两个，一个是释放当前的对象锁、另一个是使得当前线程进入阻塞队列， 而这些操作都和监视器是相关的，所以wait必须要获得一个监视器锁。
-  - 而对于notify来说也是一样，它是唤醒一个线程，既然要去唤醒，首先得知道它在哪里？所以就必须要找到这个对象获取到这个对象的锁，然后到这个对象的等待队列中去唤醒一个线程。
 
 ### 8. 说说 synchronized 关键字和 volatile 关键字的区别
 

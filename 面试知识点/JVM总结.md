@@ -12,56 +12,62 @@
 
   2.通过类名调用静态变量的时候（类名.class除外）。
 
-- 类加载的过程：
-  
+### 1.1 类加载的过程
+
   - ### 加载(Loading)
-  
-    - 通过一个类的全限定明获取定义此类的二进制字节流；
-    - 将这个字节流所代表的的静态存储结构转化为方法区的运行时数据；
-    - 在内存中生成一个代表这个类的java.lang.Class对象，作为方法区这个类的各种数据的访问入口
-  
+
+    - **类加载指的是将类的class文件读入内存，并为之创建一个java.lang.Class对象。**类的加载过程是由类加载器来完成，类加载器由JVM提供。我们开发人员也可以通过继承ClassLoader来实现自己的类加载器。
+    - 加载的class来源
+      - 从本地文件系统内加载class文件
+      - 从JAR包加载class文件
+      - 通过网络加载class文件
+      - 把一个java源文件动态编译，并执行加载。
+
   - #### 验证(Verify)
-  
+
     - 目的在于确保Class文件的字节流中包含信息符合当前虚拟机要求，保证被加载类的正确性，不会危害虚拟机自身安全。
     - 主要包括四种验证，文件格式验证，源数据验证，字节码验证，符号引用验证。
-  
+
   - #### 准备(prepare)
-  
+
     - 为类变量分配内存并且设置该类变量的默认初始值，即零值；
     - 这里不包含用final修饰的sttic，因为final在编译的时候就会分配了，准备阶段会显式初始化；
     - 之类不会为实例变量分配初始化，类变量会分配在方法去中，而实例变量是会随着对象一起分配到java堆中。
-  
+
   - #### 解析(Resolve)
-  
+
     - 将常量池内的符号引用转换为直接引用的过程。
     - 事实上，解析操作往往会伴随着jvm在执行完初始化之后再执行
     - 符号引用就是一组符号来描述所引用的目标。符号应用的字面量形式明确定义在《java虚拟机规范》的class文件格式中。直接引用就是直接指向目标的指针、相对偏移量或一个间接定位到目标的句柄
     - 解析动作主要针对类或接口、字段、类方法、接口方法、方法类型等。对应常量池中的CONSTANT_Class_info/CONSTANT_Fieldref_info、CONSTANT_Methodref_info等。
-  
+
   - ### 初始化(Initialize)
-  
+
     - 初始化阶段就是执行类构造器方法clinit（）的过程。
-    - 此方法不需要定义，是javac编译器自动收集类中的所有类变量的赋值动作和静态代码块中的语句合并而来。 `我们注意到如果没有静态变量c，那么字节码文件中就不会有clinit方法`
+    - **java类中对类变量进行初始化的两种方式：** **在定义时初始化**和**在静态初始化块内初始化**。 `我们注意到如果没有静态变量c，那么字节码文件中就不会有clinit方法`
     - 构造器方法中指令按语句在源文件中出现的顺序执行
     - clinit()不同于类的构造器。（关联：构造器是虚拟机视角下的init()）
     - 若该类具有父类，jvm会保证子类的clinit()执行前，父类的clinit()已经执行完毕
-    - 虚拟机必须保证一个类的clinit()方法在多线程下被同步加锁。
-  
-- 类加载器分类：分别为**引导类加载器（BootStrap ClassLoader）\**和\**自定义类加载器（User-Defined ClassLoader）**
+    - **接口与类不同的是，执行接口的＜clinit＞方法不需要先执行父接口的＜clinit＞方法。** **只有当父接口中定义的变量使用时，父接口才会初始化。另外，接口的实现类在初始化时也一样不会执行接口的＜clinit＞方法。**
+    - **虚拟机会保证一个类的< clinit>方法在多线程环境中被正确地加锁和同步，如果多个线程同时去初始化一个类，那么只有一个线程去执行这个类的< clinit>方法，其他线程都需要阻塞等待，直到活动线程执行< clinit>方法完毕。**
 
-  - 启动类加载器（引导类加载器，BootStrap ClassLoader）**
+### 1.2 类加载器分类
+
+ - 分别为**引导类加载器（BootStrap ClassLoader）**和**自定义类加载器（User-Defined ClassLoader）**
+
+  - 启动类加载器（引导类加载器，BootStrap ClassLoader）
     - 这个类加载使用**C/C++语言实现的**，嵌套在JVM内部
     - 它用来加载java的核心库（JAVA_HOME/jre/lib/rt.jar/resources.jar或sun.boot.class.path路径下的内容），用于提供JVM自身需要的类
     - 并不继承自java.lang.ClassLoader,没有父加载器
     - 加载拓展类和应用程序类加载器，并指定为他们的父加载器
     - 处于安全考虑，BootStrap启动类加载器只加载包名为java、javax、sun等开头的类
-  - 拓展类加载器（Extension ClassLoader）**
+  - 拓展类加载器（Extension ClassLoader）
   
     - java语言编写 ，由sun.misc.Launcher$ExtClassLoader实现。
     - 派生于ClassLoader类
     - 父类加载器为启动类加载器
     - 从java.ext.dirs系统属性所指定的目录中加载类库，或从JDK的安装目录的jre/lib/ext子目录（扩展目录）下加载类库。**如果用户创建的JAR放在此目录下，也会由拓展类加载器自动加载**
-  - 应用程序类加载器（系统类加载器，AppClassLoader）**
+  - 应用程序类加载器（系统类加载器，AppClassLoader）
   
     - java语言编写， 由sun.misc.Launcher$AppClassLoader实现。
     - 派生于ClassLoader类
@@ -69,20 +75,117 @@
     - 它负责加载环境变量classpath或系统属性 java.class.path指定路径下的类库
     - **该类加载器是程序中默认的类加载器**，一般来说，java应用的类都是由它来完成加载
     - 通过ClassLoader#getSystemClassLoader()方法可以获取到该类加载器
-  
-- 双亲委派机制：避免类的重复加载，保护程序安全，防止核心API被随意篡改
 
-  - 当一个类收到了类加载请求，他首先不会尝试自己去加载这个类，而是把这个请求委派给父类去完成，每一个层次类加载器都是如此，因此所有的加载请求都应该传送到启动类加载其中，只有当父类加载器反馈自己无法完成这个请求的时候（在它的加载路径下没有找到所需加载的Class），子类加载器才会尝试自己去加载。
-  - 采用双亲委派的一个好处是比如加载位于 rt.jar 包中的类 java.lang.Object，不管是哪个加载器加载这个类，最终都是委托给顶层的启动类加载器进行加载，这样就保证了使用不同的类加载器最终得到的都是同样一个 Object 对象。
-  
+### 1.3 类加载机制
+- **全盘负责**：当一个类加载器负责加载某个Class时，该Class所依赖和引用的其他Class也由该类加载器负责载入，除非显示使用另一个类加载器来载入。
+- **父类委托（双亲委派）**：先让父加载器试图加载该Class，只有在父加载器无法加载时该类加载器才会尝试从自己的类路径中加载该类。避免类的重复加载，保护程序安全，防止核心API被随意篡改。采用双亲委派的一个好处是比如加载位于 rt.jar 包中的类 java.lang.Object，不管是哪个加载器加载这个类，最终都是委托给顶层的启动类加载器进行加载，这样就保证了使用不同的类加载器最终得到的都是同样一个 Object 对象。
+- **缓存机制**：缓存机制会将已经加载的class缓存起来，当程序中需要使用某个Class时，类加载器先从缓存区中搜寻该Class，只有当缓存中不存在该Class时，系统才会读取该类的二进制数据，并将其转换为Class对象，存入缓存中。**这就是为什么更改了class后，需要重启JVM才生效的原因。**
 - 沙箱安全机制
 
-  - **自定义String类，由于双亲委派机制加载这个自定义String类的时候会率先使用引导类加载器加载，而引导类加载器在加载过程中会先加载jdk自带的文件（rt.jar包中的java\lang\String.class）,报错信息说没有main方法就是因为加载的是rt.jar包中的String类。这样可以保证对java核心源代码的保护，这就是\**沙箱安全机制\**.**
+  - **自定义String类，由于双亲委派机制加载这个自定义String类的时候会率先使用引导类加载器加载，而引导类加载器在加载过程中会先加载jdk自带的文件（rt.jar包中的java\lang\String.class）,报错信息说没有main方法就是因为加载的是rt.jar包中的String类。这样可以保证对java核心源代码的保护，这就是沙箱安全机制**.
   
-- 判断两个class对象是同一个类
 
-  - 类的完整类名必须一致，包括包名
-  - 加载这个类的ClassLoader（指ClassLoader实例对象）必须相同
+### 1.4 类初始化时机
+
+- 当虚拟机启动时，初始化用户指定的主类；
+
+- 当遇到用以新建目标类实例的new指令时，初始化new指令的目标类；
+
+- 当遇到调用静态方法或者使用静态变量，初始化静态变量或方法所在的类；
+
+- 子类初始化过程会触发父类初始化；
+
+- 如果一个接口定义了default方法，那么直接实现或者间接实现该接口的类的初始化，会触发该接口初始化；
+
+- 使用反射API对某个类进行反射调用时，初始化这个类；
+
+- Class.forName()会触发类的初始化
+
+- **对于一个使用final定义的常量，如果在编译时就已经确定了值，在引用时不会触发初始化，因为在编译的时候就已经确定下来，就是“宏变量”。如果在编译时无法确定，在初次使用才会导致初始化。**
+
+- ##### ClassLoader只会对类进行加载，不会进行初始化
+
+### 1.5 判断是同一个类
+
+- **每个类在JVM中使用全限定类名（包名+类名）与类加载器联合为唯一的ID，所以如果同一个类使用不同的类加载器，可以被加载到虚拟机，但彼此不兼容。**
+
+### 1.6 自定义类加载
+
+- 除了根类加载器，所有类加载器都是ClassLoader的子类。所以我们可以通过继承ClassLoader来实现自己的类加载器。
+- ClassLoader类有两个关键的方法：
+  1. protected Class **loadClass(String name, boolean resolve)**：name为类名，resove如果为true，在加载时解析该类。
+  2. protected Class **findClass(String name)** ：根据指定类名来查找类。
+- **loadClass加载方法流程：**
+  1. **判断此类是否已经加载；**
+  2. **如果父加载器不为null，则使用父加载器进行加载；** **反之，使用根加载器进行加载；**
+  3. **如果前面都没加载成功，则使用findClass方法进行加载。**
+- 推荐重写findClass方法，而不是重写loadClass方法，因为loadClass方法内部会调用findClass方法：
+
+```java
+public class Hello {
+   public void test(String str){
+       System.out.println(str);
+   }
+}
+
+public class MyClassloader extends ClassLoader {
+
+    /**
+     * 读取文件内容
+     *
+     * @param fileName 文件名
+     * @return
+     */
+    private byte[] getBytes(String fileName) throws IOException {
+        File file = new File(fileName);
+        long len = file.length();
+        byte[] raw = new byte[(int) len];
+        try (FileInputStream fin = new FileInputStream(file)) {
+            //一次性读取Class文件的全部二进制数据
+            int read = fin.read(raw);
+            if (read != len) {
+                throw new IOException("无法读取全部文件");
+            }
+            return raw;
+        }
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        Class clazz = null;
+        //将包路径的(.)替换为斜线(/)
+        String fileStub = name.replace(".", "/");
+        String classFileName = fileStub + ".class";
+        File classFile = new File(classFileName);
+
+        //如果Class文件存在，系统负责将该文件转换为Class对象
+        if (classFile.exists()) {
+            try {
+                //将Class文件的二进制数据读入数组
+                byte[] raw = getBytes(classFileName);
+                //调用ClassLoader的defineClass方法将二进制数据转换为Class对象
+                clazz = defineClass(name, raw, 0, raw.length);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //如果clazz为null,表明加载失败，抛出异常
+        if (null == clazz) {
+            throw new ClassNotFoundException(name);
+        }
+        return clazz;
+    }
+
+    public static void main(String[] args) throws Exception {
+        String classPath = "loader.Hello";
+        MyClassloader myClassloader = new MyClassloader();
+        Class<?> aClass = myClassloader.loadClass(classPath);
+        Method main = aClass.getMethod("test", String.class);
+        System.out.println(main);
+        main.invoke(aClass.newInstance(), "Hello World");
+    }
+}
+```
 
 ## 2. 程序计数器(Program Counter Register)：线程私有
 

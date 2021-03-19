@@ -922,6 +922,35 @@ class Solution {
 }
 ```
 
+### 3. [重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof/)
+
+输入某二叉树的前序遍历和中序遍历的结果，请重建该二叉树。假设输入的前序遍历和中序遍历的结果中都不含重复的数字。
+
+```java
+class Solution {
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        return dfs(0, preorder.length-1, preorder, 0, inorder.length-1, inorder);
+    }
+
+    public TreeNode dfs(int ps, int pe, int[] preorder, int is, int ie, int[] inorder){
+        if(ps > pe || is > ie) return null;
+        int rootV = preorder[ps];
+        TreeNode root = new TreeNode(rootV);
+        int index = 0;
+        for(int i = 0; i < inorder.length; i++){
+            if(inorder[i] == rootV){
+                index = i;
+                break;
+            }
+        }
+        int leftLen = index - is;
+        root.left = dfs(ps+1, ps+leftLen, preorder, is, index-1, inorder);
+        root.right = dfs(ps+leftLen+1, pe, preorder, index+1, ie, inorder);
+        return root;
+    }
+}
+```
+
 
 
 ## DP
@@ -989,6 +1018,123 @@ class Solution {
             }
         }
         return dp[nums.length-1][target];
+    }
+}
+```
+
+### 3. [打家劫舍](https://leetcode-cn.com/problems/house-robber/)
+
+你是一个专业的小偷，计划偷窃沿街的房屋。每间房内都藏有一定的现金，影响你偷窃的唯一制约因素就是相邻的房屋装有相互连通的防盗系统，如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警。
+
+给定一个代表每个房屋存放金额的非负整数数组，计算你 不触动警报装置的情况下 ，一夜之内能够偷窃到的最高金额。
+
+```java
+class Solution {
+    public int rob(int[] nums) {
+        if(nums.length == 0) return 0;
+        if(nums.length == 1) return nums[0];
+        if(nums.length == 2) return Math.max(nums[0], nums[1]);
+        int[] dp = new int[nums.length];
+        dp[0] = nums[0];
+        dp[1] = Math.max(nums[0], nums[1]);
+        for(int i = 2; i < nums.length; i++){
+            dp[i] = Math.max(dp[i - 2] + nums[i], dp[i - 1]);
+        }
+        return dp[nums.length-1];
+    }
+}
+```
+
+#### [打家劫舍 II](https://leetcode-cn.com/problems/house-robber-ii/)
+
+你是一个专业的小偷，计划偷窃沿街的房屋，每间房内都藏有一定的现金。这个地方所有的房屋都 围成一圈 ，这意味着第一个房屋和最后一个房屋是紧挨着的。同时，相邻的房屋装有相互连通的防盗系统，如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警 。
+
+给定一个代表每个房屋存放金额的非负整数数组，计算你 在不触动警报装置的情况下 ，能够偷窃到的最高金额。
+
+```java
+class Solution {
+    public int rob(int[] nums) {
+        int n = nums.length;
+        if(n == 1) return nums[0];
+        if(n == 2) return Math.max(nums[0], nums[1]);
+        int[] dp1 = new int[n-1];
+        dp1[0] = nums[0];
+        dp1[1] = Math.max(nums[0], nums[1]);
+        for(int i = 2; i < n-1; i++){
+            dp1[i] = Math.max(dp1[i-1], dp1[i-2]+nums[i]);
+        }
+        int[] dp2 = new int[n-1];
+        dp2[0] = nums[1];
+        dp2[1] = Math.max(nums[1], nums[2]);
+        for(int i = 2; i < n-1; i++){
+            dp2[i] = Math.max(dp2[i-1], dp2[i-2]+nums[i+1]);
+        }
+        return Math.max(dp1[n-2], dp2[n-2]);
+    }
+}
+```
+
+#### [打家劫舍 III](https://leetcode-cn.com/problems/house-robber-iii/)
+
+在上次打劫完一条街道之后和一圈房屋后，小偷又发现了一个新的可行窃的地区。这个地区只有一个入口，我们称之为“根”。 除了“根”之外，每栋房子有且只有一个“父“房子与之相连。一番侦察之后，聪明的小偷意识到“这个地方的所有房屋的排列类似于一棵二叉树”。 如果两个直接相连的房子在同一天晚上被打劫，房屋将自动报警。
+
+计算在不触动警报的情况下，小偷一晚能够盗取的最高金额。
+
+```java
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+class Solution {
+    Map<TreeNode, Integer> selectedMap = new HashMap<TreeNode, Integer>();
+    Map<TreeNode, Integer> skipMap = new HashMap<TreeNode, Integer>();
+    public int rob(TreeNode root) {
+        dfs(root);
+        return Math.max(selectedMap.getOrDefault(root, 0), skipMap.getOrDefault(root, 0));
+    }
+
+    public void dfs(TreeNode root){
+        if(root == null) return;
+        dfs(root.left);
+        dfs(root.right);
+
+        selectedMap.put(root, root.val + skipMap.getOrDefault(root.left, 0) + 
+        skipMap.getOrDefault(root.right, 0));
+
+        skipMap.put(root, 
+        Math.max(selectedMap.getOrDefault(root.left, 0), skipMap.getOrDefault(root.left, 0)) + 
+        Math.max(selectedMap.getOrDefault(root.right, 0), skipMap.getOrDefault(root.right, 0))
+        );
+    }
+}
+```
+
+### 4. [连续子数组的最大和](https://leetcode-cn.com/problems/lian-xu-zi-shu-zu-de-zui-da-he-lcof/)
+
+输入一个整型数组，数组中的一个或连续多个整数组成一个子数组。求所有子数组的和的最大值。
+
+```java
+class Solution {
+    public int maxSubArray(int[] nums) {
+        int[] dp = new int[nums.length];
+        dp[0] = nums[0];
+        int res = dp[0];
+        for(int i = 1; i < nums.length; i++){
+            dp[i] = Math.max(dp[i-1] + nums[i], nums[i]);
+            res = res < dp[i] ? dp[i] : res; 
+        }
+        return res;
     }
 }
 ```
@@ -1186,6 +1332,76 @@ class Solution {
             }
         }
         return false;
+    }
+}
+```
+
+## KMP
+
+### 1. [最短回文串](https://leetcode-cn.com/problems/shortest-palindrome/)
+
+给定一个字符串 ***s***，你可以通过在字符串前面添加字符将其转换为回文串。找到并返回可以用这种方式转换的最短回文串。
+
+```java
+class Solution {
+    public String shortestPalindrome(String s) {
+        String ss = s + '#' + new StringBuilder(s).reverse();
+        int max = getLastNext(ss);
+        return new StringBuilder(s.substring(max)).reverse() + s;
+    }
+
+    //返回 next 数组的最后一个值
+    public int getLastNext(String s) {
+        int n = s.length();
+        char[] c = s.toCharArray();
+        // next 数组 next[i] 表示字符串从0...i-1中最长的前缀等于后缀的长度
+        int[] next = new int[n + 1];
+        next[0] = -1;
+        next[1] = 0;
+        int k = 0;
+        int i = 2;
+        while (i <= n) {
+            if (k == -1 || c[i - 1] == c[k]) {
+                next[i] = k + 1;
+                k++;
+                i++;
+            } else {
+                k = next[k];
+            }
+        }
+        return next[n];
+    }
+}
+```
+
+## 其他
+
+### 1. [ 旋转图像](https://leetcode-cn.com/problems/rotate-image/)
+
+给定一个 n × n 的二维矩阵 matrix 表示一个图像。请你将图像顺时针旋转 90 度。
+
+你必须在 原地 旋转图像，这意味着你需要直接修改输入的二维矩阵。请不要 使用另一个矩阵来旋转图像。
+
+```java
+class Solution {
+    public void rotate(int[][] matrix) {
+        int n = matrix.length;
+        // y轴翻转
+        for(int j = 0; j < n / 2; j++){
+            for(int i = 0; i < n; i++){
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[i][n - 1 - j];
+                matrix[i][n - 1 - j] = temp;
+            }
+        }
+        // 对角线翻转
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < n - 1 - i; j++){
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[n - 1 - j][n - 1 - i];
+                matrix[n - 1 - j][n - 1 - i] = temp;
+            }
+        }
     }
 }
 ```
