@@ -126,8 +126,7 @@
 - **int到Integer：**
 
   - int a=3; Integer A=new Integer(a);
-- Integer A=Integer.valueOf(a);
-  
+  - Integer A=Integer.valueOf(a);
 - **Integer到int:**
   - Integer A=new Integer(5); int a=A.intValue();
 
@@ -330,7 +329,7 @@ Map是一种把键对象和值对象映射的集合，它的每一个元素都�
 
 ## 17. Comparable和Comparator
 
-- Comparable可以认为是一个内比较器，实现了Comparable接口的类有一个特点，就是这些类是可以和自己比较的，至于具体和另一个实现了Comparable接口的类如何比较，则依赖compareTo方法的实现。
+- Comparable接口被用来提供对象的自然排序，依赖compareTo方法的实现。
 
 ```java
 public class Domain implements Comparable<Domain>
@@ -359,7 +358,7 @@ public class Domain implements Comparable<Domain>
 }
 ```
 
-- Comparator接口里面有一个compare方法，方法有两个参数T o1和T o2
+- Comparator接口被用来提供不同的排序算法，我们可以选择需要使用的Comparator来对给定的对象集合进行排序。Comparator接口里面有一个compare方法，方法有两个参数T o1和T o2
 
 ```java
 public class DomainComparator implements Comparator<Domain>
@@ -378,3 +377,32 @@ public class DomainComparator implements Comparator<Domain>
 
 - 如果实现类没有实现Comparable接口，又想对两个类进行比较（或者实现类实现了Comparable接口，但是对compareTo方法内的比较算法不满意），那么可以实现Comparator接口，自定义一个比较器，写比较算法。实现Comparable接口的方式比实现Comparator接口的耦合性要强一些，如果要修改比较算法，要修改Comparable接口的实现类，而实现Comparator的类是在外部进行比较的，不需要对实现类有任何修改。
 
+## 18. 泛型
+
+- 2.泛型允许我们为集合提供一个可以容纳的对象类型，因此，如果你添加其它类型的任何元素，它会在编译时报错。
+
+  3.这避免了在运行时出现ClassCastException，因为你将会在编译时得到报错信息。
+
+  4.泛型也使得代码整洁，我们不需要使用显式转换和instanceOf操作符。
+
+  5.它也给运行时带来好处，因为不会产生类型检查的字节码指令。
+
+## 19. **ArrayList和Vector**
+
+- ArrayList和Vector在很多时候都很类似。
+
+（1）两者都是基于索引的，内部由一个数组支持。
+
+（2）两者维护插入的顺序，我们可以根据插入顺序来获取元素。
+
+（3）ArrayList和Vector的迭代器实现都是fail-fast的。
+
+（4）ArrayList和Vector两者允许null值，也可以使用索引值对元素进行随机访问。
+
+- 以下是ArrayList和Vector的不同点。
+
+（1）Vector是同步的，而ArrayList不是。然而，如果你寻求在迭代的时候对列表进行改变，你应该使用CopyOnWriteArrayList。
+
+（2）ArrayList比Vector快，它因为有同步，不会过载。
+
+（3）ArrayList更加通用，因为我们可以使用Collections工具类轻易地获取同步列表和只读列表。

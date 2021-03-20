@@ -103,15 +103,28 @@
 
 ## 5. 锁
 
-- 在数据库的增、删、改、查中，只有增、删、改才会加上排它锁，而只是查询并不会加锁，只能通过在select语句后显式加lock in share mode或者for update来加共享锁或者排它锁。
+- 在数据库的增、删、改、查中，只有insert，delete，update才会加上排它锁，而只是查询并不会加锁，只能通过在select语句后显式加lock in share mode或者for update来加共享锁或者排它锁。
+
 - 锁类型: 
-  - 共享锁/读锁（Shared Locks）：针对同一份数据，多个读操作可以同时进行，即读加锁，不能写并且可并行读
+  - 共享锁/读锁（Shared Locks）：针对同一份数据，多个读操作可以同时进行，即读加锁，不能写并且可并行读 
+  
+  ```sql
+  select  math from zje where math>60 lock in share mode；
+  ```
   
   - 排他锁/写锁（Exclusive Locks）：针对写操作，假如当前写操作没有完成，那么它会阻断其它的写锁和读锁，即写加锁，其它读写都阻塞 。
   
-  - 间隙锁：`Gap Locks`和`Next-Key Locks`。Gap Locks锁定索引之间的间隙，但是不包含索引本身。Next-Key Locks是Gap Locks+Record Locks形成闭区间锁，不仅锁定一个记录上的索引，也锁定索引之间的间隙。
+  ```sql
+  select math from zje where math >60 for update；
+  ```
+  
+  - 间隙锁：`Gap Locks`和`Next-Key Locks`。Gap Locks锁定索引之间的间隙，但是不包含索引本身。Next-Key Locks是Gap Locks+Record Locks形成闭区间锁，不仅锁定一个记录上的索引，也锁定索引之间的间隙。当我们用范围条件而不是相等条件检索数据，并请求共享或排他锁时，InnoDB会给符合条件的已有数据记录的索引项加锁
   
   - 行锁（Record Locks）：锁定当前数据行，锁的粒度小，加锁慢，发生锁冲突的概率小，并发度高，行锁也是MyISAM和InnoDB的区别之一，InnoDB支持行锁并且支持事务 。
+  
+    - 行锁必须有索引才能实现，否则会自动锁全表，那么就不是行锁了。
+    - 两个事务不能锁同一个索引。
+    - insert，delete，update在事务中都会自动默认加上排它锁。
   
   - 表锁：表锁则锁的粒度大，加锁快，开销小，但是锁冲突的概率大，并发度低。
   
@@ -136,23 +149,22 @@
       2. 根据获取的数据进行业务操作，得到new_data和new_version
       3. UPDATE SET data = new_data, version = new_version WHERE version = old_version
     
-      ```sql
-      if (updated row > 0) {
-      
-      // 乐观锁获取成功，操作完成
-      
-      } else {
-      
-      // 乐观锁获取失败，回滚并重试
-      
-      }
-      ```
-    
   - 悲观锁和乐观锁使用区别：
   
-    - **响应速度：** 如果需要非常高的响应速度，建议采用乐观锁方案，成功就执行，不成功就失败，不需要等待其他并发去释放锁。'
+    - **响应速度：** 如果需要非常高的响应速度，建议采用乐观锁方案，成功就执行，不成功就失败，不需要等待其他并发去释放锁。
     - **冲突频率：** 如果冲突频率非常高，建议采用悲观锁，保证成功率，如果冲突频率大，乐观锁会需要多次重试才能成功，代价比较大。
     - **重试代价：** 如果重试代价大，建议采用悲观锁。
+    
+  - MyISAM在执行查询语句（select）前，会自动给涉及的所有表加读锁，在执行增删改操作前，会自动给涉及的表加写锁。
+  
+    MySQL的表级锁有两种模式：
+  
+    - 表共享读锁
+    - 表独占写锁
+  
+    **读锁会阻塞写，写锁会阻塞读和写**
+  
+  - 在MySQL的InnoDB引擎支持行锁，MySQL的行锁是通过索引加载的，也就是说，行锁是加在索引响应的行上的，要是对应的SQL语句没有走索引，则会全表扫描，行锁则无法实现，取而代之的是表锁，此时其它事务无法对当前表进行更新或插入操作。
 
 ## 6. 三大范式
 
@@ -584,6 +596,27 @@ select * from employees order by hire_date desc limit 2,1;
 - 右连接RIGHT JOIN就是求两个表**A和B表的交集外加右表B剩下的数据**。
 
 - 外连接FULL OUTER JOIN就是求两个表**A和B集合的并集**。另外MySQL不支持OUTER JOIN，但是我们可以对左连接和右连接的结果做 **UNION** 操作来实现。MySQL UNION 操作符用于连接两个以上的 SELECT 语句的结果组合到一个结果集合中。多个 SELECT 语句会删除重复的数据。
+
+- LEFT JOIN EXCLUDING INNER JOIN（左连接-内连接）
+
+
+```sql
+SELECT <select_list> 
+FROM Table_A A
+LEFT JOIN Table_B B
+ON A.Key = B.Key
+WHERE B.Key IS NULL
+```
+
+- OUTER JOIN EXCLUDING INNER JOIN（外连接-内连接）
+
+```sql
+SELECT <select_list>
+FROM Table_A A
+FULL OUTER JOIN Table_B B
+ON A.Key = B.Key
+WHERE A.Key IS NULL OR B.Key IS NULL
+```
 
 ## 13. 页和行的大小
 

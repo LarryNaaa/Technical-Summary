@@ -112,6 +112,8 @@
 ## 9. @Component 和 @Bean 的区别是什么？
 
 - 作用对象不同: `@Component` 注解作用于类，而`@Bean`注解作用于方法。
+- @Component注解表明一个类会作为组件类，并告知Spring要为这个类创建bean。
+- @Bean注解告诉Spring这个方法将会返回一个对象，这个对象要注册为Spring应用上下文中的bean。通常方法体中包含了最终产生bean实例的逻辑。
 - `@Component`通常是通过类路径扫描来自动侦测以及自动装配到Spring容器中（我们可以使用 `@ComponentScan` 注解定义要扫描的路径从中找出标识了需要装配的类自动装配到 Spring 的 bean 容器中）。`@Bean` 注解通常是我们在标有该注解的方法中定义产生这个 bean,`@Bean`告诉了Spring这是某个类的示例，当我需要用它的时候还给我。
 - `@Bean` 注解比 `Component` 注解的自定义性更强，而且很多地方我们只能通过 `@Bean` 注解来注册bean。比如当我们引用第三方库中的类需要装配到 `Spring`容器时，则只能通过 `@Bean`来实现。
 
@@ -148,19 +150,19 @@
 
 - **支持当前事务的情况：**
 
-  - **TransactionDefinition.PROPAGATION_REQUIRED：** 如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。
-  - **TransactionDefinition.PROPAGATION_SUPPORTS：** 如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。
-  - **TransactionDefinition.PROPAGATION_MANDATORY：** 如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。（mandatory：强制性）
+  - **TransactionDefinition.PROPAGATION_REQUIRED：** 如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。**在外围方法未开启事务的情况下`Propagation.REQUIRED`修饰的内部方法会新开启自己的事务，且开启的事务相互独立，互不干扰。** **在外围方法开启事务的情况下`Propagation.REQUIRED`修饰的内部方法会加入到外围方法的事务中，所有`Propagation.REQUIRED`修饰的内部方法和外围方法均属于同一事务，只要一个方法回滚，整个事务均回滚。**
+  - **TransactionDefinition.PROPAGATION_SUPPORTS：** 支持当前事务，如果当前没有事务，就以非事务方式执行。外部方法没事务，内部方法也没事务；外部方法有事物，内部方法也有事务。
+  - **TransactionDefinition.PROPAGATION_MANDATORY：** 如果当前存在事务，则加入该事务；如果当前不存在事务，则抛出异常。一定要在事务中去调用，否则会抛出异常。
 
   **不支持当前事务的情况：**
 
-  - **TransactionDefinition.PROPAGATION_REQUIRES_NEW：** 创建一个新的事务，如果当前存在事务，则把当前事务挂起。
-  - **TransactionDefinition.PROPAGATION_NOT_SUPPORTED：** 以非事务方式运行，如果当前存在事务，则把当前事务挂起。
-  - **TransactionDefinition.PROPAGATION_NEVER：** 以非事务方式运行，如果当前存在事务，则抛出异常。
+  - **TransactionDefinition.PROPAGATION_REQUIRES_NEW：** 新建事务，如果当前存在事务，把当前事务延缓。**在外围方法未开启事务的情况下`Propagation.REQUIRES_NEW`修饰的内部方法会新开启自己的事务，且开启的事务相互独立，互不干扰。** **在外围方法开启事务的情况下`Propagation.REQUIRES_NEW`修饰的内部方法依然会单独开启独立事务，且与外部方法事务也独立，内部方法之间、内部方法和外部方法事务均相互独立，互不干扰。**
+  - **TransactionDefinition.PROPAGATION_NOT_SUPPORTED：** 以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。NOT_SUPPORTED修饰的方法其本身是没有事务的。
+  - **TransactionDefinition.PROPAGATION_NEVER：** 以非事务方式执行，如果当前存在事务，则抛出异常。外部方法有事务，内部方法抛异常。
 
   **其他情况：**
 
-  - **TransactionDefinition.PROPAGATION_NESTED：** 如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于TransactionDefinition.PROPAGATION_REQUIRED。
+  - **TransactionDefinition.PROPAGATION_NESTED：** 如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。**在外围方法未开启事务的情况下`Propagation.NESTED`和`Propagation.REQUIRED`作用相同，修饰的内部方法都会新开启自己的事务，且开启的事务相互独立，互不干扰。** **在外围方法开启事务的情况下`Propagation.NESTED`修饰的内部方法属于外部事务的子事务，外围主事务回滚，子事务一定回滚，而内部子事务可以单独回滚而不影响外围主事务和其他子事务**
 
 ## 14. 注解
 
@@ -278,6 +280,7 @@ Spring通过三级缓存解决了循环依赖，其中一级缓存为单例池�
 
 - 当这类异常交给ExceptionHandlerExceptionResolver解析时，它会首先查看发生异常的方法所在的controller类中是否有合适的@ExceptionHanlder方法，然后看所有的@ControllerAdvice类中是否有合适的@ExceptionHanlder方法,如果有,ExceptionHandlerExceptionResolver就会使用相应的方法处理该异常。
 
-  
+## 18. 事务的挂起
 
-  
+- 在ThreadLocal 对象里，将资源对象绑定或移出当前线程对应的 resources 来实现的。
+- 根据数据源获取当前的Connection，并在resource中移除该Connection。之后会将该Connection存储到TransactionStatus对象中。在事务提交或者回滚后，会将TransactionStatus 中缓存的Connection重新绑定到resource中。
