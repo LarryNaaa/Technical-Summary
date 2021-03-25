@@ -1139,6 +1139,28 @@ class Solution {
 }
 ```
 
+### 5. [买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
+
+给定一个数组 prices ，它的第 i 个元素 prices[i] 表示一支给定股票第 i 天的价格。
+
+你只能选择 某一天 买入这只股票，并选择在 未来的某一个不同的日子 卖出该股票。设计一个算法来计算你所能获取的最大利润。
+
+返回你可以从这笔交易中获取的最大利润。如果你不能获取任何利润，返回 0 。
+
+```java
+class Solution {
+    public int maxProfit(int[] prices) {
+        int[][] dp = new int[2][prices.length];
+        dp[1][0] = -prices[0];
+        for(int i = 1; i < prices.length; i++){
+            dp[0][i] = Math.max(dp[0][i-1], dp[1][i-1] + prices[i]);
+            dp[1][i] = Math.max(dp[1][i-1], -prices[i]);
+        }
+        return dp[0][prices.length-1];
+    }
+}
+```
+
 
 
 ## BFS
@@ -1401,6 +1423,90 @@ class Solution {
                 matrix[i][j] = matrix[n - 1 - j][n - 1 - i];
                 matrix[n - 1 - j][n - 1 - i] = temp;
             }
+        }
+    }
+}
+```
+
+## 分治
+
+### 1.[排序链表](https://leetcode-cn.com/problems/sort-list/)
+
+给你链表的头结点 head ，请将其按 升序 排列并返回 排序后的链表 。
+
+进阶：你可以在 O(n log n) 时间复杂度和常数级空间复杂度下，对链表进行排序吗？
+
+```java
+class Solution {
+    public ListNode sortList(ListNode head) {
+        if(head == null || head.next == null) return head;
+
+        ListNode slow = head;
+        ListNode fast = head.next;
+
+        while(fast != null && fast.next != null){
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        ListNode mid = slow.next;
+        slow.next = null;
+
+        return merge(sortList(head), sortList(mid));
+    }
+
+    public ListNode merge(ListNode l1, ListNode l2){
+        ListNode dummy = new ListNode(0);
+        ListNode curr = dummy;
+        while(l1 != null && l2 != null){
+            if(l1.val <= l2.val){
+                curr.next = l1;
+                l1 = l1.next;
+            }else{
+                curr.next = l2;
+                l2 = l2.next;
+            }
+            curr = curr.next;
+        }
+        if(l1 != null) curr.next = l1;
+        if(l2 != null) curr.next = l2;
+
+        return dummy.next;
+    }
+}
+```
+
+### 2. [数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+
+在未排序的数组中找到第 **k** 个最大的元素。请注意，你需要找的是数组排序后的第 k 个最大的元素，而不是第 k 个不同的元素。
+
+```java
+class Solution {
+    int res = 0;
+
+    public int findKthLargest(int[] nums, int k) {
+        int target = nums.length - k;
+        quicksort(nums, target, 0, nums.length - 1);
+        return res;
+    }
+
+    public void quicksort(int[] nums, int target, int left, int right){
+        if(left > right) return;
+        int p = nums[left];
+        int l = left, r = right;
+        while(l < r){
+            while(l < r && nums[r] >= p) r--;
+            if(l < r) nums[l] = nums[r];
+            while(l < r && nums[l] <= p) l++;
+            if(l < r) nums[r] = nums[l];
+            if(l >= r) nums[l] = p;
+        }
+        if(l == target){
+            res = p;
+        }else if(l < target){
+            quicksort(nums, target, l + 1, right);
+        }else{
+            quicksort(nums, target, left, l - 1);
         }
     }
 }
