@@ -2257,3 +2257,24 @@ public abstract class AbstractQueuedSynchronizer
 
 #### 10.4 锁升级
 
+## 十四、JUC
+
+### 1. Atomic
+
+- 该包下主要是一些原子变量类，仅依赖于Unsafe，并且被其他模块所依赖。
+
+### 2. Locks
+
+- 该包下主要是关于锁及其相关类，仅依赖于Unsafe或内部依赖，并且被其他高级模块所依赖。由于LockSupport类底层逻辑简单且仅依赖Unsafe，同时为其他高级模块所依赖，所以需要先了解LockSupport类的运行原理，然后重点研究AbstractQueuedSynchronizer框架，理解独占锁和共享锁的实现原理，并清楚Condition如何与AbstractQueuedSynchronizer进行协作，最后很容易就能理解ReentrantLock是如何实现的。
+
+### 3. Collections
+
+- 该包会依赖Unsafe和前两个基础模块，并且模块内部各个容器间相互较为独立，所以没有固定的学习顺序，理解编程中常用的集合类原理即可：ConcurrentHashMap、CopyOnWriteArrayList、CopyOnWriteArraySet、ArrayBlockingQueue、LinkedBlockingQueue（阻塞队列在线程池中有使用，所以理解常用阻塞队列的特性很重要）。
+
+### 4. Executor
+
+- 这一部分的核心是线程池的运行原理，也是实际应用中较多的部分，会依赖于前几个模块。首先了解Callable、Future、RunnableFuture三个接口间的关系以及FutureTask的实现原理，然后研究如何创建ThreadPoolExecutor，如何运行一个任务，如何管理自身的线程，同时了解RejectedExecutionHandler的四种实现差异，最后，在实际应用中学习如何通过调整ThreadPoolExecutor的参数来优化线程池。
+
+### 5. Tools
+
+- 这一部分是以前面几个模块为基础的高级特性模块，实际应用的场景相对较少，主要应用在多线程间相互依赖执行结果场景，没有具体的学习顺序，最好CountDownLatch、CyclicBarrier、Semaphore、Exchanger、Executors都了解下，对后面学习Guava的框架有帮助。
