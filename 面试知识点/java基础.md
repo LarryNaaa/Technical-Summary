@@ -121,14 +121,67 @@
 - **晚期绑定**
   如果被调用的方法在编译期无法被确定下来，只能够在程序运行期根据实际的类型绑定相关的方法，这种绑定方式也就被称之为晚期绑定。
 
-## 11. Integer和int之间的转换
+## 11. Integer
 
 - **int到Integer：**
-
-  - int a=3; Integer A=new Integer(a);
+- int a=3; Integer A=new Integer(a);
   - Integer A=Integer.valueOf(a);
 - **Integer到int:**
   - Integer A=new Integer(5); int a=A.intValue();
+- int 和Integer在进行比较的时候，Integer会进行拆箱，转为int值与int进行比较。
+- Integer与Integer比较的时候，由于直接赋值的时候会进行自动的装箱，那么这里就需要注意两个问题，一个是-128<= x<=127的整数，将会直接缓存在IntegerCache中，那么当赋值在这个区间的时候，不会创建新的Integer对象，而是从缓存中获取已经创建好的Integer对象。二：当大于这个范围的时候，直接new Integer来创建Integer对象。
+- new Integer(1) 和Integer a = 1不同，前者会创建对象，存储在堆中，而后者因为在-128到127的范围内，不会创建新的对象，而是从IntegerCache中获取的。那么Integer a = 128, 大于该范围的话才会直接通过new Integer（128）创建对象，进行装箱。
+
+```java
+public class Main{
+    public static void main(String[] args){
+        Integer i = new Integer(128);
+        Integer i2 = 128;
+
+        System.out.println(i == i2);//false
+
+        Integer i3 = new Integer(127);
+        Integer i4 = 127;
+        System.out.println(i3 == i4);//false
+
+        Integer i5 = 128;
+        Integer i6 = 128;
+        System.out.println(i5 == i6);//false
+
+        Integer i7 = 127;
+        Integer i8 = 127;
+        System.out.println(i7 == i8);//true
+
+        Integer i9 = 127;
+        System.out.println(i9 == 127);//true
+
+        Integer i10 = 127;
+        int i11 = 127;
+        System.out.println(i9 == i11);//true
+    }
+}
+
+/**
+     * Returns an {@code Integer} instance representing the specified
+     * {@code int} value.  If a new {@code Integer} instance is not
+     * required, this method should generally be used in preference to
+     * the constructor {@link #Integer(int)}, as this method is likely
+     * to yield significantly better space and time performance by
+     * caching frequently requested values.
+     *
+     * This method will always cache values in the range -128 to 127,
+     * inclusive, and may cache other values outside of this range.
+     *
+     * @param  i an {@code int} value.
+     * @return an {@code Integer} instance representing {@code i}.
+     * @since  1.5
+     */
+    public static Integer valueOf(int i) {
+        if (i >= IntegerCache.low && i <= IntegerCache.high)
+            return IntegerCache.cache[i + (-IntegerCache.low)];
+        return new Integer(i);
+    }
+```
 
 ## 12. equals
 

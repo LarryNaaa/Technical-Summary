@@ -1971,21 +1971,90 @@ public class MyThreadPoolDemo {
 
 ![Thread_1](/Users/na/IdeaProjects/Technical summary/Image/Thread_1.png)
 
+- 当线程对象创建后，即进入新建状态，如：`Thread t = new MyThread();`
+
+- 当调用线程对象的`start()`方法时，线程即进入就绪状态。处于就绪状态的线程只是说明此线程已经做好准备，随时等待CPU调度执行，并不是说执行了`start()`方法就立即执行。
+
+- 当CPU开始调度处于就绪状态的线程时，此时线程才得以真正执行，即进入到运行状态。
+
+- 处于运行状态中的线程由于某种原因，暂时放弃对CPU的使用权，停止执行，此时进入阻塞状态，直到其进入到就绪状态，才有机会再次被CPU调用以进入到运行状态。
+
+  **阻塞状态分类**
+
+  1. 等待阻塞：运行状态中的线程执行wait()方法，使本线程进入到等待阻塞状态；
+  2. 同步阻塞：线程在获取`synchronized`同步锁失败（因为锁被其它线程占用），它会进入到同步阻塞状态；
+  3. 其他阻塞：通过调用线程的sleep()或join()或发出I/O请求时，线程会进入到阻塞状态。当`sleep()`状态超时、`join()`等待线程终止或者超时、或者I/O处理完毕时，线程重新转入就绪状态。
+
+- 线程执行完毕或者是异常退出，该线程结束生命周期。
+
 ### 1.1 Object方法
 
 #### 1.1.1 wait方法
 
 - wait()方法的作用是将当前运行的线程挂起（即让其进入阻塞状态），直到notify或notifyAll方法来唤醒线程.
 - wait(long timeout)，该方法与wait()方法类似，唯一的区别就是在指定时间内，如果没有notify或notifAll方法的唤醒，也会自动唤醒。
-- wait方法的使用必须在同步的范围内，否则就会抛出IllegalMonitorStateException异常，wait方法的作用就是阻塞当前线程等待notify/notifyAll方法的唤醒，或等待超时后自动唤醒。
 - 调用wait方法后，线程是会释放对monitor对象的所有权的。
 - 一个通过wait方法阻塞的线程，必须同时满足以下两个条件才能被真正执行：
-  - 线程需要被唤醒（超时唤醒或调用notify/notifyll）。
-  - 线程唤醒后需要竞争到锁（monitor）。
+  - 线程需要被唤醒（超时唤醒或调用notify/notifyll）
+  - 线程唤醒后需要竞争到锁（monitor）
+- wait方法的使用必须在同步的范围内，否则就会抛出IllegalMonitorStateException异常， 要注意`wait()`方法会强迫线程先进行释放锁操作，所以在调用`wait()`时， 该线程必须已经获得锁，否则会抛出异常。但是由于`wait()`在`synchronized`的方法内部被执行， 锁一定已经获得， 就不会抛出异常了。
 
 #### 1.1.2 notify/notifyAll方法
 
 - notify和notifyAll的区别在于前者只能唤醒monitor上的一个线程，对其他线程没有影响，而notifyAll则唤醒所有的线程
+- notify和notifyAll方法的使用必须在同步的范围内，需要找到monitor对象获取到这个对象的锁，然后到这个对象的等待队列中去唤醒一个线程。
+
+#### 1.1.3 wait、notify、notifyAll与synchronized一起使用的原因
+
+-  Lost Wake-Up Problem：
+
+```java
+class BlockingQueue {
+    Queue<String> buffer = new LinkedList<String>();
+
+    public void give(String data) {
+        buffer.add(data);
+        notify();                   // 往队列里添加的时候notify，因为可能有人在等着take
+    }
+
+    public String take() throws InterruptedException {
+        while (buffer.isEmpty())    // 用while，防止spurious wakeups（虚假唤醒）
+            wait(); // 当buffer是空的时候就等着别人give
+        return buffer.remove();
+    }
+}
+```
+
+- 这段代码并没有受 synchronized 保护，于是便有可能发生以下场景：
+  1. 首先，消费者线程调用 take 方法并判断 buffer.isEmpty 方法是否返回 true，若为 true 代表buffer是空的，则线程希望进入等待，但是在线程调用 wait 方法之前，就被调度器暂停了，所以此时还没来得及执行 wait 方法。
+  2. 此时生产者开始运行，执行了整个 give 方法，它往 buffer 中添加了数据，并执行了 notify 方法，但 notify 并没有任何效果，因为消费者线程的 wait 方法没来得及执行，所以没有线程在等待被唤醒。
+  3. 此时，刚才被调度器暂停的消费者线程回来继续执行 wait 方法并进入了等待。
+- 虽然刚才消费者判断了 buffer.isEmpty 条件，但真正执行 wait 方法时，之前的buffer.isEmpty 的结果已经过期了，不再符合最新的场景了，因为这里的“判断-执行”不是一个原子操作，它在中间被打断了，是线程不安全的。假设这时没有更多的生产者进行生产，消费者便有可能陷入无穷无尽的等待，因为它错过了刚才 give 方法内的 notify 的唤醒。
+- 我们看到正是因为 wait 方法所在的 take 方法没有被 synchronized 保护，所以它的 while 判断和 wait 方法无法构成原子操作，那么此时整个程序就很容易出错。
+
+```java
+class BlockingQueue {
+    Queue<String> buffer = new LinkedList<String>();
+
+    public void give(String data) {
+        synchronized(this){
+          buffer.add(data);
+          notify();                   // 往队列里添加的时候notify，因为可能有人在等着take
+        }
+    }
+
+    public String take() throws InterruptedException {
+        synchronized(this){
+          while (buffer.isEmpty())    // 用while，防止spurious wakeups（虚假唤醒），这样即便被虚假唤醒了，也会再次检查while里面的条件，如果不满足条件，就会继续wait，也就消除了虚假唤醒的风险。
+            wait(); // 当buffer是空的时候就等着别人give
+        }
+        return buffer.remove();
+    }
+}
+```
+
+- 把代码改写成源码注释所要求的被 synchronized 保护的同步代码块的形式。这样就可以确保 notify 方法永远不会在 buffer.isEmpty 和 wait 方法之间被调用，提升了程序的安全性。
+- 另外，wait 方法会释放monitor锁，这也要求我们必须首先进入到 synchronized 内持有这把锁。
 - notify和notifyAll方法的使用必须在同步的范围内，需要找到monitor对象获取到这个对象的锁，然后到这个对象的等待队列中去唤醒一个线程。
 
 ### 1.2 Thread方法

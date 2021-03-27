@@ -74,19 +74,20 @@
 
 ## 6. Spring 中的 bean 生命周期?
 
-- Bean 容器找到配置文件中 Spring Bean 的定义。
-- Bean 容器利用 Java Reflection API 创建一个Bean的实例。
-- 如果涉及到一些属性值 利用 `set()`方法设置一些属性值。
-- 如果 Bean 实现了 `BeanNameAware` 接口，调用 `setBeanName()`方法，传入Bean的名字。
-- 如果 Bean 实现了 `BeanClassLoaderAware` 接口，调用 `setBeanClassLoader()`方法，传入 `ClassLoader`对象的实例。
-- 如果Bean实现了 `BeanFactoryAware` 接口，调用 `setBeanClassLoader()`方法，传入 `ClassLoade` r对象的实例。
-- 与上面的类似，如果实现了其他 `*.Aware`接口，就调用相应的方法。
+- Spring容器 从XML 文件中读取bean的定义，并实例化bean。
+- Spring根据bean的定义填充所有的属性。
+- 如果这个Bean实现了BeanNameAware接口，会调用它实现的setBeanName(String beanId)方法，此处传递的是Spring配置文件中Bean的ID
+- 如果这个Bean实现了BeanFactoryAware接口，会调用它实现的setBeanFactory()，传递的是Spring工厂本身（可以用这个方法获取到其他Bean）
+- 如果这个Bean实现了ApplicationContextAware接口，会调用setApplicationContext(ApplicationContext)方法，传入Spring上下文，该方式同样可以实现步骤4，但比4更好，以为ApplicationContext是BeanFactory的子接口，有更多的实现方法
 - 如果有和加载这个 Bean 的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessBeforeInitialization()` 方法
 - 如果Bean实现了`InitializingBean`接口，执行`afterPropertiesSet()`方法。
 - 如果 Bean 在配置文件中的定义包含 init-method 属性，执行指定的方法。
 - 如果有和加载这个 Bean的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessAfterInitialization()` 方法
+- 经过以上的工作后，Bean将一直驻留在应用上下文中给应用使用，直到应用上下文被销毁
 - 当要销毁 Bean 的时候，如果 Bean 实现了 `DisposableBean` 接口，执行 `destroy()` 方法。
 - 当要销毁 Bean 的时候，如果 Bean 在配置文件中的定义包含 destroy-method 属性，执行指定的方法。
+
+![Spring_5](https://upload-images.jianshu.io/upload_images/18992122-3c6aed76b93108f2.png?imageMogr2/auto-orient/strip|imageView2/2/format/webp)
 
 ## 7. 说说自己对于 Spring MVC 了解?
 
@@ -226,21 +227,27 @@ public class B {
 
 ### 16.3 Spring如何解决的循环依赖？
 
-Spring通过三级缓存解决了循环依赖，其中一级缓存为单例池（`singletonObjects`）,二级缓存为早期曝光对象`earlySingletonObjects`，三级缓存为早期曝光对象工厂（`singletonFactories`）。
+- **Spring** 是利用了 **三级缓存** 来解决循环依赖的，其实现本质是通过提前暴露已经实例化但尚未初始化的 `bean` 来完成的。
+- 这三级缓存分别指：
+  - singletonFactories ：第三级缓存，存的是`Bean工厂对象`，用来生成`半成品的Bean`并放入到二级缓存中。用以解决循环依赖。
+  - earlySingletonObjects ：第二级缓存，存放`半成品的Bean`，`半成品的Bean`是已创建对象，但是未注入属性和初始化。用以解决循环依赖。
+  - singletonObjects：第一级缓存，存放初始化完成的Bean。
 
-当A、B两个类发生循环引用时，在A完成实例化后，就使用实例化后的对象去创建一个对象工厂，并添加到三级缓存中，如果A被AOP代理，那么通过这个工厂获取到的就是A代理后的对象，如果A没有被AOP代理，那么这个工厂获取到的就是A实例化的对象。
-
-当A进行属性注入时，会去创建B，同时B又依赖了A，所以创建B的同时又会去调用getBean(a)来获取需要的依赖，此时的getBean(a)会从缓存中获取：
-
-第一步，先获取到三级缓存中的工厂；
-
-第二步，调用对象工工厂的getObject方法来获取到对应的对象，得到这个对象后将其注入到B中。紧接着B会走完它的生命周期流程，包括初始化、后置处理器等。
-
-当B创建完后，会将B再注入到A中，此时A再完成它的整个生命周期。
+- 让我们来分析一下“A的某个field或者setter依赖了B的实例对象，同时B的某个field或者setter依赖了A的实例对象”这种循环依赖的情况：
+  - A完成实例化，进入singletonFactories中
+  - A在注入属性时，发现依赖B
+  - B完成实例化，进入singletonFactories中
+  - B在注入属性时，发现依赖A，从singletonFactories中发现A，完成注入，A从singletonFactories移除并进入到earlySingletonObjects中，B从singletonFactories移除并进入singletonObjects中
+  - A在singletonObjects中发现B，完成注入，A从earlySingletonObjects移除并进入singletonObjects中
+  - A和B均完成实例化和初始化，且A和B获取的都是对方的引用
+- Spring不能解决“A的构造方法中依赖了B的实例对象，同时B的构造方法中依赖了A的实例对象”这类问题了！因为加入singletonFactories三级缓存的前提是执行了构造器，所以构造器的循环依赖没法解决。因为A中构造器注入了B，那么A在关键的方法addSingletonFactory()之前就去初始化了B，导致三级缓存中根本没有A，所以会发生死循环，Spring发现之后就抛出异常了。
 
 ### 16.4 为什么要使用三级缓存呢？二级缓存能解决循环依赖吗？
 
-如果要使用二级缓存解决循环依赖，意味着所有Bean在实例化后就要完成AOP代理，这样违背了Spring设计的原则，Spring在设计之初就是通过`AnnotationAwareAspectJAutoProxyCreator`这个后置处理器来在Bean生命周期的最后一步来完成AOP代理，而不是在实例化后就立马进行AOP代理。
+- 所以如果没有AOP的话确实可以两级缓存就可以解决循环依赖的问题，如果加上AOP，两级缓存是无法解决的，不可能每次执行singleFactory.getObject()方法都给我产生一个新的代理对象，所以还要借助另外一个缓存来保存产生的代理对象。
+- 因为AService是单例的，每次执行singleFactory.getObject()方法又会产生新的代理对象，假设这里只有一级和三级缓存的话，我每次从三级缓存中拿到singleFactory对象，执行getObject()方法又会产生新的代理对象，这是不行的，因为AService是单例的，所有这里我们要借助二级缓存来解决这个问题，将执行了singleFactory.getObject()产生的对象放到二级缓存中去，后面去二级缓存中拿，没必要再执行一遍singletonFactory.getObject()方法再产生一个新的代理对象，保证始终只有一个代理对象。
+
+![Spring_4](https://upload-images.jianshu.io/upload_images/18992122-bac2b241258060e7.png?imageMogr2/auto-orient/strip|imageView2/2/format/webp)
 
 ## 17. @ControllerAdvice全局异常处理
 
