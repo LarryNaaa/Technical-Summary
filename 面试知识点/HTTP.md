@@ -368,6 +368,17 @@ TCP 会精准记录哪些数据发送了，哪些数据被对方接收了，哪�
   - 服务端需要保存sessionid与客户端传来的sessionid做对比，当服务器为集群多机的情况下，需要复制sessionid，在多台集群机器之间共享
   - 如果需要单点登入，则须将sessionid存入redis等外部存储保证每台机器每个系统都能访问到，如果外部存储服务宕机，则单点登入失效
 
+### 17.3 cookie和session区别
+
+- cookie数据存放在客户的浏览器上，session数据放在服务器上
+- cookie不是很安全，别人可以分析存放在本地的cookie并进行cookie欺骗，考虑到安全应当使用session
+- session会在一定时间内保存在服务器上，当访问增多，会比较占用你服务器的性能，考虑到减轻服务器性能方面，应当使用cookie
+- 单个cookie保存的数据不能超过4K，很多浏览器都限制一个站点最多保存20个cookie
+- 建议将登录信息等重要信息存放为session，其他信息如果需要保留，可以放在cookie中
+- session保存在服务器，客户端不知道其中的信心；cookie保存在客户端，服务器能够知道其中的信息
+- session中保存的是对象，cookie中保存的是字符串
+- session不能区分路径，同一个用户在访问一个网站期间，所有的session在任何一个地方都可以访问到，而cookie中如果设置了路径参数，那么同一个网站中不同路径下的cookie互相是访问不到的
+
 ### 17.4 **Token**
 
 - **访问资源接口（API）时所需要的资源凭证**
@@ -497,11 +508,6 @@ TCP 会精准记录哪些数据发送了，哪些数据被对方接收了，哪�
 - 怎么强制将某个jwt失效？无法做到类似踢出某个用户的动作
   - 使用JWT的方式就是存在这种问题、无法解决。因为数据都不存储在服务端。一旦颁发token只有等待失效。
 
-#### 17.6.6 续签问题
-
-- 每次请求刷新 jwt
-- 只要快要过期的时候刷新 jwt
-
 ### 17.7 CSRF（Cross-Site Request Forgery，跨站点伪造请求）
 
 - 在一个浏览器中打开了两个标签页，其中一个页面通过窃取另一个页面的 cookie 来发送伪造的请求，因为 cookie 是随着请求自动发送到服务端的。
@@ -600,6 +606,15 @@ TCP 会精准记录哪些数据发送了，哪些数据被对方接收了，哪�
   - 关闭浏览器sessionStorage 失效；
   - 页面刷新不会消除数据；
   - 只有在当前页面打开的链接，才可以访sessionStorage的数据，使用window.open打开页面和改变localtion.href方式都可以获 取到sessionStorage内部的数据;
+
+#### 17.9.3 **localStorage，sessionStorage和cookie的区别**
+
+- cookie数据始终在同源的http请求中携带（即使不需要），即cookie在浏览器和服务器间来回传递，而sessionStorage和localStorage不会自动把数据发送给服务器，仅在本地保存。cookie数据还有路径（path）的概念，可以限制cookie只属于某个路径下
+- 存储大小限制也不同，cookie数据不能超过4K，同时因为每次http请求都会携带cookie、所以cookie只适合保存很小的数据，如会话标识。sessionStorage和localStorage虽然也有存储大小的限制，但比cookie大得多，可以达到5M或更大
+- 数据有效期不同，sessionStorage：仅在当前浏览器窗口关闭之前有效；localStorage：始终有效，窗口或浏览器关闭也一直保存，因此用作持久数据；cookie：只在设置的cookie过期时间之前有效，即使窗口关闭或浏览器关闭
+- 作用域不同，sessionStorage不在不同的浏览器窗口中共享，即使是同一个页面；localstorage在所有同源窗口中都是共享的；cookie也是在所有同源窗口中都是共享的
+- web Storage支持事件通知机制，可以将数据更新的通知发送给监听者
+- web Storage的api接口使用更方便
 
 ## 18. Http1.0 和HTTP1.1 和 Http2.x 的区别
 
