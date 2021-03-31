@@ -291,3 +291,62 @@ public class B {
 
 - 在ThreadLocal 对象里，将资源对象绑定或移出当前线程对应的 resources 来实现的。
 - 根据数据源获取当前的Connection，并在resource中移除该Connection。之后会将该Connection存储到TransactionStatus对象中。在事务提交或者回滚后，会将TransactionStatus 中缓存的Connection重新绑定到resource中。
+
+## 19. SpringBoot 启动流程
+
+- 引入相关`Starters`和相关依赖后，再编写一个启动类，然后在这个启动类标上`@SpringBootApplication`注解，在`main`函数中调用`SpringApplication.run(MainApplication.class, args);`
+
+```java
+@SpringBootApplication
+public class MainApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MainApplication.class, args);
+    }
+}
+```
+
+- 通过 `SpringFactoriesLoader` 加载 `META-INF/spring.factories` 文件，获取并创建 `SpringApplicationRunListener` 对象
+
+  然后由 `SpringApplicationRunListener` 来发出 starting 消息
+
+  创建参数，并配置当前 SpringBoot 应用将要使用的 Environment
+
+  完成之后，依然由 `SpringApplicationRunListener` 来发出 environmentPrepared 消息
+
+  创建 `ApplicationContext`
+
+  初始化 `ApplicationContext`，并设置 Environment，加载相关配置等
+
+  由 `SpringApplicationRunListener` 来发出 `contextPrepared` 消息，告知SpringBoot 应用使用的 `ApplicationContext` 已准备OK
+
+  将各种 beans 装载入 `ApplicationContext`，继续由 `SpringApplicationRunListener` 来发出 contextLoaded 消息，告知 SpringBoot 应用使用的 `ApplicationContext` 已装填OK
+
+  refresh ApplicationContext，完成IoC容器可用的最后一步
+
+  由 `SpringApplicationRunListener` 来发出 started 消息
+
+  完成最终的程序的启动
+
+  由 `SpringApplicationRunListener` 来发出 running 消息，告知程序已运行起来了
+
+- 从`spring.factories`配置文件中**加载`EventPublishingRunListener`对象**，该对象拥有`SimpleApplicationEventMulticaster`属性，即在SpringBoot启动过程的不同阶段用来发射内置的生命周期事件;
+
+- **准备环境变量**，包括系统变量，环境变量，命令行参数，默认变量，`servlet`相关配置变量，随机值以及配置文件（比如`application.properties`）等;
+
+- 控制台**打印SpringBoot的`bannner`标志**；
+
+- **根据不同类型环境创建不同类型的`applicationcontext`容器**，因为这里是`servlet`环境，所以创建的是`AnnotationConfigServletWebServerApplicationContext`容器对象；
+
+- 从`spring.factories`配置文件中**加载`FailureAnalyzers`对象**,用来报告SpringBoot启动过程中的异常；
+
+- **为刚创建的容器对象做一些初始化工作**，准备一些容器属性值等，对`ApplicationContext`应用一些相关的后置处理和调用各个`ApplicationContextInitializer`的初始化方法来执行一些初始化逻辑等；
+
+- **刷新容器**，这一步至关重要。比如调用`bean factory`的后置处理器，注册`BeanPostProcessor`后置处理器，初始化事件广播器且广播事件，初始化剩下的单例`bean`和SpringBoot创建内嵌的`Tomcat`服务器等等重要且复杂的逻辑都在这里实现，主要步骤可见代码的注释，关于这里的逻辑会在以后的spring源码分析专题详细分析；
+
+- **执行刷新容器后的后置处理逻辑**，注意这里为空方法；
+
+- **调用`ApplicationRunner`和`CommandLineRunner`的run方法**，我们实现这两个接口可以在spring容器启动后需要的一些东西比如加载一些业务数据等;
+
+- **报告启动异常**，即若启动过程中抛出异常，此时用`FailureAnalyzers`来报告异常;
+
+- 最终**返回容器对象**，这里调用方法没有声明对象来接收。
