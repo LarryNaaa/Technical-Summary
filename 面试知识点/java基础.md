@@ -249,21 +249,29 @@ public class Main{
     }
 ```
 
-## 12. equals
+## 12. hashCode（）和equals（）方法
 
 - 判断两个对象在逻辑上是否相等，如根据类的成员变量来判断两个类的实例是否相等，而继承Object中的equals方法只能判断两个引用变量是否是同一个对象。这样我们往往需要重写equals()方法。
 
-- 1、自反性：对于任何非空引用x，x.equals(x)应该返回true。
-  2、对称性：对于任何引用x和y，如果x.equals(y)返回true，那么y.equals(x)也应该返回true。
-  3、传递性：对于任何引用x、y和z，如果x.equals(y)返回true，y.equals(z)返回true，那么x.equals(z)也应该返回true。
-  4、一致性：如果x和y引用的对象没有发生变化，那么反复调用x.equals(y)应该返回同样的结果。
-  5、非空性：对于任意非空引用x，x.equals(null)应该返回false。
-
+- equals的设计原则：
+  
+  - 1、自反性：对于任何非空引用x，x.equals(x)应该返回true。
+  - 2、对称性：对于任何引用x和y，如果x.equals(y)返回true，那么y.equals(x)也应该返回true。
+  - 3、传递性：对于任何引用x、y和z，如果x.equals(y)返回true，y.equals(z)返回true，那么x.equals(z)也应该返回true。
+  - 4、一致性：如果x和y引用的对象没有发生变化，那么反复调用x.equals(y)应该返回同样的结果。
+  - 5、非空性：对于任意非空引用x，x.equals(null)应该返回false。
+  
 - 重写equals时总是要重写hashCode
 
   > **A.equals(B) 则必须使得 A.hashCode() == B.hashCode();**
   >
   > **如果 A.hashCode() ！= B.hashCode() 则 A.equals(B) 一定为false。**
+  
+- hashCode的设计原则：
+
+  - 在一个Java应用程序的执行期间，如果一个对象提供给equals做比较的信息没有被修改的话，该对象多次调用hashCode（）方法，该方法必须始终如一返回同一个整数。
+  - 如果两个对象根据equals（Object）方法是替代的，那么调用各自各自的hashCode（）方法必须产生同一个整数结果。
+  - 并不要求根据equals（java.lang.Object）方法不相似的两个对象，调用两个各自的hashCode（）方法必须产生不同的integer结果。然而，程序员应该考虑到不同的对象产生不同的integer结果，有可能会提高哈希表的性能。
 
 ```java
 public boolean equals(Object another) {
@@ -295,6 +303,12 @@ public int hashCode() {
         return result;
     }
 ```
+
+- 为什么是31，而不是32，33等其他数字呢？
+  - 31是一个素数，素数作用就是如果我用一个数字来乘以这个素数，那么最终的出来的结果只能被素数本身和被乘数还有1来整除。
+  - 31由可以`i*31 == (i<<5)-1`来表示，现在很多虚拟机里面都有做相关优化。
+  - 因为如果计算出来的hash地址偏移，所谓的“冲突”就越少，查找起来效率也会提高。
+  - 并且31只占用5bits，相乘造成数据重叠的概率过多。
 
 ## 13. Object类下面有几种方法呢
 
@@ -537,3 +551,8 @@ public boolean isOdd(int i) {
 ```
 
 - 负数的二进制：负数我们用的补码，原码取反变反码，反码加1变成补码。比如1 是0000 0001，反码:1111 1110，补码:1111 1111，-1为1111 1111。
+
+## 21. Object 0 = new Object()在内存中占多少个字节？
+
+对象头占12个字节(markword占8个，class pointer占4个)，实例数据如果没有成员变量占0个字节(如果有另算，如int占4个字节，引用类型String占4个字节)，对其填充占4个(确保对象的整体字节数是8的倍数)，引用是压缩class pointer占4个字节(JVM自动开启，如果关闭则占8个字节)
+
