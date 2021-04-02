@@ -54,8 +54,7 @@
   - LBCC：事务读不阻塞其他事务读和写，事务写阻塞其他事务写但不阻塞读；通过对写操作加 “持续X锁”，对读操作不加锁 实现；
 
 - **提交读（READ COMMITTED）**
-
-  - 事务中只能看到已提交的修改，不会出现脏读现象，但是会出现幻读，不可重复读。
+- 事务中只能看到已提交的修改，不会出现脏读现象，但是会出现幻读，不可重复读。
 - 大多数数据库的默认隔离级别都是 RC，但是 MySQL InnoDb 默认是 RR
   - LBCC：事务读不会阻塞其他事务读和写，事务写会阻塞其他事务读和写；通过对写操作加 “持续X锁”，对读操作加 “临时S锁” 实现，这里的 S 锁是一个临时 S 锁，表示事务读完之后立即释放该锁，可以让其他事务继续写；不会出现脏读；
 -  MySQL会在SQL语句开始执行时创建一个视图
@@ -989,20 +988,6 @@ WHERE A.Key IS NULL OR B.Key IS NULL
 - 隐式类型转换也用不上索引，select * from t where id = 1，如果id是字符类型的，1是数字类型的，explain会发现走了全表扫描，根本用不上索引。因为MySQL底层会对你的比较进行转换，相当于加了 CAST( id AS signed int) 这样的一个函数，上面说过函数会导致走不上索引。
 - 隐式字符编码转换也用不上索引，如果两个表的字符集不一样，一个是utf8mb4，一个是utf8，因为utf8mb4是utf8的超集，所以一旦两个字符比较，就会转换为utf8mb4再比较。转换的过程相当于加了CONVERT(id USING utf8mb4)函数，那又回到上面的问题了，用到函数就用不上索引了。
 
-### 14.10 flush
-
-- redo log大家都知道，也就是我们对数据库操作的日志，他是在内存中的，每次操作一旦写了redo log就会立马返回结果，但是这个redo log总会找个时间去更新到磁盘，这个操作就是flush。
-- 在更新之前，当内存数据页跟磁盘数据页内容不一致的时候，我们称这个内存页为“脏页”。
-- 内存数据写入到磁盘后，内存和磁盘上的数据页的内容就一致了，称为“干净页“。
-- **那什么时候会flush呢？**
-  
-  - InnoDB的redo log写满了，这时候系统会停止所有更新操作，把checkpoint往前推进，redo log留出空间可以继续写。
-  - 系统内存不足，当需要新的内存页，而内存不够用的时候，就要淘汰一些数据页，空出内存给别的数据页使用。如果淘汰的是“脏页”，就要先将脏页写到磁盘。
-  - MySQL认为系统“空闲”的时候，只要有机会就刷一点“脏页”。
-  - MySQL正常关闭，这时候，MySQL会把内存的脏页都flush到磁盘上，这样下次MySQL启动的时候，就可以直接从磁盘上读数据，启动速度会很快。
-  
-  ![MySQL_18](/Users/na/IdeaProjects/Technical summary/Image/MySQL_18.webp)
-
 ## 15. MySQL底层
 
 ### 15.1 基础框架
@@ -1092,9 +1077,9 @@ WHERE A.Key IS NULL OR B.Key IS NULL
 
   count(1)跟count(主键)一样,只扫描主键。count(*)跟count(非主键)一样,扫描整个表。明显前者更快一些。
 
-## 18. **主从复制**
+## 18. 索引失效的场景有哪些？索引何时会失效？
 
-
+https://mp.weixin.qq.com/s/bfCDkNKKayXBiNX5vuD4nw
 
 ## 19. 模糊匹配like %%的优化
 
@@ -1215,7 +1200,70 @@ mysql会一直向右匹配直到遇到范围查询(>、<、between、like)就停
   - 如果经常有合并表的操作，就可能会出现主键重复的情况
   - 很难处理分布式存储的数据表。数据量特别大时，会导致查询数据库操作变慢。此时需要进行数据库的水平拆分，划分到不同的数据库中，那么当添加数据时，每个表都会自增长，导致主键冲突。
 
-### 22.3 附录
+### 22.3 snowflake 算法
 
-- **聚簇索引的数据的物理存放顺序与索引顺序是一致的**，**只要索引是相邻的，那么对应的数据一定也是相邻地存放在磁盘上的。主键不是自增长id，会不断的调整数据的物理地址，分页造成较高的性能消耗。而自增长id只需要一页页写下去，索引相对紧凑，磁盘碎片少，效率相对较高。**
-- **整数通常是标识列的最好选择，因为它很快且可以使用AUTO_INCREAMENT,如果可能，应该避免使用字符串类型作为标识列，因为很消耗空间，且通常比数字类型慢。**
+- snowflake 算法是 twitter 开源的分布式 id 生成算法，采用 Scala 语言实现，是把一个 64 位的 long 型的 id，1 个 bit 是不用的，用其中的 41 bit 作为毫秒数，用 10 bit 作为工作机器 id，12 bit 作为序列号。
+  - 1 bit：不用，为啥呢？因为二进制里第一个 bit 为如果是 1，那么都是负数，但是我们生成的 id 都是正数，所以第一个 bit 统一都是 0。
+  - 41 bit：表示的是时间戳，单位是毫秒。41 bit 可以表示的数字多达 `2^41 - 1`，也就是可以标识 `2^41 - 1` 个毫秒值，换算成年就是表示69年的时间。
+  - 10 bit：记录工作机器 id，代表的是这个服务最多可以部署在 2^10台机器上哪，也就是1024台机器。但是 10 bit 里 5 个 bit 代表机房 id，5 个 bit 代表机器 id。意思就是最多代表 `2^5`个机房（32个机房），每个机房里可以代表 `2^5` 个机器（32台机器）。
+  - 12 bit：这个是用来记录同一个毫秒内产生的不同 id，12 bit 可以代表的最大正整数是 `2^12 - 1 = 4096`，也就是说可以用这个 12 bit 代表的数字来区分**同一个毫秒内**的 4096 个不同的 id。
+
+## 23. 分表
+
+### 23.1 MySQL表大小限制
+
+- MySQL一般安装部署在Linux操作系统上（例如CentOS 7.4），默认都是InnoDB存储引擎，且开启了独立表空间选项（参数`innodb_file_per_table=1`），此时创建一个表 orders 就会自动生成一个数据文件 orders.ibd，文件大小是受操作系统 Block 大小限制的，下面是 ext3 文件系统块大小和最大尺寸的对应关系。
+
+| 操作系统块大小 | 最大文件尺寸 | 最大文件系统尺寸 |
+| :------------- | :----------- | :--------------- |
+| 1KB            | 16GB         | 2TB              |
+| 2KB            | 256GB        | 8TB              |
+| 4KB            | 2TB          | 16TB             |
+| 8KB            | 16TB         | 32TB             |
+
+- **查看操作系统页大小及块大小**
+
+![](https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUnkHyTn0TOBkJ5Eicvc8Z2EhjCib9rgpDYDhqBzxHZ7PBOgozplKom8mxLZCPG2T4ttuzOXsF7RUTAw/640?wx_fmt=jpeg&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+- 这就说明 MySQL 单表的最大尺寸不能超过 2TB，我们简单来算一下，假设一个表的平均行长度为32KB（InnoDB最大行长度限制65536字节，64KB），那么他最大能存储多少行数据？`4 x 1024 x 1024 x 1024 / 32 = 134217728`大约 1.4 亿不到。
+
+### 23.2 分表方案
+
+- 一个表大小是满足如下公式的：**TABLE_SIZE = AVG_ROW_SIZE  x  ROWS**，从这里可以知道表太大，要么是平均行长度太大，也就说表的字段太多，要么是表的记录数太多。这就产生两种不同的分表方案，**即切分字段（垂直分表）和切分记录（水平分表）** 。
+
+#### 23.2.1 垂直分表
+
+- 还是以订单表 orders 为例，按照字段进行拆分，这里面需要考虑一个问题，如何拆分字段才能表上的DML性能最大化，常规的方案是冷热分离（将使用频率高字段放到一张表里，剩下使用频繁低的字段放到另一张表里）。
+
+![](https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUnkHyTn0TOBkJ5Eicvc8Z2EhNU71zoPk9vmAcrYaBSFuia5HPGsdh5yJhWQGS5ic3rMu1pomk79jGqEA/640?wx_fmt=jpeg&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+- orders 表通过拆分之后，就变成了 orders01 和 orders02 两张表，在磁盘上就会存储两个数据文件 orders01.ibd 和 orders02.ibd，orders 表最大尺寸就是 4TB 。
+- 如果业务表中有必须的 Text 类型来存储数据，这时可以利用垂直拆分来减少表大小，将 text 字段拆分到子表中。这样将 text 类型拆分放到子表中之后，原表的平均行长度就变小了，就可以存储更多的数据了。
+
+![](https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUnkHyTn0TOBkJ5Eicvc8Z2Ehspx6IWI61pL1otUectqjFGMNOib7U7QsAsUPX8dOjmVS1kzT2AVqHuQ/640?wx_fmt=jpeg&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+#### 23.2.2 水平分表
+
+- 水平拆分表就是按照表中的记录进行分片，举个例子，目前订单表 orders 有 2000w 数据，根据业务的增长，估算一年之后会达到1亿，同时参考阿里云 RDS for MySQL 的最佳实践，单表不建议超过 500w，1亿数据分20个子表就够了。
+- **按照什么来拆分呢？主键id还是用户的user_id**，按主键ID拆分数据很均匀，通过ID查询 orders 的场景几乎没有，业务访问 orders 大部分场景都是根据 user_id来过滤的，而且 user_id 的唯一性又很高（一个 user_id 对应的 orders 表记录不多，选择性很好），按照 user_id 来作为 Sharding key能满足大部分业务场景，拆分之后每个子表数据也比较均匀。
+
+![](https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUnkHyTn0TOBkJ5Eicvc8Z2EhTHRBbhfEJvRIpgxKC4bceCIdyibHVH3QdVQJGMObg444W8w1p8hUeww/640?wx_fmt=jpeg&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+- 这样就将 orders 表拆分成20个子表，对应到InnoDB的存储上就是20个数据文件（orders_0.ibd，orders_1.ibd等），这时候执行SQL语句`select order_id, order_sn, source from **orders** where user_id = 1001`;就能很快的定位到要查找记录的位置是在orders_1，然后做查询重写，转化为SQL语句`select order_id, order_sn, source from **orders_01** where user_id = 1001`，这种查询重写功能很多中间件都已经实现了，常用的就是 sharding-sphere 或者 sharding-jdbc 都可以实现。
+
+#### 23.2.3 MySQL分区表
+
+- MySQL内部有没有分表的解决方案呢？其实是有的，可以考虑使用 MySQL 的 HASH 分区，常规的 hash 也是基于分区个数取模（%）运算的，跟上面的user_id % 20是一样的，来看一个例子。
+
+![](https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUnkHyTn0TOBkJ5Eicvc8Z2EhmqWnHWh8dwyh2AxaEquAhe67SOUponImOJcgzFJmspeibAenTC8oC8w/640?wx_fmt=jpeg&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+- 这样就创建了20个分区，对应磁盘上就是20个数据文件（orders#p#**p0**.ibd一直到orders#p#**p19**.ibd），来看一下SQL的执行过程。
+
+![](https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUnkHyTn0TOBkJ5Eicvc8Z2Ehe9k0FtGYE2CVw05dY7ibkQkGdmRtA9vcztuCpZ6eGNalVibXfiaFHIYiag/640?wx_fmt=jpeg&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+
+- 从执行计划可以看到，通过分区键user_id过滤，直接可以定位到数据所在的分区 p19（user_id =1019 % 20 = 19，所以在p19分区上），进而去访问p19对应的数据文件 orders#p#**p19**.ibd 即可获得数据。这种方案的好处就是 MySQL 内部实现 SQL 路由的功能，不用去改造业务代码。
+
+### 23.3 分库方案
+
+- MySQL 的高可用架构大多都是一主多从，所有写入操作都发生在 Master 上，随着业务的增长，数据量的增加，很多接口响应时间变得很长，经常出现 Timeout，而且通过升级 MySQL 实例配置已经无法解决问题了，这时候就要分库，通常有两种做法：**按业务拆库和按表分库**，下面就介绍这两种分库方案啦。
+

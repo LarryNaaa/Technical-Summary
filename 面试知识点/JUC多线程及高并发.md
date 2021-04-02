@@ -1,4 +1,4 @@
-## JUC多线程及高并发
+# JUC多线程及高并发
 
 [TOC]
 
@@ -1606,7 +1606,7 @@ private static final Object PRESENT = new Object();
    }
    ```
 
-### 八、线程池用过吗？ThreadPoolExecutor谈谈你的理解
+### 八、线程池
 
 #### 1、Callable接口的使用
 
@@ -1672,7 +1672,7 @@ class MyThread2 implements Callable<Integer> {
 - Callable有返回值
 - call方法会抛出异常
 
-#### 2、为什么使用线程池
+#### 2、线程池的优点
 
 1. 线程池做的工作主要是控制运行的线程的数量，处理过程中将任务放入队列，然后在线程创建后启动给这些任务，如果线程数量超过了最大数量，超出数量的线程排队等候，等其他线程执行完毕，再从队列中取出任务来执行
 
@@ -1735,7 +1735,7 @@ class MyThread2 implements Callable<Integer> {
 
 ![Thread_10](/Users/na/IdeaProjects/Technical summary/Image/Thread_10.png)
 
-#### 4、线程池的几个重要参数介绍
+#### 4、线程池的重要参数
 
 ```
 public ThreadPoolExecutor(int corePoolSize,
