@@ -2095,7 +2095,8 @@ repl_backlog_histlen:0
 
 哨兵的核心配置
 
-```
+```bash
+# sentinel monitor 被监控名称 host port 数字1
 sentinel monitor mymaster 127.0.0.1 6379 1
 ```
 
@@ -2158,9 +2159,9 @@ sentinel auth-pass mymaster MySUPER--secret-0123passw0rd
 sentinel down-after-milliseconds mymaster 30000
  
 # 这个配置项指定了在发生failover主备切换时最多可以有多少个slave同时对新的master进行 同步，
-这个数字越小，完成failover所需的时间就越长，
-但是如果这个数字越大，就意味着越 多的slave因为replication而不可用。
-可以通过将这个值设为 1 来保证每次只有一个slave 处于不能处理命令请求的状态。
+# 这个数字越小，完成failover所需的时间就越长，
+# 但是如果这个数字越大，就意味着越 多的slave因为replication而不可用。
+# 可以通过将这个值设为 1 来保证每次只有一个slave 处于不能处理命令请求的状态。
 # sentinel parallel-syncs <master-name> <numslaves>
 sentinel parallel-syncs mymaster 1
  
@@ -2227,7 +2228,7 @@ sentinel client-reconfig-script mymaster /var/redis/reconfig.sh
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20200513215836317.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80Mzg3MzIyNw==,size_16,color_FFFFFF,t_70)
 
- 这样做有一个缺陷：存储空对象也需要空间，大量的空对象会耗费一定的空间，存储效率并不高。解决这个缺陷的方式就是设置较短过期时间
+这样做有一个缺陷：存储空对象也需要空间，大量的空对象会耗费一定的空间，存储效率并不高。解决这个缺陷的方式就是设置较短过期时间
 
 即使对空值设置了过期时间，还是会存在缓存层和存储层的数据会有一段时间窗口的不一致，这对于需要保持一致性的业务会有影响。
 
@@ -2261,7 +2262,7 @@ sentinel client-reconfig-script mymaster /var/redis/reconfig.sh
 
 - redis高可用
 
-  这个思想的含义是，既然redis有可能挂掉，那我多增设几台redis，这样一台挂掉之后其他的还可以继续工作，其实就是搭建的集群
+  这个思想的含义是，既然redis有可能挂掉，那我多增设几台redis，这样一台挂掉之后其他的还可以继续工作，其实就是搭建的集群。(异地多活)
 
 - 限流降级
 
