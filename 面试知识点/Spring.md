@@ -4,34 +4,40 @@
 
 ## 1. IoC - Inversion of Control
 
+-  控制反转IoC(Inversion of Control)，是一种设计思想，DI(依赖注入)是实现IoC的一种方法。没有IoC的程序中 , 我们使用面向对象编程 , 对象的创建与对象间的依赖关系完全硬编码在程序中，对象的创建由程序自己控制，控制反转后将对象的创建转移给第三方，个人认为所谓控制反转就是：获得依赖对象的方式反转了。
 -  **IoC将原本在程序中手动创建对象的控制权，交由Spring框架来管理。** **IoC 容器是 Spring 用来实现 IoC 的载体， IoC 容器实际上就是个Map（bean name，bean object）,Map 中存放的是各种对象。**
 -  **IOC 容器就像是一个工厂一样，当我们需要创建一个对象的时候，只需要配置好配置文件/注解即可，完全不用考虑对象是如何被创建出来的。**
 - **Spring IoC的初始化过程：**
-
-  - 1. **Resource**定位并加载配置文件
-
-    2. 解析配置文件中的bean节点，一个bean节点对应一个BeanDefinition对象（这个对象会保存我们在Bean节点内配置的所有内容，比如id，全限定类名，依赖值等等）
-
-    3. BeanDefinition集合生成（BeanDefinition对象内包含生成这个对象所需要的所有参数）所有非懒加载的单例对象，其余的会在使用的时候再实例化对应的对象，注册到**BeanFactory**的beanDefinitionMap
+- 1. **Resource**定位并加载配置文件
+  
+  2. 解析配置文件中的bean节点，一个bean节点对应一个BeanDefinition对象（这个对象会保存我们在Bean节点内配置的所有内容，比如id，全限定类名，依赖值等等）
+  
+  3. BeanDefinition集合生成（BeanDefinition对象内包含生成这个对象所需要的所有参数）所有非懒加载的单例对象，其余的会在使用的时候再实例化对应的对象，注册到**BeanFactory**的beanDefinitionMap
 
 ![Spring_1](/Users/na/IdeaProjects/Technical summary/Image/Spring_1.png)
 
   - IOC其实就是工厂模式+Java的反射机制
-  - spring bean 注入过程：
-    - 1） 在某一时刻Spring调用了Bean工厂的getBean(beanName)方法。beanName可能是simpleController,或者simpleService，simpleDao，顺序没关系（因为后面会有依赖关系的处理）。我们假设simpleController吧
-    - 2）getBean方法首先会调用Bean工厂中定义的getSingleton(beanName)方法，来判断是否存在该名字的bean单例，如果存在则返回，方法调用结束（spring默认是单例，这样可以提高效率）
-    - 3) 否则，Spring会检查是否存在父工厂，如果有则返回，方法调用结束
-    - 4) 否则，Spring会检查bean定义（BeanDefinition实例，用来描述Bean结果，component-scan扫描后，就是将beanDefinition实例放入Bean工厂，此时还没有被实例化）是否有依赖关系，如果有，执行1）步，获取依赖的bean实例
-    - 5） 否则，Spring会尝试创建这个bean实例，创建实例前，Spring会检查调用的构造器，并实例化该Bean，（通过Constructor.newInstance(args)进行实例化）
-    - 6) 实例化完成后，Spring会调用Bean工厂的populateBean方法来填充bean实例的属性，也就是自动装配。populateBean方法便是调用了BeanPostProcessor实例来完成属性元素的自动装配工作
-    - 7）在元素装配过程中，Spring会检查被装配的属性是否存在自动装配的其他属性，然后递归调用getBean方法，知道所有@Autowired的元素都被装配完成。如在装配simpleController中的simpleService属性时，发现SimpleServiceImpl实例中存在@Autowired属性simpleDao,然后调用getBean(simpleDao)方法，同样会执行1）----7）整个过程。所有可以看成一个递归过程。
-    - 8）装配完成后，Bean工厂会将所有的bean实例都添加到工厂中来。
+  - **DI—Dependency Injection，即“依赖注入”**：**组件之间依赖关系**由容器在运行期决定，形象的说，即**由容器动态的将某个依赖关系注入到组件之中**。**依赖注入的目的并非为软件系统带来更多功能，而是为了提升组件重用的频率，并为系统搭建一个灵活、可扩展的平台。**通过依赖注入机制，我们只需要通过简单的配置，而无需任何代码就可指定目标需要的资源，完成自身的业务逻辑，而不需要关心具体的资源来自何处，由谁实现。
+  - Spring IoC 的容器构建流程
+
+![](https://pic2.zhimg.com/80/v2-0f3589f313ed34f47c4d8ed132e84925_720w.jpg)
 
 ## 2. Spring AOP
 
 - 将业务模块所共同调用的非业务逻辑（例如事务处理、日志管理、权限控制等）封装起来**，便于**减少重复代码**，**降低模块间的耦合度**，并**有利于未来的可拓展性和可维护性。
-- **Spring AOP就是基于动态代理的**，如果要代理的对象，实现了某个接口，那么Spring AOP会使用**JDK Proxy**，去创建代理对象，而对于没有实现接口的对象，Spring AOP会使用**Cglib** ，这时候Spring AOP会使用 **Cglib** 通过**继承目标对象产生代理子对象**，代理子对象中继承了目标对象的方法，并可以对该方法进行增强。
+
+- 本质是通过动态代理来实现的，主要有以下几个步骤：
+
+  1、获取增强器，例如被 Aspect 注解修饰的类。
+
+  2、在创建每一个 bean 时，会检查是否有增强器能应用于这个 bean，简单理解就是该 bean 是否在该增强器指定的 execution 表达式中。如果是，则将增强器作为拦截器参数，使用动态代理创建 bean 的代理对象实例。
+
+  3、当我们调用被增强过的 bean 时，就会走到代理类中，从而可以触发增强器，本质跟拦截器类似。
+
+- **Spring AOP就是基于动态代理的**，如果要代理的对象，实现了某个接口，那么Spring AOP会使用**JDK Proxy**，去创建代理对象，只能对实现了接口的类生成代理的原因是通过 JDK 动态代理生成的类已经继承了 Proxy 类，所以无法再使用继承的方式去对类实现代理；而对于没有实现接口的对象，Spring AOP会使用**Cglib** ，这时候Spring AOP会使用 **Cglib** 通过**继承目标对象产生代理子对象**，代理子对象中继承了目标对象的方法，并可以对该方法进行增强。
+
 - **Join Point(连接点)**：Java执行流中的每个方法调用可以看成是一个连接点。
+
 - **切入点(Point Cut)**：**从所有的连接点中挑选需要被切入的切入点。**
 
 ![Spring_2](/Users/na/IdeaProjects/Technical summary/Image/Spring_2.jpg)
@@ -148,6 +154,20 @@
 - **TransactionDefinition.ISOLATION_SERIALIZABLE:** 最高的隔离级别，完全服从ACID的隔离级别。所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，**该级别可以防止脏读、不可重复读以及幻读**。但是这将严重影响程序的性能。通常情况下也不会用到该级别。
 
 ## 13. Spring 事务中哪几种事务传播行为?
+
+- 1）REQUIRED：Spring 默认的事务传播级别，如果上下文中已经存在事务，那么就加入到事务中执行，如果当前上下文中不存在事务，则新建事务执行。
+
+  2）REQUIRES_NEW：每次都会新建一个事务，如果上下文中有事务，则将上下文的事务挂起，当新建事务执行完成以后，上下文事务再恢复执行。
+  
+  3）SUPPORTS：如果上下文存在事务，则加入到事务执行，如果没有事务，则使用非事务的方式执行。
+
+  4）MANDATORY：上下文中必须要存在事务，否则就会抛出异常。
+
+  5）NOT_SUPPORTED ：如果上下文中存在事务，则挂起事务，执行当前逻辑，结束后恢复上下文的事务。
+  
+  6）NEVER：上下文中不能存在事务，否则就会抛出异常。
+
+  7）NESTED：嵌套事务。如果上下文中存在事务，则嵌套事务执行，如果不存在事务，则新建事务。
 
 - **支持当前事务的情况：**
 
@@ -357,3 +377,70 @@ public class MainApplication {
 - SpringMVC是Spring基础之上的一个MVC框架，主要处理web开发的路径映射和视图渲染，属于Spring框架中WEB层开发的一部分；通过Dispatcher Servlet, ModelAndView 和 View Resolver，开发web应用变得很容易。主要针对的是网站应用程序或者服务开发——URL路由、Session、模板引擎、静态Web资源等等。
 - Spring配置复杂，繁琐，所以推出了Spring boot，约定优于配置，简化了spring的配置流程。集成了快速开发的Spring多个插件，同时自动过滤不需要配置的多余的插件，简化了项目的开发配置流程，一定程度上取消xml配置，是一套快速配置开发的脚手架，能快速开发单个微服务；SpringBoot框架相对于SpringMVC框架来说，更专注于开发微服务后台接口，不开发前端视图；
 - Spring Cloud构建于Spring Boot之上，是一个关注全局的服务治理框架。SpringCloud大部分的功能插件都是基于SpringBoot去实现的，SpringCloud关注于全局的微服务整合和管理，将多个SpringBoot单体微服务进行整合以及管理；SpringCloud依赖于SpringBoot开发，而SpringBoot可以独立开发；
+
+## 21. spring bean 注入过程
+
+- 1） 在某一时刻Spring调用了Bean工厂的getBean(beanName)方法。beanName可能是simpleController,或者simpleService，simpleDao，顺序没关系（因为后面会有依赖关系的处理）。我们假设simpleController吧
+- 2）getBean方法首先会调用Bean工厂中定义的getSingleton(beanName)方法，来判断是否存在该名字的bean单例，如果存在则返回，方法调用结束（spring默认是单例，这样可以提高效率）
+- 3) 否则，Spring会检查是否存在父工厂，如果有则返回，方法调用结束
+- 4) 否则，Spring会检查bean定义（BeanDefinition实例，用来描述Bean结果，component-scan扫描后，就是将beanDefinition实例放入Bean工厂，此时还没有被实例化）是否有依赖关系，如果有，执行1）步，获取依赖的bean实例
+- 5） 否则，Spring会尝试创建这个bean实例，创建实例前，Spring会检查调用的构造器，并实例化该Bean，（通过Constructor.newInstance(args)进行实例化）
+- 6) 实例化完成后，Spring会调用Bean工厂的populateBean方法来填充bean实例的属性，也就是自动装配。populateBean方法便是调用了BeanPostProcessor实例来完成属性元素的自动装配工作
+- 7）在元素装配过程中，Spring会检查被装配的属性是否存在自动装配的其他属性，然后递归调用getBean方法，知道所有@Autowired的元素都被装配完成。如在装配simpleController中的simpleService属性时，发现SimpleServiceImpl实例中存在@Autowired属性simpleDao,然后调用getBean(simpleDao)方法，同样会执行1）----7）整个过程。所有可以看成一个递归过程。
+- 8）装配完成后，Bean工厂会将所有的bean实例都添加到工厂中来。
+
+## 22. BeanFactory 和 FactoryBean 的区别
+
+- BeanFactory：Spring 容器最核心也是最基础的接口，本质是个工厂类，用于管理 bean 的工厂，最核心的功能是加载 bean，也就是 getBean 方法，通常我们不会直接使用该接口，而是使用其子接口。
+- FactoryBean：该接口以 bean 样式定义，但是它不是一种普通的 bean，它是个工厂 bean，实现该接口的类可以自己定义要创建的 bean 实例，只需要实现它的 getObject 方法即可。
+- FactoryBean 被广泛应用于 Java 相关的中间件中，如果你看过一些中间件的源码，一定会看到 FactoryBean 的身影。
+- 一般来说，都是通过 FactoryBean#getObject 来返回一个代理类，当我们触发调用时，会走到代理类中，从而可以在代理类中实现中间件的自定义逻辑，比如：RPC 最核心的几个功能，选址、建立连接、远程调用，还有一些自定义的监控、限流等等。
+
+## 23. Spring 事务的实现原理
+
+- Spring 事务的底层实现主要使用的技术：AOP（动态代理） + ThreadLocal + try/catch。
+
+  动态代理：基本所有要进行逻辑增强的地方都会用到动态代理，AOP 底层也是通过动态代理实现。
+
+  ThreadLocal：主要用于线程间的资源隔离，以此实现不同线程可以使用不同的数据源、隔离级别等等。
+
+  try/catch：最终是执行 commit 还是 rollback，是根据业务逻辑处理是否抛出异常来决定。
+
+- Spring 事务的核心逻辑伪代码如下：
+
+```java
+public void invokeWithinTransaction() {
+
+ // 1.事务资源准备
+
+ try {
+
+ // 2.业务逻辑处理，也就是调用被代理的方法
+
+    } catch (Exception e) {
+
+ // 3.出现异常，进行回滚并将异常抛出
+
+    } finally {
+
+ // 现场还原：还原旧的事务信息
+
+    }
+
+ // 4.正常执行，进行事务的提交
+
+ // 返回业务逻辑处理结果
+
+}
+```
+
+![](https://pic4.zhimg.com/80/v2-491bf433440cc224a409dcb3e579257b_720w.jpg)
+
+## 24. @Resource 和 @Autowire 的区别
+
+- 1、@Resource 和 @Autowired 都可以用来装配 bean
+
+  2、@Autowired 默认按类型装配，默认情况下必须要求依赖对象必须存在，如果要允许null值，可以设置它的required属性为false。
+
+  3、@Resource 如果指定了 name 或 type，则按指定的进行装配；如果都不指定，则优先按名称装配，当找不到与名称匹配的 bean 时才按照类型进行装配。
+

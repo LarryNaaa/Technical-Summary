@@ -276,10 +276,10 @@ final V put(K key, int hash, V value, boolean onlyIfAbsent) {
   
   ![HashMap_1](/Users/na/IdeaProjects/Technical summary/Image/HashMap_1.webp)
 
-#### 9.3.3 区别
+#### 9.3.3 为什么不用ReentrantLock而用synchronized
 
-- 采用红黑树之后可以保证查询效率（`O(logn)`）
-- 取消了 ReentrantLock 改为了 synchronized
+- 减少内存开销：如果使用ReentrantLock则需要节点继承AQS来获得同步支持，增加内存开销，而1.8中只有头节点需要进行同步。
+- 内部优化：synchronized则是JVM直接支持的，JVM能够在运行时作出相应的优化措施：锁粗化、锁消除、锁自旋等等。
 
 ## 10. jdk1.7中的HashMap扩容造成死循环
 

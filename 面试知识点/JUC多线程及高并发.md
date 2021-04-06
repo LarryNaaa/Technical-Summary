@@ -714,9 +714,14 @@ private static final Object PRESENT = new Object();
 
 3. **other**
 
-   对Java ReentrantLock而言，通过构造函数指定该锁是否公平，默认是非公平锁，非公平锁的优点在于吞吐量比公平锁大
+   - 对Java ReentrantLock而言，通过构造函数指定该锁是否公平，默认是非公平锁，非公平锁的优点在于吞吐量比公平锁大
 
-   对Synchronized而言，是一种非公平锁
+   - 对Synchronized而言，是一种非公平锁
+   
+4. 实现方式：
+
+- 公平锁的实现机理在于每次有线程来抢占锁的时候，都会检查一遍有没有等待队列，当前同步队列没有前驱节点（也就是没有线程在等待）时才会去`compareAndSetState(0, acquires)`使用CAS修改同步状态变量。
+- 非公平锁的实现在刚进入lock方法时会直接使用一次CAS去尝试获取锁，不成功才会到acquire方法中。而在nonfairTryAcquire方法中并没有判断是否有前驱节点在等待，如果发现锁这个时候被释放了（state == 0），非公平锁会直接 CAS 抢锁。如果这两次 CAS 都不成功，那么后面非公平锁和公平锁是一样的，都要进入到阻塞队列等待唤醒。
 
 #### 2、可重入锁（递归锁）
 
@@ -2359,3 +2364,12 @@ public abstract class AbstractQueuedSynchronizer
 ### 5. Tools
 
 - 这一部分是以前面几个模块为基础的高级特性模块，实际应用的场景相对较少，主要应用在多线程间相互依赖执行结果场景，没有具体的学习顺序，最好CountDownLatch、CyclicBarrier、Semaphore、Exchanger、Executors都了解下，对后面学习Guava的框架有帮助。
+
+## 十五、SimpleDateFormat
+
+- 声明SimpleDateFormat为static变量，那么它的Calendar变量也就是一个共享变量，可以被多个线程访问
+- 假设线程A执行完calendar.setTime(date)，把时间设置成2019-01-02，这时候被挂起，线程B获得CPU执行权。线程B也执行到了calendar.setTime(date)，把时间设置为2019-01-03。线程挂起，线程A继续走，calendar还会被继续使用(subFormat方法)，而这时calendar用的是线程B设置的值了，而这就是引发问题的根源，出现时间不对，线程挂死等等。
+- java.time.format.DateTimeFormatter是jdk新加入的日期格式化工具类，解决了SimpleDateFormat的线程安全问题，如果使用的是jdk8以上，强烈推荐使用。
+
+![](https://pic4.zhimg.com/80/v2-8999628e3872222be7bd61371b8b7f77_720w.jpg)
+

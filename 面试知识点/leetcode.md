@@ -1,3 +1,5 @@
+
+
 # Leetcode
 
 [TOC]
@@ -951,6 +953,44 @@ class Solution {
 }
 ```
 
+### 4. [二叉树中的最大路径和](https://leetcode-cn.com/problems/binary-tree-maximum-path-sum/)
+
+路径 被定义为一条从树中任意节点出发，沿父节点-子节点连接，达到任意节点的序列。同一个节点在一条路径序列中 至多出现一次 。该路径 至少包含一个 节点，且不一定经过根节点。
+
+路径和 是路径中各节点值的总和。
+
+给你一个二叉树的根节点 root ，返回其 最大路径和 。
+
+```java
+class Solution {
+    int res = 0;
+    public int maxPathSum(TreeNode root) {
+        res = root.val;
+        dfs(root);
+        return res;
+    }
+
+    public int dfs(TreeNode root){
+        if(root == null){
+            return 0;
+        }
+        int l = dfs(root.left);
+        int r = dfs(root.right);
+        int max = 0;
+        max = Math.max(root.val, root.val + l);
+        max = Math.max(max, root.val + r);
+        max = Math.max(max, l + r + root.val);
+        if(max > res){
+            res = max;
+        }
+        if(l < 0 && r < 0){
+            return root.val;
+        }
+        return Math.max(l, r) + root.val;
+    }
+}
+```
+
 
 
 ## DP
@@ -1161,7 +1201,35 @@ class Solution {
 }
 ```
 
+### 6. [最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
 
+给你一个字符串 `s`，找到 `s` 中最长的回文子串。
+
+```java
+class Solution {
+    public String longestPalindrome(String s) {
+        if(s.length() < 1) return "";
+        boolean[][] dp = new boolean[s.length()][s.length()];
+        for(int i = 0; i < s.length(); i++){
+            dp[i][i] = true;
+        }
+        int max = 0;
+        String res = "";
+        for(int i = s.length() - 1; i >= 0; i--){
+            for(int j = s.length() - 1; j >= i; j--){
+                if(s.charAt(i) == s.charAt(j) && (i+1 > j-1 || dp[i+1][j-1])){
+                    dp[i][j] = true;
+                    if(j - i + 1 > max){
+                        max = j - i + 1;
+                        res = s.substring(i, j+1);
+                    }
+                }
+            }
+        }
+        return res;
+    }
+}
+```
 
 ## BFS
 
@@ -1234,6 +1302,34 @@ class Solution {
             }
         }
         return false;
+    }
+}
+```
+
+### 2. [无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+
+给定一个字符串，请你找出其中不含有重复字符的 **最长子串** 的长度。
+
+```java
+class Solution {
+    public int lengthOfLongestSubstring(String s) {
+        int l = 0, r = 0;
+        Map<Character, Integer> map = new HashMap<>();
+        int max = 0;
+        while(r < s.length()){
+            char rc = s.charAt(r);
+            map.put(rc, map.getOrDefault(rc, 0) + 1);
+            r++;
+            while(map.get(rc) > 1){
+                char lc = s.charAt(l);
+                map.put(lc, map.get(lc) - 1);
+                l++;
+            }
+            if(r - l > max){
+                max = r - l;
+            }
+        }
+        return max;
     }
 }
 ```
@@ -1428,6 +1524,34 @@ class Solution {
 }
 ```
 
+### 2. [整数反转](https://leetcode-cn.com/problems/reverse-integer/)
+
+给你一个 32 位的有符号整数 x ，返回将 x 中的数字部分反转后的结果。
+
+如果反转后整数超过 32 位的有符号整数的范围 [−231,  231 − 1] ，就返回 0。
+
+假设环境不允许存储 64 位整数（有符号或无符号）。
+
+```java
+class Solution {
+    public int reverse(int x) {
+        int res = 0;
+        while(x != 0){
+            int remainder = x % 10;
+            if (res > Integer.MAX_VALUE / 10 || (res == Integer.MAX_VALUE / 10 && remainder > 7)) 
+                return 0;
+            if (res < Integer.MIN_VALUE / 10 || (res == Integer.MIN_VALUE / 10 && remainder < -8)) 
+                return 0;
+            res = res * 10 + remainder;
+            x /= 10;
+        }
+        return res;
+    }
+}
+```
+
+### 
+
 ## 分治
 
 ### 1.[排序链表](https://leetcode-cn.com/problems/sort-list/)
@@ -1508,6 +1632,60 @@ class Solution {
         }else{
             quicksort(nums, target, left, l - 1);
         }
+    }
+}
+```
+
+## 双指针
+
+### 1. [删除有序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
+
+给你一个有序数组 `nums` ，请你**[ 原地](http://baike.baidu.com/item/原地算法)** 删除重复出现的元素，使每个元素 **只出现一次** ，返回删除后数组的新长度。
+
+```java
+class Solution {
+    public int removeDuplicates(int[] nums) {
+        int l = 0, r = 0;
+        while(r < nums.length){
+            if(nums[l] != nums[r]){
+                nums[++l] = nums[r];
+            }
+            r++;
+        }
+        return l+1;
+    }
+}
+```
+
+## 链表
+
+### 1. [反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
+
+反转一个单链表。
+
+```java
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     int val;
+ *     ListNode next;
+ *     ListNode() {}
+ *     ListNode(int val) { this.val = val; }
+ *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+ * }
+ */
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        ListNode dummy = null;
+        ListNode prev = dummy;
+        ListNode curr = head;
+        while(curr != null){
+            ListNode next = curr.next;
+            curr.next = prev;
+            prev = curr;
+            curr = next;
+        }
+        return prev;
     }
 }
 ```

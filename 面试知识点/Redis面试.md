@@ -162,6 +162,10 @@ https://mp.weixin.qq.com/s?__biz=MzI4Njg5MDA5NA==&mid=2247484609&idx=1&sn=4c0532
 
 ## 6. Redis 常用数据结构
 
+- Redis内部使用一个redisObject对象来表示所有的key和value。redisObject主要的信息包括数据类型（type）、编码方式(encoding)、数据指针（ptr）、虚拟内存（vm）等。type代表一个value对象具体是何种数据类型，encoding是不同数据类型在redis内部式。
+
+![](https://images2015.cnblogs.com/blog/811915/201701/811915-20170113134336963-1997996643.png)
+
 ### 6.1 String字符串
 
 Redis中的字符串是一种**动态字符串**，这意味着用户可以修改，它的实现实现有点类似Java中的**ArrayList**，有一个字符**数组**。
