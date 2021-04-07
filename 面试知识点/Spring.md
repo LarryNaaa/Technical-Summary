@@ -444,3 +444,62 @@ public void invokeWithinTransaction() {
 
   3、@Resource 如果指定了 name 或 type，则按指定的进行装配；如果都不指定，则优先按名称装配，当找不到与名称匹配的 bean 时才按照类型进行装配。
 
+## 25. springboot自动装配原理
+
+- `@SpringBootApplication`注解：
+  
+  - **`@ComponentScan`** **注解：**自动扫描并加载符合条件的Bean到容器中，这个注解会默认扫描声明类所在的包开始扫描，例如：类`cn.shiyujun.Demo`类上标注了`@ComponentScan` 注解，则`cn.shiyujun.controller`、`cn.shiyujun.service`等等包下的类都可以被扫描到
+  -   **`@SpringBootConfiguration`注解：**它只是对`Configuration`注解的一个封装而已
+  -   EnableAutoConfiguration注解：利用`@Import`注解，将所有符合自动装配条件的bean注入到IOC容器中
+- EnableAutoConfiguration注解：
+
+```java
+@Import({AutoConfigurationImportSelector.class})
+public @interface EnableAutoConfiguration {
+    String ENABLED_OVERRIDE_PROPERTY = "spring.boot.enableautoconfiguration";
+
+    Class<?>[] exclude() default {};
+
+    String[] excludeName() default {};
+}
+```
+
+- 进入类`AutoConfigurationImportSelector`，观察其`selectImports`方法，这个方法执行完毕后，Spring会把这个方法返回的类的全限定名数组里的所有的类都注入到IOC容器中
+
+```java
+public String[] selectImports(AnnotationMetadata annotationMetadata) {
+        if (!this.isEnabled(annotationMetadata)) {
+            return NO_IMPORTS;
+        } else {
+            AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader.loadMetadata(this.beanClassLoader);
+            AnnotationAttributes attributes = this.getAttributes(annotationMetadata);
+            List<String> configurations = this.getCandidateConfigurations(annotationMetadata, attributes);
+            configurations = this.removeDuplicates(configurations);
+            Set<String> exclusions = this.getExclusions(annotationMetadata, attributes);
+            this.checkExcludedClasses(configurations, exclusions);
+            configurations.removeAll(exclusions);
+            configurations = this.filter(configurations, autoConfigurationMetadata);
+            this.fireAutoConfigurationImportEvents(configurations, exclusions);
+            return StringUtils.toStringArray(configurations);
+        }
+    }
+```
+
+- 第一行if时会首先判断当前系统是否禁用了自动装配的功能
+- 如果当前系统禁用了自动装配的功能则会返回如下这个空的数组，后续也就无法注入bean了
+- 此时如果没有禁用自动装配则进入else分枝，第一步操作首先会去加载所有Spring预先定义的配置条件信息，这些配置信息在`org.springframework.boot.autoconfigure`包下的`META-INF/spring-autoconfigure-metadata.properties`文件中
+- 这些配置条件主要含义大致是这样的：如果你要自动装配某个类的话，你觉得先存在哪些类或者哪些配置文件等等条件，这些条件的判断主要是利用了`@ConditionalXXX`注解
+- 获取`@EnableAutoConfiguration`注解上的exclude、excludeName属性，这两个属性的作用都是排除一些类的
+- 这里又是关键的一步，可以看到刚才图片中spring-autoconfigure-metadata.properties文件的上方存在一个文件spring.factories，这个文件可就不止存在于`org.springframework.boot.autoconfigure`包里了，所有的包里都有可能存在这个文件，所以这一步是加载整个项目所有的spring.factories文件。
+
+## 26. SpringBoot条件注解@Conditional
+
+- @Conditional注解可以根据代码中设置的条件装载不同的bean，根据满足某一个特定条件创建一个特定的Bean。
+- @ConditionalOnBean：存在某个bean，实例化
+- @ConditionalOnMissingBean：不存在某个bean的时候实例化。
+- @ConditionalOnClass：存在某个类时，才会实例化一个Bean
+- @ConditionalOnMissingClass：不存在某个类时，才会实例化一个Bean
+- @ConditionalOnProperty(prefix = “syj”, name = “algorithm”, havingValue = “token”)：当存在配置文件中以syj为前缀的属性，属性名称为algorithm，然后它的值为token时才会实例化一个类。
+- @ConditionalOnJava：如果是Java应用
+- @ConditionalOnWebApplication：如果是Web应用
+
