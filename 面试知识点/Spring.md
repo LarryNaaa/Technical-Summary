@@ -376,6 +376,12 @@ public class MainApplication {
 - Spring是一个一站式的轻量级的java开发框架，核心是控制反转（IOC）和面向切面（AOP），针对于开发的WEB层(springMvc)、业务层(Ioc)、持久层(jdbcTemplate)等都提供了多种配置解决方案；
 - SpringMVC是Spring基础之上的一个MVC框架，主要处理web开发的路径映射和视图渲染，属于Spring框架中WEB层开发的一部分；通过Dispatcher Servlet, ModelAndView 和 View Resolver，开发web应用变得很容易。主要针对的是网站应用程序或者服务开发——URL路由、Session、模板引擎、静态Web资源等等。
 - Spring配置复杂，繁琐，所以推出了Spring boot，约定优于配置，简化了spring的配置流程。集成了快速开发的Spring多个插件，同时自动过滤不需要配置的多余的插件，简化了项目的开发配置流程，一定程度上取消xml配置，是一套快速配置开发的脚手架，能快速开发单个微服务；SpringBoot框架相对于SpringMVC框架来说，更专注于开发微服务后台接口，不开发前端视图；
+  - 为了解决java开发中的，繁多的配置、底下的开发效率，复杂的部署流程，和第三方技术集成难度大的问题，产生了spring boot。
+  - springboot 使用 “习惯优于配置”的理念让项目快速运行起来，使用springboot很容易创建一个独立运行的jar，内嵌servlet容器
+  - springboot的核心功能一：独立运行spring项目，springboot可以以jar包的形式独立运行，运行一个springboot项目只需要 java -jar xxx.jar 来运行
+  - springboot的核心功能二：内嵌servlet容器，可以内嵌tomcat，接天jetty，或者undertow，这样我们就可以不用war包形式部署项目
+  - springboot的核心功能三，提供starter简化maven配置，spring提供了一系列starter pom 来简化maven的依赖加载， 当使用了 spring-boot-starter-web时，会自动加载所需要的依赖包
+  - springboot的核心功能三：自动配置spring sprintboot 会根据在类路径的jar包，类，为jar包中的类自动配置bean，这样会极大的减少使用的配置，会根据启动类所在的目录，自动配置bean
 - Spring Cloud构建于Spring Boot之上，是一个关注全局的服务治理框架。SpringCloud大部分的功能插件都是基于SpringBoot去实现的，SpringCloud关注于全局的微服务整合和管理，将多个SpringBoot单体微服务进行整合以及管理；SpringCloud依赖于SpringBoot开发，而SpringBoot可以独立开发；
 
 ## 21. spring bean 注入过程
@@ -449,7 +455,7 @@ public void invokeWithinTransaction() {
 - `@SpringBootApplication`注解：
   
   - **`@ComponentScan`** **注解：**自动扫描并加载符合条件的Bean到容器中，这个注解会默认扫描声明类所在的包开始扫描，例如：类`cn.shiyujun.Demo`类上标注了`@ComponentScan` 注解，则`cn.shiyujun.controller`、`cn.shiyujun.service`等等包下的类都可以被扫描到
-  -   **`@SpringBootConfiguration`注解：**它只是对`Configuration`注解的一个封装而已
+  -   **`@SpringBootConfiguration`注解：**底层是**Configuration**注解，支持**JavaConfig**的方式来进行配置(**使用Configuration配置类等同于XML文件**)。
   -   EnableAutoConfiguration注解：利用`@Import`注解，将所有符合自动装配条件的bean注入到IOC容器中
 - EnableAutoConfiguration注解：
 
@@ -467,30 +473,62 @@ public @interface EnableAutoConfiguration {
 - 进入类`AutoConfigurationImportSelector`，观察其`selectImports`方法，这个方法执行完毕后，Spring会把这个方法返回的类的全限定名数组里的所有的类都注入到IOC容器中
 
 ```java
+/**
+* 方法用于给容器中导入组件
+**/
+@Override
 public String[] selectImports(AnnotationMetadata annotationMetadata) {
-        if (!this.isEnabled(annotationMetadata)) {
-            return NO_IMPORTS;
-        } else {
-            AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader.loadMetadata(this.beanClassLoader);
-            AnnotationAttributes attributes = this.getAttributes(annotationMetadata);
-            List<String> configurations = this.getCandidateConfigurations(annotationMetadata, attributes);
-            configurations = this.removeDuplicates(configurations);
-            Set<String> exclusions = this.getExclusions(annotationMetadata, attributes);
-            this.checkExcludedClasses(configurations, exclusions);
-            configurations.removeAll(exclusions);
-            configurations = this.filter(configurations, autoConfigurationMetadata);
-            this.fireAutoConfigurationImportEvents(configurations, exclusions);
-            return StringUtils.toStringArray(configurations);
-        }
+    if (!isEnabled(annotationMetadata)) {
+        return NO_IMPORTS;
     }
+    AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader
+        .loadMetadata(this.beanClassLoader);
+    AutoConfigurationEntry autoConfigurationEntry = getAutoConfigurationEntry(
+        autoConfigurationMetadata, annotationMetadata);  // 获取自动配置项
+    return StringUtils.toStringArray(autoConfigurationEntry.getConfigurations());
+}
+
+// 获取自动配置项
+protected AutoConfigurationEntry getAutoConfigurationEntry(
+    AutoConfigurationMetadata autoConfigurationMetadata,
+    AnnotationMetadata annotationMetadata) {
+    if (!isEnabled(annotationMetadata)) {
+        return EMPTY_ENTRY;
+    }
+    AnnotationAttributes attributes = getAttributes(annotationMetadata);
+    List < String > configurations = getCandidateConfigurations(annotationMetadata,
+        attributes);  //  获取一个自动配置 List ，这个 List 就包含了所有自动配置的类名
+    configurations = removeDuplicates(configurations);
+    Set < String > exclusions = getExclusions(annotationMetadata, attributes);
+    checkExcludedClasses(configurations, exclusions);
+    configurations.removeAll(exclusions);
+    configurations = filter(configurations, autoConfigurationMetadata);
+    fireAutoConfigurationImportEvents(configurations, exclusions);
+    return new AutoConfigurationEntry(configurations, exclusions);
+}
+
+//   获取一个自动配置 List ，这个 List 就包含了所有的自动配置的类名
+protected List < String > getCandidateConfigurations(AnnotationMetadata metadata,
+    AnnotationAttributes attributes) {
+    // 通过 getSpringFactoriesLoaderFactoryClass 获取默认的 EnableAutoConfiguration.class 类名，传入 loadFactoryNames 方法
+    List < String > configurations = SpringFactoriesLoader.loadFactoryNames(
+        getSpringFactoriesLoaderFactoryClass(), getBeanClassLoader());
+    Assert.notEmpty(configurations,
+        "No auto configuration classes found in META-INF/spring.factories. If you " +
+        "are using a custom packaging, make sure that file is correct.");
+    return configurations;
+}
+
+// 默认的 EnableAutoConfiguration.class 类名
+protected Class<?> getSpringFactoriesLoaderFactoryClass() {
+	return EnableAutoConfiguration.class;
+}
 ```
 
-- 第一行if时会首先判断当前系统是否禁用了自动装配的功能
-- 如果当前系统禁用了自动装配的功能则会返回如下这个空的数组，后续也就无法注入bean了
-- 此时如果没有禁用自动装配则进入else分枝，第一步操作首先会去加载所有Spring预先定义的配置条件信息，这些配置信息在`org.springframework.boot.autoconfigure`包下的`META-INF/spring-autoconfigure-metadata.properties`文件中
-- 这些配置条件主要含义大致是这样的：如果你要自动装配某个类的话，你觉得先存在哪些类或者哪些配置文件等等条件，这些条件的判断主要是利用了`@ConditionalXXX`注解
-- 获取`@EnableAutoConfiguration`注解上的exclude、excludeName属性，这两个属性的作用都是排除一些类的
-- 这里又是关键的一步，可以看到刚才图片中spring-autoconfigure-metadata.properties文件的上方存在一个文件spring.factories，这个文件可就不止存在于`org.springframework.boot.autoconfigure`包里了，所有的包里都有可能存在这个文件，所以这一步是加载整个项目所有的spring.factories文件。
+- 首先注意到 selectImports 方法，其实从方法名就能看出，这个方法用于给容器中导入组件，然后跳到 getAutoConfigurationEntry 方法就是用于获取自动配置项的。
+- 再来进入 getCandidateConfigurations 方法就是 获取一个自动配置 List ，这个 List 就包含了所有的自动配置的类名 。
+- 再进入 SpringFactoriesLoader 类的 loadFactoryNames 方法，跳转到 loadSpringFactories 方法发现 ClassLoader 类加载器指定了一个 FACTORIES_RESOURCE_LOCATION 常量，它指定的是 jar 包类路径下 META-INF/spring.factories 文件。
+- 然后利用PropertiesLoaderUtils 把 ClassLoader 扫描到的这些文件的内容包装成 properties 对象，从 properties 中获取到 EnableAutoConfiguration.class 类（类名）对应的值，然后把他们添加在容器中。
 
 ## 26. SpringBoot条件注解@Conditional
 
@@ -503,3 +541,8 @@ public String[] selectImports(AnnotationMetadata annotationMetadata) {
 - @ConditionalOnJava：如果是Java应用
 - @ConditionalOnWebApplication：如果是Web应用
 
+## 27. Spring Boot Starters启动器
+
+- Starters可以理解为启动器，它包含了一系列可以集成到应用里面的依赖包，你可以一站式集成Spring及其他技术，而不需要到处找示例代码和依赖包。如你想使用Spring JPA访问数据库，只要加入spring-boot-starter-data-jpa启动器依赖就能使用了。
+- Spring Boot官方的启动器都是以spring-boot-starter-命名的，代表了一个特定的应用类型。
+- 第三方的启动器不能以spring-boot开头命名，它们都被Spring Boot官方保留。一般一个第三方的应该这样命名，像mybatis的mybatis-spring-boot-starter。
