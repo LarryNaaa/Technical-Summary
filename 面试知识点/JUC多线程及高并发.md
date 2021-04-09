@@ -1499,6 +1499,8 @@ private static final Object PRESENT = new Object();
    - synchronized没有
    - ReentrantLock用来实现分组唤醒需要要唤醒的线程们，可以精确唤醒，而不是像synchronized要么随机唤醒一个线程要么唤醒全部线程。
 
+#### 7、对线程之间按顺序调用，实现A>B>C三个线程启动
+
    ```java
    package com.jian8.juc.lock;
    
@@ -2372,4 +2374,92 @@ public abstract class AbstractQueuedSynchronizer
 - java.time.format.DateTimeFormatter是jdk新加入的日期格式化工具类，解决了SimpleDateFormat的线程安全问题，如果使用的是jdk8以上，强烈推荐使用。
 
 ![](https://pic4.zhimg.com/80/v2-8999628e3872222be7bd61371b8b7f77_720w.jpg)
+
+## 十六、三个线程按顺序轮流打印n个数
+
+```java
+public class Main {
+
+    public static void main(String[] args){
+        new Thread(new Printer(0)).start();
+        new Thread(new Printer(1)).start();
+        new Thread(new Printer(2)).start();
+    }
+
+}
+
+class Printer implements Runnable{
+    //打印的数字，初始值
+    static int num = 1;
+    //最大值
+    static final int MAX = 15;
+    //线程id
+    int id = 0;
+
+    public Printer(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public void run() {
+        synchronized (Printer.class) {
+            while(num <= MAX) {
+                //每行第一个数字与线程id对应关系
+                if(num/5%3 == id) {
+                    System.out.print("线程" + id + "打印：");
+                    for(int i=0; i<5; i++) {
+                        System.out.print(num++ + ",");
+                    }
+                    System.out.println();
+                    //打印完数据，唤醒Printer.class等待队列上的线程
+                    Printer.class.notifyAll();
+                    continue;
+                }
+                //如果不属于自己的数，放弃CPU，挂在Printer.class对象的等待队列
+                try {
+                    Printer.class.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
+
+class Printer implements Runnable{
+    //打印的数字，初始值
+    private static volatile int num = 1;
+    //线程id
+    private int id;
+
+    public Printer(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public void run() {
+        synchronized (Printer.class) {
+            while(num <= 60) {
+                //每行第一个数字与线程id对应关系
+                if(num / 5 % 3 == id) {
+                    System.out.print("线程" + id + "打印：");
+                    for(int i=0; i<5; i++) {
+                        System.out.print(num++ + ",");
+                    }
+                    System.out.println();
+                    //打印完数据，唤醒Printer.class等待队列上的线程
+                    Printer.class.notifyAll();
+                }else {
+                    //如果不属于自己的数，放弃CPU，挂在Printer.class对象的等待队列
+                    try {
+                        Printer.class.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+}
+```
 

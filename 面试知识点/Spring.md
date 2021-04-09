@@ -37,7 +37,6 @@
 - **Spring AOP就是基于动态代理的**，如果要代理的对象，实现了某个接口，那么Spring AOP会使用**JDK Proxy**，去创建代理对象，只能对实现了接口的类生成代理的原因是通过 JDK 动态代理生成的类已经继承了 Proxy 类，所以无法再使用继承的方式去对类实现代理；而对于没有实现接口的对象，Spring AOP会使用**Cglib** ，这时候Spring AOP会使用 **Cglib** 通过**继承目标对象产生代理子对象**，代理子对象中继承了目标对象的方法，并可以对该方法进行增强。
 
 - **Join Point(连接点)**：Java执行流中的每个方法调用可以看成是一个连接点。
-
 - **切入点(Point Cut)**：**从所有的连接点中挑选需要被切入的切入点。**
 
 ![Spring_2](/Users/na/IdeaProjects/Technical summary/Image/Spring_2.jpg)
@@ -59,6 +58,21 @@
   环绕通知（round）：可以控制目标方法是否执行
 
 ![Spring_3](/Users/na/IdeaProjects/Technical summary/Image/Spring_3.jpg)
+
+### 2.1 AOP 代理失效
+
+(1) 在一个类内部调用时，被调用方法的 AOP 声明将不起作用。
+
+(2) 对于基于接口动态代理的 AOP 事务增强来说，由于接口的方法都必然是 public ，这就要求实现类的实现方法也必须是 public 的（不能是 protected、private 等），同时不能使用 static 的修饰符。所以，可以实施接口动态代理的方法只能是使用 public 或 public final 修饰符的方法，其他方法不可能被动态代理，相应的也就不能实施 AOP 增强，换句话说，即不能进行 Spring 事务增强了。
+
+(3) 基于 CGLib 字节码动态代理的方案是通过扩展被增强类，动态创建其子类的方式进行 AOP 增强植入的。由于使用 final、static、private 修饰符的方法都不能被子类覆盖，这些方法将无法实施 AOP 增强。所以方法签名必须特别注意这些修饰符的使用，以免使方法不小心成为事务管理的漏网之鱼。
+
+(4) 该例中的方法符合上述条件，但注解仍然失效，主要原因是在于同一类中的方法互相调用，调用者指向当前对象，所以无论是接口代理还是 cglib 代理都无法织入增强实现。
+
+> 解决方法：
+>
+> 1. 将需要进行AOP管理的方法，在独立的类中定义，即可解决此类问题。在特定的情况，可以定独立的事务层
+> 2. 强制将AOP对象进行设置，在内部方法调用中，通过AopContext 获取代理对象。本质是在AopContext中存放了代理对象，代码对象是放存在threadlocal中的。AopContext的实现如下： (1).在进入代理对象之后通过AopContext.serCurrentProxy(proxy)暴露当前代理对象到ThreadLocal，并保存上次ThreadLocal绑定的代理对象为oldProxy。 (2).接下来我们可以通过 AopContext.currentProxy() 获取当前代理对象。 (3).在退出代理对象之前要重新将ThreadLocal绑定的代理对象设置为上一次的代理对象，即 AopContext.serCurrentProxy(oldProxy)。
 
 ## 3. Spring AOP 和 AspectJ AOP 有什么区别？
 
